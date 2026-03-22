@@ -6,7 +6,6 @@ const TABS = ['menu', 'chat', 'cart', 'admin'];
 function App() {
   const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'chat', 'cart', 'admin'
   const [menu, setMenu] = useState([]);
-  //
   const [orders, setOrders] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState([]);
