@@ -1,4 +1,5 @@
 import { createContext, useEffect, useRef, useState } from 'react';
+import api from '../api/axiosInstance';
 
 export const AppContext = createContext();
 
@@ -17,8 +18,8 @@ export const AppProvider = ({ children }) => {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    const fetchMenu = () => fetch('/api/menu').then(res => res.json()).then(data => setMenu(data)).catch(() => setMenu([]));
-    const fetchOrders = () => fetch('/api/orders').then(res => res.json()).then(data => setOrders(data)).catch(() => setOrders([]));
+    const fetchMenu = () => api.get('/api/menu').then(res => setMenu(res.data)).catch(() => setMenu([]));
+    const fetchOrders = () => api.get('/api/orders').then(res => setOrders(res.data)).catch(() => setOrders([]));
 
     fetchMenu();
     const interval = setInterval(fetchOrders, 5000); 
@@ -43,13 +44,8 @@ export const AppProvider = ({ children }) => {
     setLoadingChat(true);
 
     try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg })
-      });
-      const data = await res.json();
-      setChatMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
+      const res = await api.post('/api/ai/chat', { message: msg });
+      setChatMessages(prev => [...prev, { role: 'ai', text: res.data.reply }]);
     } catch (err) {
       setChatMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting to the kitchen. Can I help with something else?" }]);
     } finally {
@@ -66,19 +62,13 @@ export const AppProvider = ({ children }) => {
 
   const handlePlaceOrder = async () => {
     try {
-      const res = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table_number: 5,
-          items: cart,
-          total_price: totalCartValue
-        })
+      await api.post('/api/order', {
+        table_number: 5,
+        items: cart,
+        total_price: totalCartValue
       });
-      if (res.ok) {
-        alert("Order sent to kitchen! 👨‍🍳");
-        setCart([]);
-      }
+      alert("Order sent to kitchen! 👨‍🍳");
+      setCart([]);
     } catch (err) {
       alert("Failed to place order.");
     }
