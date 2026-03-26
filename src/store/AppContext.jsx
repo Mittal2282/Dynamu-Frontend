@@ -1,4 +1,4 @@
-import { createContext, useEffect, useRef, useState } from 'react';
+import { createContext, useRef, useState } from 'react';
 import api from '../api/axiosInstance';
 
 export const AppContext = createContext();
@@ -16,15 +16,6 @@ export const AppProvider = ({ children }) => {
   const [loadingChat, setLoadingChat] = useState(false);
 
   const chatEndRef = useRef(null);
-
-  useEffect(() => {
-    const fetchMenu = () => api.get('/api/menu').then(res => setMenu(res.data)).catch(() => setMenu([]));
-    const fetchOrders = () => api.get('/api/orders').then(res => setOrders(res.data)).catch(() => setOrders([]));
-
-    fetchMenu();
-    const interval = setInterval(fetchOrders, 5000); 
-    return () => clearInterval(interval);
-  }, []);
 
   const addToCart = (item) => {
     setCart(prev => {
