@@ -1,0 +1,187 @@
+import { useEffect, useState, useRef, useCallback } from 'react';
+import adminApi from '../../api/adminAxios';
+
+const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served'];
+
+const STATUS_CONFIG = {
+  pending:   { label: 'New',       color: 'border-yellow-500/50 bg-yellow-500/5',  badge: 'bg-yellow-500/20 text-yellow-400',  next: 'confirmed',  nextLabel: 'Confirm' },
+  confirmed: { label: 'Confirmed', color: 'border-blue-500/50 bg-blue-500/5',      badge: 'bg-blue-500/20 text-blue-400',      next: 'preparing',  nextLabel: 'Start Preparing' },
+  preparing: { label: 'Preparing', color: 'border-purple-500/50 bg-purple-500/5',  badge: 'bg-purple-500/20 text-purple-400',  next: 'ready',      nextLabel: 'Mark Ready' },
+  ready:     { label: 'Ready',     color: 'border-green-500/50 bg-green-500/5',    badge: 'bg-green-500/20 text-green-400',    next: 'served',     nextLabel: 'Mark Served' },
+  served:    { label: 'Served',    color: 'border-slate-500/50 bg-slate-500/5',    badge: 'bg-slate-500/20 text-slate-300',    next: null,         nextLabel: null },
+};
+
+function timeAgo(date) {
+  const diff = (Date.now() - new Date(date)) / 1000;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
+}
+
+function OrderCard({ order, onStatusChange, updating }) {
+  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
+
+  return (
+    <div className={`border rounded-xl p-4 space-y-3 ${cfg.color} transition-all`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <span className="font-bold text-white text-base">Table {order.table?.table_number ?? order.table_number ?? '?'}</span>
+          <span className="text-slate-500 text-xs ml-2">#{order.order_number}</span>
+        </div>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
+          {order.status}
+        </span>
+      </div>
+
+      <ul className="space-y-1">
+        {order.items?.map((item, i) => (
+          <li key={i} className="flex justify-between text-sm">
+            <span className="text-slate-300">{item.name}</span>
+            <span className="text-slate-500">×{item.quantity}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex items-center justify-between pt-1 border-t border-white/10">
+        <div>
+          <span className="text-orange-400 font-bold">₹{Math.round(order.total_amount || 0)}</span>
+          <span className="text-slate-600 text-xs ml-2">{timeAgo(order.createdAt)}</span>
+        </div>
+        {cfg.next && (
+          <button
+            onClick={() => onStatusChange(order._id, cfg.next)}
+            disabled={updating === order._id}
+            className="text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {updating === order._id ? '…' : cfg.nextLabel}
+          </button>
+        )}
+      </div>
+
+      {/* Cancel button */}
+      {['pending', 'confirmed'].includes(order.status) && (
+        <button
+          onClick={() => onStatusChange(order._id, 'cancelled')}
+          disabled={updating === order._id}
+          className="text-xs text-red-400 hover:text-red-300 transition-colors w-full text-right"
+        >
+          Cancel order
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function OrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [updating, setUpdating] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [newIds, setNewIds] = useState(new Set());
+  const prevIdsRef = useRef(new Set());
+
+  const fetchOrders = useCallback(async (quiet = false) => {
+    try {
+      const res = await adminApi.get('/api/restaurant-dash/orders');
+      const incoming = res.data.data;
+
+      // Detect new orders for highlight
+      const incomingIds = new Set(incoming.map(o => o._id));
+      const brandNew = [...incomingIds].filter(id => !prevIdsRef.current.has(id));
+      if (brandNew.length > 0 && prevIdsRef.current.size > 0) {
+        setNewIds(new Set(brandNew));
+        setTimeout(() => setNewIds(new Set()), 4000);
+      }
+      prevIdsRef.current = incomingIds;
+
+      setOrders(incoming);
+      if (!quiet) setLastRefresh(new Date());
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+    const interval = setInterval(() => fetchOrders(true), 10000);
+    return () => clearInterval(interval);
+  }, [fetchOrders]);
+
+  const handleStatusChange = async (orderId, status) => {
+    setUpdating(orderId);
+    try {
+      await adminApi.put(`/api/restaurant-dash/orders/${orderId}/status`, { status });
+      await fetchOrders(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status.');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const byStatus = (status) => orders.filter(o => o.status === status);
+  const activeCount = orders.filter(o => !['served', 'completed', 'cancelled'].includes(o.status)).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Live Orders</h1>
+          <p className="text-slate-400 text-sm mt-0.5">
+            {activeCount} active · auto-refreshes every 10s
+            {lastRefresh && <span className="ml-2 text-slate-600">· last at {lastRefresh.toLocaleTimeString()}</span>}
+          </p>
+        </div>
+        <button
+          onClick={() => fetchOrders()}
+          className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+        >
+          ↻ Refresh
+        </button>
+      </div>
+
+      {/* Kanban columns */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {STATUSES.map(status => {
+          const cfg = STATUS_CONFIG[status];
+          const cols = byStatus(status);
+          return (
+            <div key={status} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-300">{cfg.label}</h2>
+                {cols.length > 0 && (
+                  <span className="text-xs bg-white/10 text-slate-400 px-2 py-0.5 rounded-full">{cols.length}</span>
+                )}
+              </div>
+              <div className="space-y-3 min-h-[80px]">
+                {cols.length === 0 ? (
+                  <div className="border border-dashed border-white/10 rounded-xl h-16 flex items-center justify-center">
+                    <span className="text-slate-600 text-xs">Empty</span>
+                  </div>
+                ) : cols.map(order => (
+                  <div
+                    key={order._id}
+                    className={newIds.has(order._id) ? 'ring-2 ring-orange-500 ring-offset-1 ring-offset-slate-950 rounded-xl animate-pulse' : ''}
+                  >
+                    <OrderCard
+                      order={order}
+                      onStatusChange={handleStatusChange}
+                      updating={updating}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {orders.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-48 text-center">
+          <p className="text-4xl mb-3">🍽️</p>
+          <p className="text-slate-400">No orders today yet. Waiting for customers…</p>
+        </div>
+      )}
+    </div>
+  );
+}
