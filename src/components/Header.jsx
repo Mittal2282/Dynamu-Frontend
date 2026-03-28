@@ -1,28 +1,41 @@
-import React, { useContext } from 'react';
-import { AppContext } from '../store/AppContext';
+import React from 'react';
+import { restaurantStore } from '../store/restaurantStore';
+import { cartStore } from '../store/cartStore';
+import { CountBadge } from '../components/ui/Badge';
+import Text from '../components/ui/Text';
 
-export default function Header() {
-  const { cart, totalCartCount, setIsCartOpen } = useContext(AppContext);
+/**
+ * Customer-facing top header.
+ * @param {{ onCartClick: () => void }} props
+ */
+export default function Header({ onCartClick }) {
+  const { name, tagline }   = restaurantStore();
+  const { count }           = cartStore();
+
+  const title = name || 'Dynamu Smart Menu';
+  const sub   = tagline || 'Table 05 • Royal Cafe';
 
   return (
-    <header className="p-6 flex justify-between items-center bg-white/5 backdrop-blur-md border-b border-white/10">
+    <header className="px-5 py-4 flex justify-between items-center bg-white/5 backdrop-blur-md border-b border-white/10">
       <div>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-          Dynamu Smart Menu
-        </h1>
-        <p className="text-xs text-slate-400">Table 05 • Royal Cafe</p>
+        <Text
+          as="h1"
+          size="lg"
+          weight="bold"
+          className="bg-gradient-to-r from-brand to-orange-400 bg-clip-text text-transparent"
+        >
+          {title}
+        </Text>
+        <Text size="xs" color="muted" className="mt-0.5">{sub}</Text>
       </div>
+
       <button
-        onClick={() => setIsCartOpen(true)}
-        className="relative cursor-pointer"
-        aria-label="View cart"
+        onClick={onCartClick}
+        className="relative cursor-pointer active:scale-90 transition-transform"
+        aria-label={`View cart${count > 0 ? ` — ${count} items` : ''}`}
       >
         <span className="text-2xl">🛒</span>
-        {cart.length > 0 && (
-          <span className="absolute -top-2 -right-2 bg-secondary text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">
-            {totalCartCount}
-          </span>
-        )}
+        <CountBadge count={count} />
       </button>
     </header>
   );

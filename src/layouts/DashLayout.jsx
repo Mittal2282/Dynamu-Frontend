@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import adminApi from '../api/adminAxios';
+import { getDashProfile } from '../services/adminService';
+import { authStore } from '../store/authStore';
+import { getInitials } from '../utils/formatters';
 
 const NAV = [
   { to: '/dashboard',       label: 'Live Orders', icon: '🍽️', end: true },
@@ -11,19 +13,17 @@ export default function DashLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [restaurantName, setRestaurantName] = useState('');
-  const name = localStorage.getItem('admin_name') || 'Owner';
+  const { adminName, resetAuth } = authStore();
+  const name = adminName || 'Owner';
 
   useEffect(() => {
-    adminApi.get('/api/restaurant-dash/profile')
-      .then(res => setRestaurantName(res.data.data?.name || ''))
+    getDashProfile()
+      .then(data => setRestaurantName(data?.name || ''))
       .catch(() => {});
   }, []);
 
   const logout = () => {
-    localStorage.removeItem('admin_access_token');
-    localStorage.removeItem('admin_refresh_token');
-    localStorage.removeItem('admin_role');
-    localStorage.removeItem('admin_name');
+    resetAuth();
     navigate('/login', { replace: true });
   };
 

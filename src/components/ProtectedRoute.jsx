@@ -1,11 +1,11 @@
 import { Navigate } from 'react-router-dom';
+import { authStore } from '../store/authStore';
 
 export default function ProtectedRoute({ allowedRoles, children }) {
-  const token = localStorage.getItem('admin_access_token');
-  const role  = localStorage.getItem('admin_role');
+  const { adminAccessToken, adminRole } = authStore();
 
-  if (!token) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(role)) return <Navigate to="/login" replace />;
+  if (!adminAccessToken) return <Navigate to="/login" replace />;
+  if (allowedRoles && !allowedRoles.includes(adminRole)) return <Navigate to="/login" replace />;
 
   return children;
 }

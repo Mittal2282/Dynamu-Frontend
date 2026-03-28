@@ -1,14 +1,14 @@
-import React, { useContext } from 'react';
-import { AppContext } from '../../store/AppContext';
+import React from 'react';
+import { cartStore } from '../../store/cartStore';
 
-export default function MenuPage() {
-  const {
-    MENU_CATEGORIES,
-    selectedCategory,
-    setSelectedCategory,
-    filteredMenu,
-    addToCart
-  } = useContext(AppContext);
+const MENU_CATEGORIES = ['All', 'Starter', 'Main Course', 'Bread', 'Beverage'];
+
+export default function MenuPage({ menu = [], selectedCategory, setSelectedCategory }) {
+  const { add } = cartStore();
+
+  const filteredMenu = selectedCategory === 'All'
+    ? menu
+    : menu.filter(m => m.category === selectedCategory);
 
   return (
     <div className="page-transition space-y-6">
@@ -41,7 +41,7 @@ export default function MenuPage() {
               </div>
               <p className="text-sm text-slate-400 line-clamp-2 mt-1">{item.description}</p>
               <button
-                onClick={() => addToCart(item)}
+                onClick={() => add({ ...item, _id: item._id ?? item.id })}
                 className="mt-3 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-xs font-bold transition-colors"
               >
                 + Quick Add

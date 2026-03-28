@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authStore } from '../store/authStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -9,9 +10,9 @@ const adminApi = axios.create({
 
 // Attach admin JWT to every request
 adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const { adminAccessToken } = authStore.getState();
+  if (adminAccessToken) {
+    config.headers.Authorization = `Bearer ${adminAccessToken}`;
   }
   return config;
 });
@@ -23,22 +24,21 @@ adminApi.interceptors.response.use(
     const original = err.config;
     if (err.response?.status === 401 && !original._retry) {
       original._retry = true;
-      const refreshToken = localStorage.getItem('admin_refresh_token');
-      if (refreshToken) {
+      const { adminRefreshToken, setAdminAccessToken } = authStore.getState();
+      if (adminRefreshToken) {
         try {
-          const { data } = await axios.post(`${BASE_URL}/api/auth/refresh`, { refreshToken });
+          const { data } = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+            refreshToken: adminRefreshToken,
+          });
           const newToken = data.data.accessToken;
-          localStorage.setItem('admin_access_token', newToken);
+          setAdminAccessToken(newToken);
           original.headers.Authorization = `Bearer ${newToken}`;
           return adminApi(original);
         } catch {
-          // Refresh failed — clear storage and redirect
+          // Refresh failed — clear store and redirect
         }
       }
-      localStorage.removeItem('admin_access_token');
-      localStorage.removeItem('admin_refresh_token');
-      localStorage.removeItem('admin_role');
-      localStorage.removeItem('admin_name');
+      authStore.getState().resetAuth();
       window.location.href = '/login';
     }
     return Promise.reject(err);

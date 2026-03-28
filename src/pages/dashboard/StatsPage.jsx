@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import adminApi from '../../api/adminAxios';
+import { getDashOrders } from '../../services/adminService';
+import { apiCaller } from '../../api/apiCaller';
 
 const RANGES = [
   { label: 'Today',     value: 'today' },
@@ -39,12 +40,12 @@ export default function StatsPage() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      adminApi.get(`/api/restaurant-dash/stats?range=${range}`),
-      adminApi.get('/api/restaurant-dash/orders'),
+      apiCaller({ method: 'GET', endpoint: `/api/restaurant-dash/stats?range=${range}`, useAdmin: true }),
+      getDashOrders(),
     ])
-      .then(([sRes, oRes]) => {
-        setStats(sRes.data.data);
-        setOrders(oRes.data.data);
+      .then(([statsData, orderList]) => {
+        setStats(statsData?.data);
+        setOrders(orderList);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

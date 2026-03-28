@@ -1,60 +1,96 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
-@theme {
-  --color-primary: #833ab4;
-  --color-secondary: #fd1d1d;
-  --color-accent: #fcb045;
-  --color-slate-950: #0f172a;
-  /* Use a standard-ish name or custom */
-
-  --font-sans: 'Outfit', sans-serif;
-}
-
+/* ─── Design token defaults (overridden dynamically by useTheme) ────────────── */
 :root {
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-main: #f8fafc;
-  --text-dim: #94a3b8;
+  /* Brand — overridden per restaurant */
+  --color-brand-primary:      #FF6B35;
+  --color-brand-secondary:    #FFFFFF;
+  --color-brand-primary-10:   #FF6B351A;
+  --color-brand-primary-20:   #FF6B3533;
+  --color-brand-primary-40:   #FF6B3566;
+
+  /* UI Surface */
+  --color-surface-base:       #0f172a; /* slate-950 */
+  --color-surface-raised:     #1e293b; /* slate-800 */
+  --color-surface-overlay:    rgba(255, 255, 255, 0.05);
+
+  /* Text */
+  --color-text-primary:       #f8fafc;
+  --color-text-secondary:     #94a3b8;
+  --color-text-muted:         #64748b;
+
+  /* Border */
+  --color-border:             rgba(255, 255, 255, 0.10);
+  --color-border-strong:      rgba(255, 255, 255, 0.20);
+
+  /* Feedback */
+  --color-success:   #22c55e;
+  --color-warning:   #f59e0b;
+  --color-error:     #ef4444;
 }
 
+/* ─── Tailwind v4 theme ────────────────────────────────────────────────────── */
+@theme {
+  --color-brand:                 var(--color-brand-primary);
+  --color-brand-secondary:       var(--color-brand-secondary);
+  
+  /* Short-hand brand tokens */
+  --color-brand-primary:         var(--color-brand-primary);
+  --color-brand-primary-10:      var(--color-brand-primary-10);
+  --color-brand-primary-20:      var(--color-brand-primary-20);
+  --color-brand-primary-40:      var(--color-brand-primary-40);
+
+  --color-primary:               #833ab4; /* legacy – consoles */
+  --color-secondary:             #fd1d1d; /* legacy – consoles */
+  --color-accent:                #fcb045; /* legacy – consoles */
+  --color-slate-950:             #0f172a;
+  --font-sans:                   'Outfit', sans-serif;
+}
+
+/* ─── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background-color: #0f172a;
-  /* Fallback direct color */
-  @apply text-slate-50 font-sans;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-primary);
+  font-family: 'Outfit', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ─── Utility classes ───────────────────────────────────────────────────────── */
 .glass {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl;
+  background: var(--color-surface-overlay);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
 }
 
 .page-transition {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeSlideIn 0.3s ease-out both;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
+/* Brand button — inherits CSS var so it follows restaurant theme */
+.btn-brand {
+  background-color: var(--color-brand-primary);
+  color: #fff;
 }
+.btn-brand:hover   { opacity: 0.92; }
+.btn-brand:active  { transform: scale(0.97); }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 99px; }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full;
+/* Hide scrollbar but keep scroll — used on horizontal chip rows */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.no-scrollbar::-webkit-scrollbar { display: none; }

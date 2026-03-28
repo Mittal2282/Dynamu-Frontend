@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import adminApi from '../../api/adminAxios';
+import { createRestaurant, createTables, importMenu } from '../../services/adminService';
+import { authStore } from '../../store/authStore';
 
 const STEPS = ['Restaurant Details', 'Import Menu', 'Done'];
 
@@ -83,7 +84,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
     setError('');
     setLoading(true);
     try {
-      await adminApi.post(`/api/superadmin/restaurants/${restaurantId}/menu`, { csvText });
+      await importMenu(restaurantId, csvText);
       onNext();
     } catch (err) {
       setError(err.response?.data?.message || 'Import failed.');
@@ -175,7 +176,7 @@ function Step3({ restaurantId }) {
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/superadmin/restaurants/${restaurantId}/qr-pdf`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('admin_access_token')}` } }
+        { headers: { Authorization: `Bearer ${authStore.getState().adminAccessToken}` } }
       );
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -258,23 +259,22 @@ export default function OnboardPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await adminApi.post('/api/superadmin/restaurants', {
-        name: form.name,
-        slug: form.slug,
-        description: form.description,
-        contact: { phone: form.phone, email: form.email },
-        address: { city: form.city, state: form.state },
-        owner_name: form.owner_name,
-        owner_email: form.owner_email,
+      const data = await createRestaurant({
+        name:           form.name,
+        slug:           form.slug,
+        description:    form.description,
+        contact:        { phone: form.phone, email: form.email },
+        address:        { city: form.city, state: form.state },
+        owner_name:     form.owner_name,
+        owner_email:    form.owner_email,
         owner_password: form.owner_password,
       });
-      const rid = res.data.data.restaurant._id;
+      const rid = data.restaurant._id;
       setRestaurantId(rid);
 
-      // Create tables if count > 0
       const count = parseInt(form.table_count);
       if (count > 0) {
-        await adminApi.post(`/api/superadmin/restaurants/${rid}/tables`, {
+        await createTables(rid, {
           count,
           start_number: parseInt(form.start_number) || 1,
         });

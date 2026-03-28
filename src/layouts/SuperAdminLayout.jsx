@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { authStore } from '../store/authStore';
 
 const NAV = [
   { to: '/superadmin',         label: 'Restaurants', icon: '🏪', end: true },
@@ -9,13 +10,11 @@ const NAV = [
 export default function SuperAdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const name = localStorage.getItem('admin_name') || 'Admin';
+  const { adminName, resetAuth } = authStore();
+  const name = adminName || 'Admin';
 
   const logout = () => {
-    localStorage.removeItem('admin_access_token');
-    localStorage.removeItem('admin_refresh_token');
-    localStorage.removeItem('admin_role');
-    localStorage.removeItem('admin_name');
+    resetAuth();
     navigate('/login', { replace: true });
   };
 

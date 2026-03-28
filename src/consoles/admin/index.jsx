@@ -1,8 +1,14 @@
-import React, { useContext } from 'react';
-import { AppContext } from '../../store/AppContext';
+import React, { useState, useEffect } from 'react';
+import { apiCaller } from '../../api/apiCaller';
 
 export default function AdminPage() {
-  const { orders } = useContext(AppContext);
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    apiCaller({ method: 'GET', endpoint: '/api/orders' })
+      .then(data => setOrders(data?.data ?? []))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="page-transition space-y-6">

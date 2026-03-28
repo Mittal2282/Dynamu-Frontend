@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import adminApi from '../../api/adminAxios';
+import { getRestaurantOrders } from '../../services/adminService';
+import { apiCaller } from '../../api/apiCaller';
 
 const STATUS_COLORS = {
   pending:   'bg-yellow-500/20 text-yellow-400',
@@ -31,8 +32,8 @@ export default function RestaurantOrdersPage() {
   const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
-    adminApi.get(`/api/superadmin/restaurants/${id}`)
-      .then(res => setRestaurant(res.data.data.restaurant))
+    apiCaller({ method: 'GET', endpoint: `/api/superadmin/restaurants/${id}`, useAdmin: true })
+      .then(data => setRestaurant(data?.data?.restaurant))
       .catch(console.error);
   }, [id]);
 
@@ -40,11 +41,11 @@ export default function RestaurantOrdersPage() {
     setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
-    if (dateFrom) params.set('date_from', dateFrom);
-    if (dateTo) params.set('date_to', dateTo);
+    if (dateFrom)     params.set('date_from', dateFrom);
+    if (dateTo)       params.set('date_to', dateTo);
 
-    adminApi.get(`/api/superadmin/restaurants/${id}/orders?${params}`)
-      .then(res => setOrders(res.data.data))
+    getRestaurantOrders(id)
+      .then(data => setOrders(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id, statusFilter, dateFrom, dateTo]);

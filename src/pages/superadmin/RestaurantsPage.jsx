@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import adminApi from '../../api/adminAxios';
+import { apiCaller } from '../../api/apiCaller';
+import { ENDPOINTS } from '../../utils/endpoints';
+import { getRestaurants } from '../../services/adminService';
+import { formatCurrency } from '../../utils/formatters';
 
 function StatCard({ label, value, icon }) {
   return (
@@ -37,12 +40,12 @@ export default function RestaurantsPage() {
 
   useEffect(() => {
     Promise.all([
-      adminApi.get('/api/superadmin/stats'),
-      adminApi.get('/api/superadmin/restaurants'),
+      apiCaller({ method: 'GET', endpoint: '/api/superadmin/stats', useAdmin: true }),
+      getRestaurants(),
     ])
-      .then(([sRes, rRes]) => {
-        setStats(sRes.data.data);
-        setRestaurants(rRes.data.data);
+      .then(([statsData, restaurantList]) => {
+        setStats(statsData?.data);
+        setRestaurants(restaurantList);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

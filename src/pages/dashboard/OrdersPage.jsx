@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import adminApi from '../../api/adminAxios';
+import { getDashOrders } from '../../services/adminService';
+import { apiCaller } from '../../api/apiCaller';
 
 const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served'];
 
@@ -81,10 +82,8 @@ export default function OrdersPage() {
 
   const fetchOrders = useCallback(async (quiet = false) => {
     try {
-      const res = await adminApi.get('/api/restaurant-dash/orders');
-      const incoming = res.data.data;
+      const incoming = await getDashOrders();
 
-      // Detect new orders for highlight
       const incomingIds = new Set(incoming.map(o => o._id));
       const brandNew = [...incomingIds].filter(id => !prevIdsRef.current.has(id));
       if (brandNew.length > 0 && prevIdsRef.current.size > 0) {
@@ -109,7 +108,12 @@ export default function OrdersPage() {
   const handleStatusChange = async (orderId, status) => {
     setUpdating(orderId);
     try {
-      await adminApi.put(`/api/restaurant-dash/orders/${orderId}/status`, { status });
+      await apiCaller({
+        method:   'PUT',
+        endpoint: `/api/restaurant-dash/orders/${orderId}/status`,
+        payload:  { status },
+        useAdmin: true,
+      });
       await fetchOrders(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status.');

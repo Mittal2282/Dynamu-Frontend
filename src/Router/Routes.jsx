@@ -29,8 +29,8 @@ import StatsPage from '../pages/dashboard/StatsPage';
 export default function Routes() {
   return (
     <RouterRoutes>
-      {/* QR scan entry point — standalone, no app shell */}
-      <Route path="/r/:slug/t/:qrCodeId" element={<QRLandingPage />} />
+      {/* QR scan entry point — /:restaurantId/:tableNumber */}
+      <Route path="/:restaurantId/:tableNumber" element={<QRLandingPage />} />
 
       {/* Auth */}
       <Route path="/login" element={<LoginPage />} />
