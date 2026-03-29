@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { getDashOrders } from '../../services/adminService';
+import { getDashOrders, closeTableSession } from '../../services/adminService';
 import { apiCaller } from '../../api/apiCaller';
 
 const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served'];
@@ -23,7 +23,7 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function OrderCard({ order, onStatusChange, updating }) {
+function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable }) {
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
   const [showPrepInput, setShowPrepInput] = useState(false);
   const [prepTime, setPrepTime] = useState('');
@@ -152,6 +152,17 @@ function OrderCard({ order, onStatusChange, updating }) {
           Cancel order
         </button>
       )}
+
+      {/* Close Table button — shown on served original orders that still have an open session */}
+      {order.status === 'served' && !order.is_addon && order.session && (
+        <button
+          onClick={() => onCloseTable(order.session)}
+          disabled={closingTable === order.session}
+          className="text-xs text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 transition-colors w-full py-1.5 rounded-lg mt-1"
+        >
+          {closingTable === order.session ? 'Closing…' : '🔒 Close Table'}
+        </button>
+      )}
     </div>
   );
 }
@@ -159,6 +170,7 @@ function OrderCard({ order, onStatusChange, updating }) {
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [updating, setUpdating] = useState(null);
+  const [closingTable, setClosingTable] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [newIds, setNewIds] = useState(new Set());
   const prevIdsRef = useRef(new Set());
@@ -204,6 +216,18 @@ export default function OrdersPage() {
       alert(err.response?.data?.message || 'Failed to update status.');
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleCloseTable = async (sessionId) => {
+    setClosingTable(sessionId);
+    try {
+      await closeTableSession(sessionId);
+      await fetchOrders(true);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to close table session.');
+    } finally {
+      setClosingTable(null);
     }
   };
 
@@ -255,7 +279,9 @@ export default function OrdersPage() {
                     <OrderCard
                       order={order}
                       onStatusChange={handleStatusChange}
+                      onCloseTable={handleCloseTable}
                       updating={updating}
+                      closingTable={closingTable}
                     />
                   </div>
                 ))}

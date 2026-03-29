@@ -163,6 +163,19 @@ export async function updateDashMenuItem(id, payload) {
 }
 
 /**
+ * Manually close a table session (end it so next QR scan starts fresh).
+ * @param {string} sessionId
+ */
+export async function closeTableSession(sessionId) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_CLOSE_SESSION(sessionId),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
  * Toggle menu item availability.
  * @param {string} id
  */
