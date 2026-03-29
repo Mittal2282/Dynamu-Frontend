@@ -36,7 +36,7 @@ export async function getCart() {
  */
 export async function syncCart(items) {
   const formattedItems = items.map(item => ({
-    menu_item: item._id,
+    _id: item._id,       // sessionService reads item._id
     quantity: item.qty,
   }));
   return apiCaller({
@@ -47,14 +47,23 @@ export async function syncCart(items) {
 }
 
 /**
- * Place an order.
- * @param {{ tableNumber: number, items: Array, totalPrice: number }} payload
+ * Place an order from the current session cart.
+ * @param {{ notes?: string, payment_method?: string }} [payload]
  */
-export async function placeOrder({ tableNumber, items, totalPrice }) {
+export async function placeOrder(payload = {}) {
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.PLACE_ORDER,
-    payload:  { table_number: tableNumber, items, total_price: totalPrice },
+    payload,
   });
   return data.data;
+}
+
+/**
+ * Get all orders for the current session.
+ * @returns {Promise<Array>}
+ */
+export async function getCustomerOrders() {
+  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.CUSTOMER_ORDERS });
+  return data.data ?? [];
 }

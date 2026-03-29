@@ -133,6 +133,48 @@ export async function importMenu(restaurantId, csvText) {
   });
 }
 
+// ─── Menu Management ──────────────────────────────────────────────────────────
+
+/**
+ * Fetch all menu items for the restaurant (including unavailable).
+ */
+export async function getDashMenu() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_MENU,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+/**
+ * Update menu item name/price.
+ * @param {string} id
+ * @param {{ name?: string, price?: number }} payload
+ */
+export async function updateDashMenuItem(id, payload) {
+  const data = await apiCaller({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_MENU_ITEM(id),
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
+ * Toggle menu item availability.
+ * @param {string} id
+ */
+export async function toggleDashMenuItem(id) {
+  const data = await apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_MENU_TOGGLE(id),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
 /**
  * Fetch orders for a specific restaurant (superadmin).
  * @param {string} restaurantId

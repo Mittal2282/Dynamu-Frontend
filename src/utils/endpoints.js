@@ -12,7 +12,8 @@ export const ENDPOINTS = {
   CART:            '/api/customer/cart',
 
   // Orders
-  PLACE_ORDER:     '/api/order',
+  PLACE_ORDER:     '/api/customer/order',
+  CUSTOMER_ORDERS: '/api/customer/orders',
 
   // AI Chat
   CHAT:            '/api/ai/chat',
@@ -28,6 +29,9 @@ export const ENDPOINTS = {
   DASH_PROFILE:    '/api/restaurant-dash/profile',
   DASH_ORDERS:     '/api/restaurant-dash/orders',
   DASH_STATS:      '/api/restaurant-dash/stats',
+  DASH_MENU:       '/api/restaurant-dash/menu',
+  DASH_MENU_ITEM:  (id) => `/api/restaurant-dash/menu/${id}`,
+  DASH_MENU_TOGGLE:(id) => `/api/restaurant-dash/menu/${id}/toggle`,
 
   // Superadmin
   SA_RESTAURANTS:  '/api/superadmin/restaurants',

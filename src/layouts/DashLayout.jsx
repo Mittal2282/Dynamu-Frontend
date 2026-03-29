@@ -6,6 +6,7 @@ import { getInitials } from '../utils/formatters';
 
 const NAV = [
   { to: '/dashboard',       label: 'Live Orders', icon: '🍽️', end: true },
+  { to: '/dashboard/menu',  label: 'Menu',         icon: '📋' },
   { to: '/dashboard/stats', label: 'Stats',        icon: '📊' },
 ];
 

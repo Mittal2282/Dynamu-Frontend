@@ -2,11 +2,6 @@ import React from 'react';
 import { Route, Routes as RouterRoutes, Navigate } from 'react-router-dom';
 
 // Customer-facing
-import MainLayout from '../layout/MainLayout';
-import MenuPage from '../consoles/menu';
-import ChatPage from '../consoles/chat';
-import CartPage from '../consoles/cart';
-import AdminPage from '../consoles/admin';
 import QRLandingPage from '../pages/QRLandingPage';
 
 // Auth
@@ -25,6 +20,7 @@ import RestaurantOrdersPage from '../pages/superadmin/RestaurantOrdersPage';
 // Restaurant dashboard pages
 import OrdersPage from '../pages/dashboard/OrdersPage';
 import StatsPage from '../pages/dashboard/StatsPage';
+import MenuManagePage from '../pages/dashboard/MenuManagePage';
 
 export default function Routes() {
   return (
@@ -60,18 +56,14 @@ export default function Routes() {
       >
         <Route index element={<OrdersPage />} />
         <Route path="stats" element={<StatsPage />} />
+        <Route path="menu" element={<MenuManagePage />} />
       </Route>
 
-      {/* Original customer-facing app */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<MenuPage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="cart" element={<CartPage />} />
-        <Route path="admin" element={<AdminPage />} />
-      </Route>
+      {/* Root → Login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </RouterRoutes>
   );
 }

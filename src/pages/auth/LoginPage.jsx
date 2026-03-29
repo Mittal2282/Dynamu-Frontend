@@ -25,14 +25,14 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await adminLogin(form);
+      // Backend returns { user: { role, name, ... }, accessToken, refreshToken }
+      const role = data.user?.role ?? data.role;
       setAdminTokens({
         accessToken:  data.access_token  ?? data.accessToken,
         refreshToken: data.refresh_token ?? data.refreshToken,
-        role:         data.role,
-        name:         data.name ?? '',
+        role,
+        name:         data.user?.name ?? data.name ?? '',
       });
-
-      const role = data.role;
       if (role === 'super_admin')                                        navigate('/superadmin', { replace: true });
       else if (role === 'restaurant_owner' || role === 'restaurant_staff') navigate('/dashboard',   { replace: true });
       else navigate('/', { replace: true });

@@ -1,51 +1,49 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
 
 /**
- * Persisted cart store.
+ * In-memory cart store — NOT persisted to localStorage.
+ * Source of truth is the server; this is a local mirror for fast UI updates.
  * Keyed by item._id to avoid duplicates.
  */
 export const cartStore = create(
   devtools(
-    persist(
-      (set, get) => ({
-        cart: {},
+    (set, get) => ({
+      cart: {},
 
-        add: (item) =>
-          set((state) => ({
+      add: (item) =>
+        set((state) => ({
+          cart: {
+            ...state.cart,
+            [item._id]: {
+              ...item,
+              qty: (state.cart[item._id]?.qty ?? 0) + 1,
+            },
+          },
+        })),
+
+      remove: (item) =>
+        set((state) => {
+          const qty = (state.cart[item._id]?.qty ?? 0) - 1;
+          if (qty <= 0) {
+            const { [item._id]: _, ...rest } = state.cart;
+            return { cart: rest };
+          }
+          return {
             cart: {
               ...state.cart,
-              [item._id]: {
-                ...item,
-                qty: (state.cart[item._id]?.qty ?? 0) + 1,
-              },
+              [item._id]: { ...state.cart[item._id], qty },
             },
-          })),
+          };
+        }),
 
-        remove: (item) =>
-          set((state) => {
-            const qty = (state.cart[item._id]?.qty ?? 0) - 1;
-            if (qty <= 0) {
-              const { [item._id]: _, ...rest } = state.cart;
-              return { cart: rest };
-            }
-            return {
-              cart: {
-                ...state.cart,
-                [item._id]: { ...state.cart[item._id], qty },
-              },
-            };
-          }),
+      clear: () => set(() => ({ cart: {} })),
 
-        clear: () => set(() => ({ cart: {} })),
+      setCart: (cart) => set(() => ({ cart })),
 
-        setCart: (cart) => set(() => ({ cart })),
-
-        // Helper function (still works in get())
-        getQty: (id) => get().cart[id]?.qty ?? 0,
-      }),
-      { name: 'CartStore' }
-    )
+      getQty: (id) => get().cart[id]?.qty ?? 0,
+    }),
+    { name: 'CartStore' }
   )
 );
 
@@ -58,7 +56,6 @@ export const useCartCount = () => {
   const cartMap = cartStore((state) => state.cart);
   return Object.values(cartMap).reduce((sum, item) => sum + item.qty, 0);
 };
-
 export const useCartTotal = () => {
   const cartMap = cartStore((state) => state.cart);
   return Object.values(cartMap).reduce((sum, item) => sum + (item.price * item.qty), 0);
