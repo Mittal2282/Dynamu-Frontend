@@ -25,8 +25,32 @@ export const QUICK_CHAT_CHIPS = [
   { label: 'Budget ₹500 💸',      text: 'What can I get under ₹500?' },
 ];
 
-// ─── Default Theme ─────────────────────────────────────────────────────────────
+// ─── Theme Palettes ───────────────────────────────────────────────────────────
+export const THEMES = {
+  CYBERPLATE_NOIR: {
+    primary:   '#FF6B00',
+    secondary: '#00F0FF',
+    tertiary:  '#7000FF',
+    neutral:   '#0B0E14',
+  },
+  OBSIDIAN_GILT: {
+    primary:   '#D4AF37',
+    secondary: '#FDF9F4',
+    tertiary:  '#C5A028',
+    neutral:   '#1A1A1A',
+  },
+  EXECUTIVE_MAITRE_D: {
+    primary:   '#3B82F6',
+    secondary: '#1E293B',
+    tertiary:  '#231500',
+    neutral:   '#0F172A',
+  },
+};
+
+// Default (CyberPlate Noir)
 export const DEFAULT_BRAND = {
-  primaryColor:   '#FF6B35',
-  secondaryColor: '#FFFFFF',
+  primaryColor:   THEMES.CYBERPLATE_NOIR.primary,
+  secondaryColor: THEMES.CYBERPLATE_NOIR.secondary,
+  tertiaryColor:  THEMES.CYBERPLATE_NOIR.tertiary,
+  neutralColor:   THEMES.CYBERPLATE_NOIR.neutral,
 };

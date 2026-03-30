@@ -1,16 +1,148 @@
+import { useState } from 'react';
+import { cartStore } from '../store/cartStore';
 import { restaurantStore } from '../store/restaurantStore';
-import { VegBadge } from './ui/Badge';
-import { Spinner } from './ui/Spinner';
-import Button from './ui/Button';
-import Text from './ui/Text';
-import Drawer from './ui/Drawer';
 import { formatCurrency } from '../utils/formatters';
+import { VegBadge } from './ui/Badge';
+import Button from './ui/Button';
+import Drawer from './ui/Drawer';
+import Modal from './ui/Modal';
+import Text from './ui/Text';
 
-/**
- * CartDrawer — polished bottom-sheet cart.
- *
- * Props: isOpen, onClose, items, onAdd, onRemove, onPlaceOrder, total, count, loading, subtitle
- */
+/* ─── Constants ────────────────────────────────────────────────────────────── */
+const SERVICE_CHARGE = 10; // fixed ₹10
+const TAX_RATE       = 0.05; // 5 %
+
+// Hardcoded "You might also like" items — swap for API call later
+const SUGGESTIONS = [
+  { _id: 'sug1', name: 'Truffle Infused Fries', is_veg: true },
+  { _id: 'sug2', name: 'Organic Matcha Latte',  is_veg: true },
+];
+
+/* ─── Qty stepper ──────────────────────────────────────────────────────────── */
+function Stepper({ qty, onAdd, onRemove }) {
+  return (
+    <div
+      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
+      style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+    >
+      <button
+        onClick={onRemove}
+        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
+        aria-label="Remove one"
+      >
+        −
+      </button>
+      <Text
+        as="span"
+        size="sm"
+        weight="bold"
+        color="white"
+        className="w-8 text-center select-none"
+        style={{ lineHeight: '2rem' }}
+      >
+        {String(qty).padStart(2, '0')}
+      </Text>
+      <button
+        onClick={onAdd}
+        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
+        aria-label="Add one"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+/* ─── Cart item row ────────────────────────────────────────────────────────── */
+function CartItem({ item, onAdd, onRemove, onAddInstruction, currencySymbol }) {
+  return (
+    <div className="border-b border-white/5 last:border-0 py-1 first:pt-2">
+      <div className="flex items-start gap-3 p-3 -mx-3 hover:bg-white/5 rounded-2xl transition-colors group">
+        <VegBadge isVeg={item.is_veg} className="mt-1 shrink-0" />
+
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">{item.name}</Text>
+          {item.description && (
+            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">{item.description}</Text>
+          )}
+          <Text as="p" size="sm" weight="bold" color="brand" className="mt-1">
+            {formatCurrency(item.price, currencySymbol)}
+          </Text>
+
+          {/* Add Instruction Button */}
+          <div className="mt-2.5">
+            {item.instruction ? (
+              <div 
+                className="cursor-pointer group/instruction"
+                onClick={() => onAddInstruction(item)}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[var(--color-brand-primary)] opacity-80 group-hover/instruction:opacity-100 transition-opacity">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </span>
+                  <Text as="span" size="xs" weight="medium" color="brand" className="opacity-80 group-hover/instruction:opacity-100 transition-opacity hover:underline">
+                    Edit Instruction
+                  </Text>
+                </div>
+                <p className="text-white/60 text-xs italic border-l-2 pl-2" style={{ borderColor: 'var(--color-brand-primary)' }}>
+                  "{item.instruction}"
+                </p>
+              </div>
+            ) : (
+              <Button
+                variant="ghost" 
+                size="sm"
+                leftIcon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>}
+                onClick={() => onAddInstruction(item)}
+                className="!px-2.5 !py-1 !text-xs !font-medium !bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10"
+              >
+                Add Instruction
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Stepper qty={item.qty} onAdd={() => onAdd(item)} onRemove={() => onRemove(item)} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── "You might also like" suggestion row ─────────────────────────────────── */
+function SuggestionRow({ item, onAdd }) {
+  return (
+    <div className="border-b border-white/5 last:border-0 py-1">
+      <div 
+        className="flex items-center gap-3 p-3 -mx-3 rounded-2xl group cursor-pointer hover:bg-white/5 transition-colors"
+        onClick={() => onAdd(item)}
+      >
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ background: 'var(--color-brand-secondary)' }}
+        />
+        <Text as="p" size="sm" weight="medium" color="white" className="flex-1 opacity-80 group-hover:opacity-100 transition-opacity">{item.name}</Text>
+        <button
+          className="w-8 h-8 rounded-xl border border-white/20 flex items-center justify-center text-white/60 group-hover:text-white group-hover:border-[color:var(--color-brand-secondary)] group-hover:bg-[color:var(--color-brand-secondary-20)] hover:scale-105 active:scale-95 transition-all text-lg font-bold cursor-pointer"
+          aria-label="Add suggestion"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Bill row ─────────────────────────────────────────────────────────────── */
+function BillRow({ label, value, muted }) {
+  return (
+    <div className="flex items-center justify-between py-2 px-3 -mx-3 hover:bg-white/5 rounded-xl transition-colors cursor-default">
+      <Text as="span" size="sm" color="white" className={muted ? 'opacity-50' : 'opacity-70'}>{label}</Text>
+      <Text as="span" size="sm" weight="semibold" color="white" className={muted ? 'opacity-50' : 'opacity-90'}>{value}</Text>
+    </div>
+  );
+}
+
+/* ─── CartDrawer ────────────────────────────────────────────────────────────── */
 export default function CartDrawer({
   isOpen,
   onClose,
@@ -18,96 +150,202 @@ export default function CartDrawer({
   onAdd,
   onRemove,
   onPlaceOrder,
-  total       = 0,
   count       = 0,
   loading     = false,
   subtitle    = '',
 }) {
   const { currencySymbol } = restaurantStore();
+  
+  // Instruction Modal State
+  const [instructionModalOpen, setInstructionModalOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState(null);
+  const [instructionText, setInstructionText] = useState('');
+
+  const handleOpenInstruction = (item) => {
+    setActiveItem(item);
+    setInstructionText(item.instruction || '');
+    setInstructionModalOpen(true);
+  };
+
+  const handleSaveInstruction = () => {
+    if (activeItem) {
+      cartStore.getState().setInstruction(activeItem._id ?? activeItem.id, instructionText.trim());
+    }
+    setInstructionModalOpen(false);
+  };
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax      = subtotal * TAX_RATE;
+  const total    = subtotal + SERVICE_CHARGE + tax;
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} maxHeight="82vh">
-      {/* Header */}
-      <div className="px-5 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
-        <div>
-          <Text as="h2" size="lg" weight="bold">Your Cart</Text>
-          {subtitle && <Text size="xs" color="muted" className="mt-0.5">{subtitle}</Text>}
+    <Drawer isOpen={isOpen} onClose={onClose} maxHeight="92vh">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="px-5 pt-2 pb-4 border-b border-white/10 shrink-0">
+        <div className="flex items-start justify-between">
+          <div>
+            <Text as="h2" size="xl" weight="bold" color="white" className="tracking-wide uppercase">My Cart</Text>
+            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 uppercase tracking-widest">
+              {count} {count === 1 ? 'item' : 'items'} selected
+              {subtitle ? ` · ${subtitle}` : ''}
+            </Text>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg mt-0.5 cursor-pointer active:scale-95"
+            aria-label="Close cart"
+          >
+            ✕
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-white text-3xl leading-none w-8 h-8 flex items-center justify-center transition-colors"
-          aria-label="Close cart"
-        >
-          &times;
-        </button>
       </div>
 
-      {/* Items */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <span className="text-4xl">🛒</span>
-            <Text color="muted" size="sm">Your cart is empty</Text>
+      {/* ── Scrollable body ────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+
+        {/* Empty state */}
+        {items.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <span className="text-5xl">🛒</span>
+            <Text as="p" size="sm" color="white" className="opacity-50">Your cart is empty</Text>
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="mt-2 border-[color:var(--color-brand-primary-40)] text-[color:var(--color-brand-primary)] hover:bg-[color:var(--color-brand-primary-10)] active:bg-[color:var(--color-brand-primary-20)]"
+            >
+              Browse Menu
+            </Button>
           </div>
-        ) : (
-          items.map((item) => {
-            const id = item._id ?? item.id;
-            return (
-              <div key={id} className="flex items-center gap-3 bg-slate-800/80 border border-white/5 rounded-xl p-3">
-                <VegBadge isVeg={item.is_veg} size="sm" />
+        )}
 
-                <div className="flex-1 min-w-0">
-                  <Text size="sm" weight="semibold" className="leading-snug truncate">{item.name}</Text>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {formatCurrency(item.price, currencySymbol)} &times; {item.qty}
-                    {' = '}
-                    <Text as="span" size="xs" weight="bold" color="brand">
-                      {formatCurrency(item.price * item.qty, currencySymbol)}
-                    </Text>
-                  </p>
-                </div>
+        {items.length > 0 && (
+          <>
+            {/* Cart items */}
+            <div className="px-5">
+              {items.map((item) => (
+                <CartItem
+                  key={item._id ?? item.id}
+                  item={item}
+                  onAdd={onAdd}
+                  onRemove={onRemove}
+                  onAddInstruction={handleOpenInstruction}
+                  currencySymbol={currencySymbol}
+                />
+              ))}
+            </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => onRemove(item)}
-                    className="w-7 h-7 rounded-full bg-[var(--color-brand-primary)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
-                    aria-label={`Remove one ${item.name}`}
-                  >
-                    −
-                  </button>
-                  <Text as="span" size="sm" weight="bold" className="w-4 text-center">{item.qty}</Text>
-                  <button
-                    onClick={() => onAdd(item)}
-                    className="w-7 h-7 rounded-full bg-[var(--color-brand-primary)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
-                    aria-label={`Add one ${item.name}`}
-                  >
-                    +
-                  </button>
-                </div>
+            {/* You might also like */}
+            <div className="px-5 pt-4 pb-2">
+              <Text as="p" size="xs" weight="bold" color="white" className="opacity-30 uppercase tracking-widest mb-1">
+                You Might Also Like
+              </Text>
+              {SUGGESTIONS.map((s) => (
+                <SuggestionRow
+                  key={s._id}
+                  item={s}
+                  onAdd={(suggItem) => {
+                    // Suggestions don't have price/extra data yet; gracefully no-op or pass minimal obj
+                    onAdd({ ...suggItem, price: 0, qty: 0 });
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="mx-5 my-2 border-t border-white/10" />
+
+            {/* Bill breakdown */}
+            <div className="px-5">
+              <BillRow
+                label="Subtotal"
+                value={formatCurrency(subtotal, currencySymbol, 2)}
+                muted
+              />
+              <BillRow
+                label="Service Charge"
+                value={formatCurrency(SERVICE_CHARGE, currencySymbol, 2)}
+                muted
+              />
+              <BillRow
+                label="Estimated Taxes (5%)"
+                value={formatCurrency(tax, currencySymbol, 2)}
+                muted
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="mx-5 my-2 border-t border-white/10" />
+            
+            {/* Total */}
+            <div className='px-5 pb-10'>
+              <div className="flex items-baseline justify-between py-2 mt-1 cursor-default px-2 -mx-2 hover:bg-white/5 rounded-lg transition-colors">
+                <Text as="span" size="lg" weight="bold" color="white">Total Amount</Text>
+                <Text
+                  as="span"
+                  size="2xl"
+                  weight="bold"
+                  color="brand"
+                >
+                  {formatCurrency(total, currencySymbol, 2)}
+                </Text>
               </div>
-            );
-          })
+            </div>
+
+            {/* Spacer so content doesn't hide behind sticky button */}
+            <div className="h-10" />
+          </>
         )}
       </div>
 
-      {/* Footer */}
+      {/* ── Sticky Place Order button ───────────────────────────────────────── */}
       {items.length > 0 && (
-        <div className="px-5 pb-8 pt-3 border-t border-white/10 space-y-3 shrink-0">
-          <div className="flex justify-between items-center">
-            <Text size="sm" color="secondary">{count} {count === 1 ? 'item' : 'items'}</Text>
-            <Text size="xl" weight="bold">{formatCurrency(total, currencySymbol)}</Text>
-          </div>
+        <div
+          className="shrink-0 px-5 pb-8 pt-4"
+          // We apply the soft gradient background over the scrollable area
+          style={{ background: 'linear-gradient(to top, var(--color-brand-neutral) 80%, transparent)' }}
+        >
           <Button
+            variant="primary"
             fullWidth
-            size="lg"
+            size="xl"
             loading={loading}
             onClick={onPlaceOrder}
-            className="shadow-xl shadow-brand-primary-40"
+            className="uppercase tracking-widest shadow-[0_8px_32px_-4px_var(--color-brand-primary-40)]"
           >
-            Place Order Now 🍽️
+            Place Order
+            <span className="text-base ml-1">→</span>
           </Button>
         </div>
       )}
+
+      {/* ── Instruction Modal ──────────────────────────────────────────────── */}
+      <Modal
+        isOpen={instructionModalOpen}
+        onClose={() => setInstructionModalOpen(false)}
+        title="Add Special Instruction"
+      >
+        <div className="flex flex-col gap-4">
+          <Text as="p" size="sm" color="white" className="opacity-70">
+            Any requests for the kitchen regarding <strong>{activeItem?.name}</strong>? We will try our best to accommodate them.
+          </Text>
+          <textarea
+            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[var(--color-brand-primary)] transition-colors placeholder:text-white/30 resize-none"
+            rows={3}
+            maxLength={150}
+            placeholder="e.g. No sugar, extra spicy, sauce on the side..."
+            value={instructionText}
+            onChange={(e) => setInstructionText(e.target.value)}
+          />
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={handleSaveInstruction}
+            className="mt-2"
+          >
+            Save Instruction
+          </Button>
+        </div>
+      </Modal>
     </Drawer>
   );
 }

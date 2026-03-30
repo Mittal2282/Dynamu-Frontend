@@ -9,9 +9,13 @@
  * @param {string} [symbol='₹']
  * @returns {string}  e.g. "₹1,299"
  */
-export function formatCurrency(amount, symbol = '₹') {
+export function formatCurrency(amount, symbol = '₹', decimals = 0) {
   if (amount === null || amount === undefined) return `${symbol}0`;
-  return `${symbol}${Number(amount).toLocaleString('en-IN')}`;
+  const num = Number(amount);
+  if (decimals > 0) {
+    return `${symbol}${num.toFixed(decimals)}`;
+  }
+  return `${symbol}${num.toLocaleString('en-IN')}`;
 }
 
 /**

@@ -10,13 +10,15 @@ import { buildCssTokens, applyCssTokens, BRAND_DEFAULTS } from '../theme/tokens'
  * The CSS variables are then available to Tailwind via the `brand-*` color tokens.
  */
 export default function useTheme() {
-  const { primaryColor, secondaryColor } = restaurantStore();
+  const { primaryColor, secondaryColor, tertiaryColor, neutralColor } = restaurantStore();
 
   useEffect(() => {
     const tokens = buildCssTokens({
       primary:   primaryColor   || BRAND_DEFAULTS.primary,
       secondary: secondaryColor || BRAND_DEFAULTS.secondary,
+      tertiary:  tertiaryColor  || BRAND_DEFAULTS.tertiary,
+      neutral:   neutralColor   || BRAND_DEFAULTS.neutral,
     });
     applyCssTokens(tokens);
-  }, [primaryColor, secondaryColor]);
+  }, [primaryColor, secondaryColor, tertiaryColor, neutralColor]);
 }

@@ -4,12 +4,31 @@
 
 /* ─── Design token defaults (overridden dynamically by useTheme) ────────────── */
 :root {
-  /* Brand — overridden per restaurant */
-  --color-brand-primary:      #FF6B35;
-  --color-brand-secondary:    #FFFFFF;
-  --color-brand-primary-10:   #FF6B351A;
-  --color-brand-primary-20:   #FF6B3533;
-  --color-brand-primary-40:   #FF6B3566;
+  /* Brand (CyberPlate Noir Defaults) — overridden per restaurant */
+  --color-brand-primary:      #FF6B00;
+  --color-brand-secondary:    #00F0FF;
+  --color-brand-tertiary:     #7000FF;
+  --color-brand-neutral:      #0B0E14;
+
+  /* Alpha Variants for Primary */
+  --color-brand-primary-10:   rgba(255, 107, 0, 0.1);
+  --color-brand-primary-20:   rgba(255, 107, 0, 0.2);
+  --color-brand-primary-40:   rgba(255, 107, 0, 0.4);
+
+  /* Alpha Variants for Secondary */
+  --color-brand-secondary-10:  rgba(0, 240, 255, 0.1);
+  --color-brand-secondary-20:  rgba(0, 240, 255, 0.2);
+  --color-brand-secondary-40:  rgba(0, 240, 255, 0.4);
+
+  /* Alpha Variants for Tertiary */
+  --color-brand-tertiary-10:   rgba(112, 0, 255, 0.1);
+  --color-brand-tertiary-20:   rgba(112, 0, 255, 0.2);
+  --color-brand-tertiary-40:   rgba(112, 0, 255, 0.4);
+
+  /* Alpha Variants for Neutral */
+  --color-brand-neutral-10:    rgba(11, 14, 20, 0.1);
+  --color-brand-neutral-20:    rgba(11, 14, 20, 0.2);
+  --color-brand-neutral-40:    rgba(11, 14, 20, 0.4);
 
   /* UI Surface */
   --color-surface-base:       #0f172a; /* slate-950 */
@@ -35,12 +54,25 @@
 @theme {
   --color-brand:                 var(--color-brand-primary);
   --color-brand-secondary:       var(--color-brand-secondary);
-  
-  /* Short-hand brand tokens */
-  --color-brand-primary:         var(--color-brand-primary);
+  --color-brand-tertiary:        var(--color-brand-tertiary);
+  --color-brand-neutral:         var(--color-brand-neutral);
+
+  /* Alpha transparency tokens */
   --color-brand-primary-10:      var(--color-brand-primary-10);
   --color-brand-primary-20:      var(--color-brand-primary-20);
   --color-brand-primary-40:      var(--color-brand-primary-40);
+
+  --color-brand-secondary-10:    var(--color-brand-secondary-10);
+  --color-brand-secondary-20:    var(--color-brand-secondary-20);
+  --color-brand-secondary-40:    var(--color-brand-secondary-40);
+
+  --color-brand-tertiary-10:     var(--color-brand-tertiary-10);
+  --color-brand-tertiary-20:     var(--color-brand-tertiary-20);
+  --color-brand-tertiary-40:     var(--color-brand-tertiary-40);
+
+  --color-brand-neutral-10:      var(--color-brand-neutral-10);
+  --color-brand-neutral-20:      var(--color-brand-neutral-20);
+  --color-brand-neutral-40:      var(--color-brand-neutral-40);
 
   --color-primary:               #833ab4; /* legacy – consoles */
   --color-secondary:             #fd1d1d; /* legacy – consoles */
@@ -51,7 +83,7 @@
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background-color: var(--color-surface-base);
+  background-color: var(--color-brand-neutral);
   color: var(--color-text-primary);
   font-family: 'Outfit', sans-serif;
   -webkit-tap-highlight-color: transparent;

@@ -41,6 +41,20 @@ export const cartStore = create(
 
       setCart: (cart) => set(() => ({ cart })),
 
+      setInstruction: (id, instruction) =>
+        set((state) => {
+          if (!state.cart[id]) return state;
+          return {
+            cart: {
+              ...state.cart,
+              [id]: { 
+                ...state.cart[id], 
+                instruction 
+              },
+            },
+          };
+        }),
+
       getQty: (id) => get().cart[id]?.qty ?? 0,
     }),
     { name: 'CartStore' }

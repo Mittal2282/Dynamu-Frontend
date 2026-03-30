@@ -38,6 +38,7 @@ export async function syncCart(items) {
   const formattedItems = items.map(item => ({
     _id: item._id,       // sessionService reads item._id
     quantity: item.qty,
+    instruction: item.instruction,
   }));
   return apiCaller({
     method:   'PUT',

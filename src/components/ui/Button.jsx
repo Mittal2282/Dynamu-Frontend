@@ -78,6 +78,8 @@ export default function Button({
         !isDisabled && v.active,
         isDisabled  && v.disabled,
         fullWidth   && 'w-full',
+        !isDisabled && 'hover:cursor-pointer',
+        isDisabled && 'cursor-not-allowed',
         s,
         className,
       ].filter(Boolean).join(' ')}

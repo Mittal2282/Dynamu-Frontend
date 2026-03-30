@@ -3,7 +3,7 @@
  *
  * @param {{ isVeg: boolean|null, size?: 'sm'|'md' }} props
  */
-export function VegBadge({ isVeg, size = 'md' }) {
+export function VegBadge({ isVeg, size = 'md', className='' }) {
   const dim = size === 'sm' ? 'w-2 h-2' : 'w-3 h-3';
   const color =
     isVeg === true  ? '#22c55e' :   // green
@@ -14,7 +14,7 @@ export function VegBadge({ isVeg, size = 'md' }) {
     <span
       role="img"
       aria-label={isVeg === true ? 'Vegetarian' : isVeg === false ? 'Non-vegetarian' : 'Unknown'}
-      className={`block rounded-full shrink-0 ${dim}`}
+      className={`block rounded-full shrink-0 ${dim} ${className}`}
       style={{ backgroundColor: color }}
     />
   );
