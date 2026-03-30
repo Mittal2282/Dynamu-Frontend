@@ -70,6 +70,7 @@ function CartControl({ item }) {
 function MyOrders({ currencySymbol }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { tableNumber: storedTable } = restaurantStore();
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -102,50 +103,68 @@ function MyOrders({ currencySymbol }) {
     </div>
   );
 
+  // All orders belong to this session — group into one card: original first, add-ons below
+  const original = orders.find(o => !o.is_addon);
+  const addons = orders.filter(o => o.is_addon);
+  const grandTotal = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+  const formatTime = (d) => new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const OrderBatch = ({ order, label }) => (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <Text size="xs" color="muted">
+          {label} · #{order.order_number} · {formatTime(order.createdAt)}
+        </Text>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${ORDER_STATUS_BADGE[order.status] ?? 'bg-white/10 text-slate-300'}`}>
+          {ORDER_STATUS_LABEL[order.status] ?? order.status}
+        </span>
+      </div>
+      <ul className="space-y-0.5">
+        {order.items?.map((item, i) => (
+          <li key={i} className="flex justify-between text-xs text-slate-400">
+            <span>{item.name}</span>
+            <span>×{item.quantity}</span>
+          </li>
+        ))}
+      </ul>
+      {order.estimated_prep_time && (
+        <Text size="xs" color="secondary">
+          Est. ready in ~{order.estimated_prep_time} min
+        </Text>
+      )}
+    </div>
+  );
+
   return (
-    <div className="px-4 py-4 space-y-3">
-      {orders.map(order => (
-        <div key={order._id} className="bg-slate-800/80 border border-white/5 rounded-xl p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text size="sm" weight="bold">Order #{order.order_number}</Text>
-              <Text size="xs" color="muted">
-                {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                {order.is_addon && (
-                  <span className="ml-2 text-orange-300">· Add-on</span>
-                )}
-              </Text>
-            </div>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ORDER_STATUS_BADGE[order.status] ?? 'bg-white/10 text-slate-300'}`}>
-              {ORDER_STATUS_LABEL[order.status] ?? order.status}
-            </span>
-          </div>
-
-          <ul className="space-y-0.5">
-            {order.items?.map((item, i) => (
-              <li key={i} className="flex justify-between text-xs text-slate-400">
-                <span>{item.name}</span>
-                <span>×{item.quantity}</span>
-              </li>
-            ))}
-          </ul>
-
-          {order.estimated_prep_time && (
-            <Text size="xs" color="secondary">
-              Est. ready in ~{order.estimated_prep_time} min
-            </Text>
-          )}
-
-          <div className="pt-1 border-t border-white/10 flex justify-between">
-            <Text size="xs" color="muted">Total</Text>
-            <Text size="sm" weight="bold" color="brand">
-              {formatCurrency(order.total_amount, currencySymbol)}
-            </Text>
-          </div>
+    <div className="px-4 py-4">
+      <div className="bg-slate-800/80 border border-white/5 rounded-xl p-4 space-y-3">
+        {/* Card header */}
+        <div className="flex items-center justify-between">
+          <Text size="sm" weight="bold">Your Order</Text>
+          {storedTable && <Text size="xs" color="muted">Table {storedTable}</Text>}
         </div>
-      ))}
 
-      <Text size="xs" color="muted" className="text-center pb-2">
+        {/* Original order */}
+        {original && <OrderBatch order={original} label="Order" />}
+
+        {/* Add-on orders */}
+        {addons.map((addon, idx) => (
+          <div key={addon._id} className="pt-2 border-t border-white/10">
+            <OrderBatch order={addon} label={`Add-on${addons.length > 1 ? ` ${idx + 1}` : ''}`} />
+          </div>
+        ))}
+
+        {/* Grand total */}
+        <div className="pt-2 border-t border-white/10 flex justify-between">
+          <Text size="xs" color="muted">Total</Text>
+          <Text size="sm" weight="bold" color="brand">
+            {formatCurrency(grandTotal, currencySymbol)}
+          </Text>
+        </div>
+      </div>
+
+      <Text size="xs" color="muted" className="text-center py-2">
         Status updates automatically every 15s
       </Text>
     </div>
