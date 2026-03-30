@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { createRestaurant, createTables, importMenu } from '../../services/adminService';
 import { authStore } from '../../store/authStore';
 
@@ -65,22 +66,61 @@ function Step1({ form, onChange, onNext, loading, error }) {
 }
 
 function Step2({ restaurantId, onNext, onSkip }) {
-  const [csvText, setCsvText] = useState('');
-  const [preview, setPreview] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
+  const [csvText, setCsvText]   = useState('');
+  const [fileName, setFileName] = useState('');
+  const [preview, setPreview]   = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [parsing, setParsing]   = useState(false);
+  const [error, setError]       = useState('');
   const [showSample, setShowSample] = useState(false);
 
-  const parsePreview = (text) => {
+  // Build preview rows from CSV text (first 5 data rows)
+  const buildPreview = (text) => {
     const lines = text.trim().split('\n').slice(1).filter(l => l.trim());
     return lines.slice(0, 5).map(line => {
       const parts = line.split(',');
-      return { category: parts[0], name: parts[1], price: parts[2] };
-    });
+      return { category: parts[0]?.trim(), name: parts[1]?.trim(), price: parts[2]?.trim() };
+    }).filter(r => r.name);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError('');
+    setParsing(true);
+    setPreview([]);
+    setCsvText('');
+
+    try {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const isXLSX = ext === 'xlsx' || ext === 'xls';
+
+      let csvResult = '';
+
+      if (isXLSX) {
+        // Read XLSX as ArrayBuffer and convert first sheet to CSV
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        csvResult = XLSX.utils.sheet_to_csv(firstSheet);
+      } else {
+        // Plain CSV — read as text
+        csvResult = await file.text();
+      }
+
+      setFileName(`${file.name} (${isXLSX ? 'XLSX' : 'CSV'}, ${(file.size / 1024).toFixed(1)} KB)`);
+      setCsvText(csvResult);
+      setPreview(buildPreview(csvResult));
+    } catch {
+      setError('Could not read the file. Make sure it is a valid CSV or XLSX.');
+    } finally {
+      setParsing(false);
+    }
   };
 
   const handleImport = async () => {
-    if (!csvText.trim()) { setError('Paste your CSV data first.'); return; }
+    if (!csvText.trim()) { setError('Please upload a file first.'); return; }
     setError('');
     setLoading(true);
     try {
@@ -97,19 +137,20 @@ function Step2({ restaurantId, onNext, onSkip }) {
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-bold text-white">Import Menu</h2>
-        <p className="text-slate-400 text-sm mt-0.5">Paste the restaurant's menu CSV or upload a file.</p>
+        <p className="text-slate-400 text-sm mt-0.5">Upload a CSV or XLSX file — the format is detected automatically.</p>
       </div>
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
       )}
 
+      {/* Format reference */}
       <div>
         <button
           onClick={() => setShowSample(s => !s)}
           className="text-xs text-orange-400 hover:text-orange-300 mb-2 transition-colors"
         >
-          {showSample ? '▲ Hide' : '▼ Show'} CSV Format Example
+          {showSample ? '▲ Hide' : '▼ Show'} expected column format
         </button>
         {showSample && (
           <pre className="bg-slate-800 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto border border-white/10 mb-3">
@@ -118,40 +159,67 @@ function Step2({ restaurantId, onNext, onSkip }) {
         )}
       </div>
 
-      <div>
-        <label className="text-sm text-slate-400 block mb-1">Paste CSV Data</label>
-        <textarea
-          value={csvText}
-          onChange={e => { setCsvText(e.target.value); setPreview(parsePreview(e.target.value)); }}
-          rows={10}
-          className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-orange-500 resize-y"
-          placeholder={CSV_SAMPLE}
+      {/* Drop / click zone */}
+      <div
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={e => e.preventDefault()}
+        onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) { fileInputRef.current.files = e.dataTransfer.files; handleFileChange({ target: { files: e.dataTransfer.files } }); } }}
+        className="border-2 border-dashed border-white/20 hover:border-orange-500/60 rounded-xl p-10 text-center cursor-pointer transition-colors group"
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          onChange={handleFileChange}
+          className="hidden"
         />
+        {parsing ? (
+          <p className="text-slate-400 text-sm">Reading file…</p>
+        ) : fileName ? (
+          <div className="space-y-1">
+            <p className="text-2xl">📄</p>
+            <p className="text-white text-sm font-medium">{fileName}</p>
+            <p className="text-slate-400 text-xs">{preview.length > 0 ? `${preview.length}+ items detected` : 'Click to replace'}</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-3xl">⬆️</p>
+            <p className="text-white text-sm font-medium group-hover:text-orange-400 transition-colors">
+              Click to upload or drag &amp; drop
+            </p>
+            <p className="text-slate-500 text-xs">CSV or XLSX — format is auto-detected</p>
+          </div>
+        )}
       </div>
 
+      {/* Preview table */}
       {preview.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Preview (first 5 items):</p>
+          <p className="text-xs text-slate-400 mb-2">Preview (first {preview.length} rows):</p>
           <div className="bg-slate-800 rounded-lg overflow-hidden border border-white/10">
             <table className="w-full text-xs">
-              <thead><tr className="border-b border-white/10">
-                <th className="text-left px-3 py-2 text-slate-400">Category</th>
-                <th className="text-left px-3 py-2 text-slate-400">Name</th>
-                <th className="text-left px-3 py-2 text-slate-400">Price</th>
-              </tr></thead>
-              <tbody>{preview.map((r, i) => (
-                <tr key={i} className="border-b border-white/5 last:border-0">
-                  <td className="px-3 py-2 text-slate-300">{r.category}</td>
-                  <td className="px-3 py-2 text-white font-medium">{r.name}</td>
-                  <td className="px-3 py-2 text-orange-400">₹{r.price}</td>
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left px-3 py-2 text-slate-400">Category</th>
+                  <th className="text-left px-3 py-2 text-slate-400">Name</th>
+                  <th className="text-left px-3 py-2 text-slate-400">Price</th>
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody>
+                {preview.map((r, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0">
+                    <td className="px-3 py-2 text-slate-300">{r.category}</td>
+                    <td className="px-3 py-2 text-white font-medium">{r.name}</td>
+                    <td className="px-3 py-2 text-orange-400">{r.price}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>
       )}
 
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <button
           onClick={onSkip}
           className="text-sm text-slate-400 hover:text-white transition-colors"
@@ -160,7 +228,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
         </button>
         <button
           onClick={handleImport}
-          disabled={loading}
+          disabled={loading || parsing || !csvText}
           className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60"
         >
           {loading ? 'Importing…' : 'Import Menu →'}

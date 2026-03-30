@@ -8,15 +8,15 @@ import { ENDPOINTS } from '../utils/endpoints';
 
 /**
  * Start a customer session by scanning a QR code.
- * @param {string} restaurantId
+ * @param {string} qrCodeId
  * @param {string|number} tableNumber
  * @returns {Promise<{ session_token, restaurant, table, menu }>}
  */
-export async function startSession(restaurantId, tableNumber) {
+export async function startSession(qrCodeId, tableNumber) {
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_START,
-    payload:  { qr_code_id: restaurantId },
+    payload:  { qr_code_id: qrCodeId },
   });
   return data.data;
 }

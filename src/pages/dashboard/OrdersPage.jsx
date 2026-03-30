@@ -23,7 +23,8 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable }) {
+/* ─── Inline status controls for a single order (used for both original + addons) ── */
+function OrderStatusRow({ order, onStatusChange, updating, label }) {
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
   const [showPrepInput, setShowPrepInput] = useState(false);
   const [prepTime, setPrepTime] = useState('');
@@ -44,20 +45,13 @@ function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable
   };
 
   return (
-    <div className={`border rounded-xl p-4 space-y-3 ${cfg.color} transition-all`}>
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-white text-base">Table {order.table?.table_number ?? order.table_number ?? '?'}</span>
-            {order.is_addon && (
-              <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300">Add-on</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-slate-500 text-xs">#{order.order_number}</span>
-            <span className="text-slate-600 text-xs">· {formatTime(order.createdAt)} ({timeAgo(order.createdAt)})</span>
-          </div>
+    <div className="space-y-2">
+      {/* Sub-header */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {label && <span className="text-xs font-semibold text-orange-300">{label}</span>}
+          <span className="text-slate-500 text-xs">#{order.order_number}</span>
+          <span className="text-slate-600 text-xs">· {formatTime(order.createdAt)} ({timeAgo(order.createdAt)})</span>
         </div>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
           {order.status}
@@ -84,22 +78,14 @@ function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable
         </p>
       )}
 
-      {/* Prep time (if set) */}
+      {/* Prep time */}
       {order.estimated_prep_time && (
-        <p className="text-xs text-blue-300">
-          Est. prep time: {order.estimated_prep_time} min
-        </p>
+        <p className="text-xs text-blue-300">Est. prep time: {order.estimated_prep_time} min</p>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-white/10">
-        <div>
-          <span className="text-orange-400 font-bold">₹{Math.round(order.total_amount || 0)}</span>
-          {order.subtotal !== order.total_amount && (
-            <span className="text-slate-600 text-xs ml-1">(sub ₹{Math.round(order.subtotal || 0)})</span>
-          )}
-        </div>
-
+      {/* Action row */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-orange-400 font-bold text-sm">₹{Math.round(order.total_amount || 0)}</span>
         {cfg.next && !showPrepInput && (
           <button
             onClick={handleConfirmClick}
@@ -111,9 +97,9 @@ function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable
         )}
       </div>
 
-      {/* Prep time inline input (shown when confirming) */}
+      {/* Prep time inline input */}
       {showPrepInput && (
-        <div className="pt-1 border-t border-white/10 space-y-2">
+        <div className="space-y-2">
           <p className="text-xs text-slate-400">Est. prep time (optional):</p>
           <div className="flex items-center gap-2">
             <input
@@ -132,17 +118,12 @@ function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable
             >
               {updating === order._id ? '…' : 'Confirm Order'}
             </button>
-            <button
-              onClick={() => setShowPrepInput(false)}
-              className="text-xs text-slate-500 hover:text-slate-300"
-            >
-              ✕
-            </button>
+            <button onClick={() => setShowPrepInput(false)} className="text-xs text-slate-500 hover:text-slate-300">✕</button>
           </div>
         </div>
       )}
 
-      {/* Cancel button */}
+      {/* Cancel */}
       {['pending', 'confirmed'].includes(order.status) && (
         <button
           onClick={() => onStatusChange(order._id, 'cancelled')}
@@ -152,15 +133,58 @@ function OrderCard({ order, onStatusChange, onCloseTable, updating, closingTable
           Cancel order
         </button>
       )}
+    </div>
+  );
+}
 
-      {/* Close Table button — shown on served original orders that still have an open session */}
-      {order.status === 'served' && !order.is_addon && order.session && (
+function OrderCard({ order, addons, onStatusChange, onCloseTable, updating, closingTable }) {
+  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
+  const sessionKey = String(order.session?._id ?? order.session ?? '');
+
+  // Determine if all orders in this card are served/terminal so Close Table can show
+  const allTerminal = ['served', 'completed', 'cancelled'].includes(order.status) &&
+    (addons ?? []).every(a => ['served', 'completed', 'cancelled'].includes(a.status));
+
+  return (
+    <div className={`border rounded-xl p-4 space-y-3 ${cfg.color} transition-all`}>
+      {/* Card header */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-bold text-white text-base">
+          Table {order.table?.table_number ?? order.table_number ?? '?'}
+        </span>
+        {addons?.length > 0 && (
+          <span className="text-xs text-slate-400">{1 + addons.length} batches</span>
+        )}
+      </div>
+
+      {/* Original order */}
+      <OrderStatusRow
+        order={order}
+        onStatusChange={onStatusChange}
+        updating={updating}
+        label={addons?.length > 0 ? 'Order' : null}
+      />
+
+      {/* Add-on orders */}
+      {addons?.map((addon, idx) => (
+        <div key={addon._id} className="pt-3 border-t border-white/10">
+          <OrderStatusRow
+            order={addon}
+            onStatusChange={onStatusChange}
+            updating={updating}
+            label={`Add-on${addons.length > 1 ? ` ${idx + 1}` : ''}`}
+          />
+        </div>
+      ))}
+
+      {/* Close Table — only when all orders in the session are terminal */}
+      {allTerminal && sessionKey && (
         <button
-          onClick={() => onCloseTable(order.session)}
-          disabled={closingTable === order.session}
+          onClick={() => onCloseTable(sessionKey)}
+          disabled={closingTable === sessionKey}
           className="text-xs text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 transition-colors w-full py-1.5 rounded-lg mt-1"
         >
-          {closingTable === order.session ? 'Closing…' : '🔒 Close Table'}
+          {closingTable === sessionKey ? 'Closing…' : '🔒 Close Table'}
         </button>
       )}
     </div>
@@ -231,7 +255,18 @@ export default function OrdersPage() {
     }
   };
 
-  const byStatus = (status) => orders.filter(o => o.status === status);
+  // Build a session → add-ons map so add-ons are embedded in the original order's card
+  const addonsBySession = {};
+  orders.forEach(o => {
+    if (!o.is_addon) return;
+    const key = String(o.session?._id ?? o.session ?? '');
+    if (!key) return;
+    if (!addonsBySession[key]) addonsBySession[key] = [];
+    addonsBySession[key].push(o);
+  });
+
+  // Only original (non-addon) orders appear as standalone cards in the Kanban
+  const byStatus = (status) => orders.filter(o => o.status === status && !o.is_addon);
   const activeCount = orders.filter(o => !['served', 'completed', 'cancelled'].includes(o.status)).length;
 
   return (
@@ -278,6 +313,7 @@ export default function OrdersPage() {
                   >
                     <OrderCard
                       order={order}
+                      addons={addonsBySession[String(order.session?._id ?? order.session ?? '')] ?? []}
                       onStatusChange={handleStatusChange}
                       onCloseTable={handleCloseTable}
                       updating={updating}

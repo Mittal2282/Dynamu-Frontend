@@ -25,8 +25,8 @@ import MenuManagePage from '../pages/dashboard/MenuManagePage';
 export default function Routes() {
   return (
     <RouterRoutes>
-      {/* QR scan entry point — /:restaurantId/:tableNumber */}
-      <Route path="/:restaurantId/:tableNumber" element={<QRLandingPage />} />
+      {/* QR scan entry point — /:qrCodeId/:tableNumber */}
+      <Route path="/:qrCodeId/:tableNumber" element={<QRLandingPage />} />
 
       {/* Auth */}
       <Route path="/login" element={<LoginPage />} />
