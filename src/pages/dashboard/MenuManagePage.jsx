@@ -49,6 +49,11 @@ export default function MenuManagePage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(null);
 
+  // Search & filter
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [availFilter, setAvailFilter]   = useState('all'); // 'all' | 'available' | 'unavailable'
+
   useEffect(() => {
     getDashMenu()
       .then(setItems)
@@ -83,12 +88,31 @@ export default function MenuManagePage() {
   if (loading) return <div className="text-slate-400 text-sm">Loading menu…</div>;
   if (error) return <div className="text-red-400 text-sm">{error}</div>;
 
-  // Group by category
-  const grouped = items.reduce((acc, item) => {
+  const allCategories = [...new Set(items.map(i => i.category || 'Other'))].sort();
+
+  // Apply search + filters
+  const visibleItems = items.filter(item => {
+    if (categoryFilter && (item.category || 'Other') !== categoryFilter) return false;
+    if (availFilter === 'available' && !item.is_available) return false;
+    if (availFilter === 'unavailable' && item.is_available) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const inName = (item.name || '').toLowerCase().includes(q);
+      const inCat  = (item.category || '').toLowerCase().includes(q);
+      const inDesc = (item.description || '').toLowerCase().includes(q);
+      if (!inName && !inCat && !inDesc) return false;
+    }
+    return true;
+  });
+
+  // Group filtered items by category
+  const grouped = visibleItems.reduce((acc, item) => {
     const cat = item.category || 'Other';
     (acc[cat] = acc[cat] || []).push(item);
     return acc;
   }, {});
+
+  const isFiltering = searchQuery.trim() !== '' || categoryFilter !== '' || availFilter !== 'all';
 
   return (
     <div className="space-y-6">
@@ -98,6 +122,79 @@ export default function MenuManagePage() {
           Click on a name or price to edit it inline. Toggle the switch to show/hide items from customers.
         </p>
       </div>
+
+      {/* Search + filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Search */}
+        <div className="relative flex-1 min-w-48">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+          <input
+            type="text"
+            placeholder="Search items…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/60 transition-colors"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Category filter */}
+        <select
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-orange-500/60 transition-colors"
+        >
+          <option value="">All categories</option>
+          {allCategories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+
+        {/* Availability filter */}
+        <div className="flex rounded-xl border border-white/10 overflow-hidden text-xs font-semibold">
+          {[
+            { value: 'all',         label: 'All' },
+            { value: 'available',   label: 'Available' },
+            { value: 'unavailable', label: 'Hidden' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setAvailFilter(opt.value)}
+              className={`px-3 py-2 transition-colors ${
+                availFilter === opt.value
+                  ? 'bg-orange-500/20 text-orange-300'
+                  : 'text-slate-400 hover:bg-white/5'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Clear filters */}
+        {isFiltering && (
+          <button
+            onClick={() => { setSearchQuery(''); setCategoryFilter(''); setAvailFilter('all'); }}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Results count when filtering */}
+      {isFiltering && (
+        <p className="text-xs text-slate-500">
+          {visibleItems.length} of {items.length} items
+        </p>
+      )}
 
       {Object.entries(grouped).map(([category, catItems]) => (
         <div key={category}>
@@ -116,7 +213,7 @@ export default function MenuManagePage() {
                 {catItems.map((item, idx) => (
                   <tr
                     key={item._id}
-                    className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} ${saving === item._id ? 'opacity-60' : ''}`}
+                    className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} ${saving === item._id ? 'opacity-60' : ''} ${!item.is_available ? 'opacity-50' : ''}`}
                   >
                     <td className="px-4 py-3 text-center text-xs">{VEG_INDICATOR[item.is_veg] ?? '⚪'}</td>
                     <td className="px-4 py-3 text-white">
@@ -156,8 +253,10 @@ export default function MenuManagePage() {
         </div>
       ))}
 
-      {items.length === 0 && (
-        <div className="text-center text-slate-500 py-12">No menu items found.</div>
+      {visibleItems.length === 0 && (
+        <div className="text-center text-slate-500 py-12">
+          {isFiltering ? 'No items match your search.' : 'No menu items found.'}
+        </div>
       )}
     </div>
   );
