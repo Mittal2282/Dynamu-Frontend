@@ -154,7 +154,7 @@ function MyOrders({ currencySymbol }) {
 
 /* ─── QR Landing Page ───────────────────────────────────────────────────────── */
 export default function QRLandingPage() {
-  const { restaurantId, tableNumber } = useParams();
+  const { qrCodeId, tableNumber } = useParams();
 
   useTheme();
 
@@ -178,7 +178,7 @@ export default function QRLandingPage() {
   useEffect(() => {
     async function init() {
       try {
-        const sessionData = await startSession(restaurantId, tableNumber);
+        const sessionData = await startSession(qrCodeId, tableNumber);
 
         authStore.getState().setSessionToken(sessionData.session_token);
         restaurantStore.getState().setRestaurant(sessionData.restaurant);
@@ -216,7 +216,7 @@ export default function QRLandingPage() {
     }
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurantId, tableNumber]);
+  }, [qrCodeId, tableNumber]);
 
   // ── Sync cart to backend ─────────────────────────────────────────────────────
   const itemsStr = JSON.stringify(items.map(i => ({ _id: i._id, qty: i.qty })));
