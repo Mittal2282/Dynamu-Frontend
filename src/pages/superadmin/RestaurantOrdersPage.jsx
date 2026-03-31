@@ -3,15 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getRestaurantOrders } from '../../services/adminService';
 import { apiCaller } from '../../api/apiCaller';
 
-const STATUS_COLORS = {
-  pending:   'bg-yellow-500/20 text-yellow-400',
-  confirmed: 'bg-blue-500/20 text-blue-400',
-  preparing: 'bg-purple-500/20 text-purple-400',
-  ready:     'bg-green-500/20 text-green-400',
-  served:    'bg-slate-500/20 text-slate-300',
-  completed: 'bg-slate-500/20 text-slate-300',
-  cancelled: 'bg-red-500/20 text-red-400',
+const STATUS_BADGE = {
+  pending:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
+  confirmed: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  preparing: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
+  ready:     'bg-green-500/15 text-green-400 border-green-500/20',
+  served:    'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  completed: 'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/20',
 };
+
+const ALL_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled'];
 
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
@@ -39,111 +41,145 @@ export default function RestaurantOrdersPage() {
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (statusFilter) params.set('status', statusFilter);
-    if (dateFrom)     params.set('date_from', dateFrom);
-    if (dateTo)       params.set('date_to', dateTo);
-
     getRestaurantOrders(id)
       .then(data => setOrders(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id, statusFilter, dateFrom, dateTo]);
 
+  const isFiltering = statusFilter || dateFrom || dateTo;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/superadmin')} className="text-slate-400 hover:text-white transition-colors text-sm">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-start gap-3">
+        <button
+          onClick={() => navigate('/superadmin')}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all duration-150 shrink-0 mt-0.5"
+        >
           ← Back
         </button>
         <div>
-          <h1 className="text-2xl font-bold">{restaurant?.name || 'Restaurant'} — Orders</h1>
-          <p className="text-slate-400 text-sm">/{restaurant?.slug}</p>
+          <h1
+            className="text-2xl font-bold"
+            style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          >
+            {restaurant?.name || 'Restaurant'} — Orders
+          </h1>
+          {restaurant?.slug && (
+            <p className="text-slate-500 text-sm mt-0.5 font-mono">/{restaurant.slug}</p>
+          )}
         </div>
       </div>
 
-      {/* Filters */}
+      {/* ── Filters ────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="text-xs text-slate-400 block mb-1">Status</label>
+        {/* Status */}
+        <div className="space-y-1">
+          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">Status</label>
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onBlur={e => e.target.style.borderColor = ''}
           >
             <option value="">All Statuses</option>
-            {['pending','confirmed','preparing','ready','served','completed','cancelled'].map(s => (
+            {ALL_STATUSES.map(s => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
-        <div>
-          <label className="text-xs text-slate-400 block mb-1">From</label>
+
+        {/* From */}
+        <div className="space-y-1">
+          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">From</label>
           <input
             type="date"
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onBlur={e => e.target.style.borderColor = ''}
           />
         </div>
-        <div>
-          <label className="text-xs text-slate-400 block mb-1">To</label>
+
+        {/* To */}
+        <div className="space-y-1">
+          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">To</label>
           <input
             type="date"
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onBlur={e => e.target.style.borderColor = ''}
           />
         </div>
-        {(statusFilter || dateFrom || dateTo) && (
+
+        {isFiltering && (
           <button
             onClick={() => { setStatusFilter(''); setDateFrom(''); setDateTo(''); }}
-            className="text-xs text-orange-400 hover:text-orange-300 pb-0.5"
+            className="text-xs text-slate-400 hover:text-slate-200 transition-colors pb-2"
           >
             Clear filters
           </button>
         )}
       </div>
 
-      {/* Orders table */}
-      <div className="bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
+      {/* ── Orders table ───────────────────────────────────────────────────── */}
+      <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+          <p className="text-sm font-semibold text-white">Orders</p>
+          {!loading && (
+            <span className="text-xs text-slate-500">{orders.length} total</span>
+          )}
+        </div>
+
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center justify-center gap-3 h-40">
+            <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+            <span className="text-slate-500 text-sm">Loading orders…</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left px-5 py-3 text-slate-400 font-medium">Order #</th>
-                  <th className="text-left px-5 py-3 text-slate-400 font-medium">Table</th>
-                  <th className="text-left px-5 py-3 text-slate-400 font-medium">Items</th>
-                  <th className="text-right px-5 py-3 text-slate-400 font-medium">Total</th>
-                  <th className="text-center px-4 py-3 text-slate-400 font-medium">Status</th>
-                  <th className="text-right px-5 py-3 text-slate-400 font-medium">Time</th>
+                <tr className="border-b border-white/5">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Order #</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Table</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Items</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-slate-500 py-12">No orders found.</td>
+                    <td colSpan={6} className="text-center py-16">
+                      <p className="text-3xl mb-3">📋</p>
+                      <p className="text-slate-500 text-sm">No orders found.</p>
+                    </td>
                   </tr>
                 ) : orders.map(order => (
-                  <tr key={order._id} className="hover:bg-white/3 transition-colors">
-                    <td className="px-5 py-4 font-mono text-xs text-slate-300">{order.order_number}</td>
-                    <td className="px-5 py-4 text-white">Table {order.table?.table_number ?? order.table_number ?? '—'}</td>
-                    <td className="px-5 py-4 text-slate-400 max-w-[200px]">
-                      <span className="truncate block">
+                  <tr key={order._id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="px-5 py-4 font-mono text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+                      {order.order_number}
+                    </td>
+                    <td className="px-5 py-4 text-slate-200">
+                      Table {order.table?.table_number ?? order.table_number ?? '—'}
+                    </td>
+                    <td className="px-5 py-4 text-slate-500 max-w-[220px]">
+                      <span className="truncate block text-xs">
                         {order.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || '—'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right text-orange-400 font-semibold">
+                    <td className="px-5 py-4 text-right font-semibold" style={{ color: 'var(--color-brand-primary, #f97316)' }}>
                       ₹{Math.round(order.total_amount || 0)}
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[order.status] || ''}`}>
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[order.status] ?? 'bg-white/10 text-white border-white/10'}`}>
                         {order.status}
                       </span>
                     </td>
@@ -157,8 +193,6 @@ export default function RestaurantOrdersPage() {
           </div>
         )}
       </div>
-
-      <p className="text-slate-500 text-xs text-right">{orders.length} order{orders.length !== 1 ? 's' : ''} total</p>
     </div>
   );
 }

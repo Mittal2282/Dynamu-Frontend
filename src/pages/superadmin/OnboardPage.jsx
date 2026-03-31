@@ -12,70 +12,103 @@ Starters,Chicken Wings,349,false,3,Crispy fried wings with hot sauce
 Main Course,Dal Makhani,249,true,1,Slow-cooked black lentils in butter
 Main Course,Chicken Biryani,399,false,2,Aromatic basmati rice with spiced chicken`;
 
+/* ─── Shared input field ─────────────────────────────────────────────────── */
+function Field({ label, name, value, onChange, type = 'text', placeholder, hint }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1.5">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={e => onChange(name, e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none transition-colors"
+        onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+        onBlur={e => e.target.style.borderColor = ''}
+      />
+      {hint && <p className="text-xs text-slate-600 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+/* ─── Section divider ────────────────────────────────────────────────────── */
+function SectionLabel({ title, sub }) {
+  return (
+    <div className="border-t border-white/10 pt-5">
+      <p className="text-sm font-semibold text-white">{title}</p>
+      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+/* ─── Step 1: Restaurant Details ─────────────────────────────────────────── */
 function Step1({ form, onChange, onNext, loading, error }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-bold text-white">Restaurant Details</h2>
-        <p className="text-slate-400 text-sm mt-0.5">Basic information about the restaurant and its owner.</p>
+        <p className="text-base font-bold text-white">Restaurant Details</p>
+        <p className="text-slate-500 text-sm mt-0.5">Basic information about the restaurant and its owner.</p>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field label="Restaurant Name *" value={form.name} name="name" onChange={onChange} placeholder="Spice Garden" />
-        <Field label="Slug *" value={form.slug} name="slug" onChange={onChange} placeholder="spice-garden" hint="URL-friendly, lowercase, no spaces" />
-        <Field label="Description" value={form.description} name="description" onChange={onChange} placeholder="A lovely family restaurant…" />
-        <Field label="Phone" value={form.phone} name="phone" onChange={onChange} placeholder="+91 98765 43210" />
-        <Field label="Email" value={form.email} name="email" onChange={onChange} type="email" placeholder="info@spicegarden.com" />
-        <Field label="Opening Hours" value={form.opening_hours} name="opening_hours" onChange={onChange} placeholder="11:00 AM – 11:00 PM" />
-        <Field label="City" value={form.city} name="city" onChange={onChange} placeholder="Mumbai" />
-        <Field label="State" value={form.state} name="state" onChange={onChange} placeholder="Maharashtra" />
+        <Field label="Restaurant Name *"  value={form.name}           name="name"           onChange={onChange} placeholder="Spice Garden" />
+        <Field label="Slug *"             value={form.slug}           name="slug"           onChange={onChange} placeholder="spice-garden"  hint="URL-friendly, lowercase, no spaces" />
+        <Field label="Description"        value={form.description}    name="description"    onChange={onChange} placeholder="A lovely family restaurant…" />
+        <Field label="Phone"              value={form.phone}          name="phone"          onChange={onChange} placeholder="+91 98765 43210" />
+        <Field label="Email"              value={form.email}          name="email"          onChange={onChange} type="email" placeholder="info@spicegarden.com" />
+        <Field label="Opening Hours"      value={form.opening_hours}  name="opening_hours"  onChange={onChange} placeholder="11:00 AM – 11:00 PM" />
+        <Field label="City"               value={form.city}           name="city"           onChange={onChange} placeholder="Mumbai" />
+        <Field label="State"              value={form.state}          name="state"          onChange={onChange} placeholder="Maharashtra" />
       </div>
 
-      <div className="border-t border-white/10 pt-5">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Owner Account</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Field label="Owner Name *" value={form.owner_name} name="owner_name" onChange={onChange} placeholder="Rahul Sharma" />
-          <Field label="Owner Email *" value={form.owner_email} name="owner_email" onChange={onChange} type="email" placeholder="rahul@spicegarden.com" />
-          <Field label="Password *" value={form.owner_password} name="owner_password" onChange={onChange} type="password" placeholder="Min. 8 characters" />
-        </div>
+      <SectionLabel title="Owner Account" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Field label="Owner Name *"  value={form.owner_name}     name="owner_name"     onChange={onChange} placeholder="Rahul Sharma" />
+        <Field label="Owner Email *" value={form.owner_email}    name="owner_email"    onChange={onChange} type="email" placeholder="rahul@spicegarden.com" />
+        <Field label="Password *"    value={form.owner_password} name="owner_password" onChange={onChange} type="password" placeholder="Min. 8 characters" />
       </div>
 
-      <div className="border-t border-white/10 pt-5">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Tables</h3>
-        <div className="grid grid-cols-2 gap-4 max-w-xs">
-          <Field label="Number of Tables *" value={form.table_count} name="table_count" onChange={onChange} type="number" placeholder="10" />
-          <Field label="Starting Table #" value={form.start_number} name="start_number" onChange={onChange} type="number" placeholder="1" />
-        </div>
+      <SectionLabel title="Tables" />
+      <div className="grid grid-cols-2 gap-4 max-w-xs">
+        <Field label="Number of Tables *" value={form.table_count}  name="table_count"  onChange={onChange} type="number" placeholder="10" />
+        <Field label="Starting Table #"   value={form.start_number} name="start_number" onChange={onChange} type="number" placeholder="1" />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-2">
         <button
           onClick={onNext}
           disabled={loading}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
+          style={{ background: 'var(--color-brand-primary, #f97316)' }}
         >
-          {loading ? 'Creating…' : 'Next: Import Menu →'}
+          {loading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Creating…
+            </>
+          ) : 'Next: Import Menu →'}
         </button>
       </div>
     </div>
   );
 }
 
+/* ─── Step 2: Import Menu ────────────────────────────────────────────────── */
 function Step2({ restaurantId, onNext, onSkip }) {
   const fileInputRef = useRef(null);
-  const [csvText, setCsvText]   = useState('');
-  const [fileName, setFileName] = useState('');
-  const [preview, setPreview]   = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [parsing, setParsing]   = useState(false);
-  const [error, setError]       = useState('');
+  const [csvText, setCsvText]       = useState('');
+  const [fileName, setFileName]     = useState('');
+  const [preview, setPreview]       = useState([]);
+  const [loading, setLoading]       = useState(false);
+  const [parsing, setParsing]       = useState(false);
+  const [error, setError]           = useState('');
   const [showSample, setShowSample] = useState(false);
 
-  // Build preview rows from CSV text (first 5 data rows)
   const buildPreview = (text) => {
     const lines = text.trim().split('\n').slice(1).filter(l => l.trim());
     return lines.slice(0, 5).map(line => {
@@ -91,25 +124,19 @@ function Step2({ restaurantId, onNext, onSkip }) {
     setParsing(true);
     setPreview([]);
     setCsvText('');
-
     try {
       const ext = file.name.split('.').pop().toLowerCase();
       const isXLSX = ext === 'xlsx' || ext === 'xls';
-
       let csvResult = '';
-
       if (isXLSX) {
-        // Read XLSX as ArrayBuffer and convert first sheet to CSV
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         csvResult = XLSX.utils.sheet_to_csv(firstSheet);
       } else {
-        // Plain CSV — read as text
         csvResult = await file.text();
       }
-
-      setFileName(`${file.name} (${isXLSX ? 'XLSX' : 'CSV'}, ${(file.size / 1024).toFixed(1)} KB)`);
+      setFileName(`${file.name} · ${isXLSX ? 'XLSX' : 'CSV'} · ${(file.size / 1024).toFixed(1)} KB`);
       setCsvText(csvResult);
       setPreview(buildPreview(csvResult));
     } catch {
@@ -136,81 +163,86 @@ function Step2({ restaurantId, onNext, onSkip }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-bold text-white">Import Menu</h2>
-        <p className="text-slate-400 text-sm mt-0.5">Upload a CSV or XLSX file — the format is detected automatically.</p>
+        <p className="text-base font-bold text-white">Import Menu</p>
+        <p className="text-slate-500 text-sm mt-0.5">Upload a CSV or XLSX file — format is auto-detected.</p>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
       {/* Format reference */}
       <div>
         <button
           onClick={() => setShowSample(s => !s)}
-          className="text-xs text-orange-400 hover:text-orange-300 mb-2 transition-colors"
+          className="text-xs font-medium transition-colors flex items-center gap-1"
+          style={{ color: 'var(--color-brand-primary, #f97316)' }}
         >
           {showSample ? '▲ Hide' : '▼ Show'} expected column format
         </button>
         {showSample && (
-          <pre className="bg-slate-800 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto border border-white/10 mb-3">
+          <pre className="mt-2 bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-slate-300 overflow-x-auto">
             {CSV_SAMPLE}
           </pre>
         )}
       </div>
 
-      {/* Drop / click zone */}
+      {/* Drop zone */}
       <div
         onClick={() => fileInputRef.current?.click()}
         onDragOver={e => e.preventDefault()}
-        onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) { fileInputRef.current.files = e.dataTransfer.files; handleFileChange({ target: { files: e.dataTransfer.files } }); } }}
-        className="border-2 border-dashed border-white/20 hover:border-orange-500/60 rounded-xl p-10 text-center cursor-pointer transition-colors group"
+        onDrop={e => {
+          e.preventDefault();
+          const f = e.dataTransfer.files?.[0];
+          if (f) handleFileChange({ target: { files: e.dataTransfer.files } });
+        }}
+        className="border-2 border-dashed border-white/10 hover:border-orange-500/50 rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 group"
+        style={{ background: 'rgba(255,255,255,0.02)' }}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={handleFileChange}
-          className="hidden"
-        />
+        <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="hidden" />
         {parsing ? (
-          <p className="text-slate-400 text-sm">Reading file…</p>
+          <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
+            <span className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
+            Reading file…
+          </div>
         ) : fileName ? (
-          <div className="space-y-1">
-            <p className="text-2xl">📄</p>
+          <div className="space-y-2">
+            <p className="text-3xl">📄</p>
             <p className="text-white text-sm font-medium">{fileName}</p>
-            <p className="text-slate-400 text-xs">{preview.length > 0 ? `${preview.length}+ items detected` : 'Click to replace'}</p>
+            <p className="text-slate-500 text-xs">
+              {preview.length > 0 ? `${preview.length}+ items detected` : 'Click to replace'}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-3xl">⬆️</p>
+            <p className="text-4xl group-hover:scale-110 transition-transform duration-200">⬆️</p>
             <p className="text-white text-sm font-medium group-hover:text-orange-400 transition-colors">
               Click to upload or drag &amp; drop
             </p>
-            <p className="text-slate-500 text-xs">CSV or XLSX — format is auto-detected</p>
+            <p className="text-slate-600 text-xs">CSV or XLSX — format is auto-detected</p>
           </div>
         )}
       </div>
 
-      {/* Preview table */}
+      {/* Preview */}
       {preview.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Preview (first {preview.length} rows):</p>
-          <div className="bg-slate-800 rounded-lg overflow-hidden border border-white/10">
+          <p className="text-xs text-slate-500 mb-2">Preview — first {preview.length} rows</p>
+          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="text-left px-3 py-2 text-slate-400">Category</th>
-                  <th className="text-left px-3 py-2 text-slate-400">Name</th>
-                  <th className="text-left px-3 py-2 text-slate-400">Price</th>
+                  <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Category</th>
+                  <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Name</th>
+                  <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Price</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                 {preview.map((r, i) => (
-                  <tr key={i} className="border-b border-white/5 last:border-0">
-                    <td className="px-3 py-2 text-slate-300">{r.category}</td>
-                    <td className="px-3 py-2 text-white font-medium">{r.name}</td>
-                    <td className="px-3 py-2 text-orange-400">{r.price}</td>
+                  <tr key={i} className="hover:bg-white/[0.02]">
+                    <td className="px-4 py-2.5 text-slate-400">{r.category}</td>
+                    <td className="px-4 py-2.5 text-slate-200 font-medium">{r.name}</td>
+                    <td className="px-4 py-2.5 font-semibold" style={{ color: 'var(--color-brand-primary, #f97316)' }}>{r.price}</td>
                   </tr>
                 ))}
               </tbody>
@@ -219,27 +251,35 @@ function Step2({ restaurantId, onNext, onSkip }) {
         </div>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center pt-2">
         <button
           onClick={onSkip}
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+          className="text-sm text-slate-500 hover:text-slate-200 transition-colors"
         >
           Skip for now →
         </button>
         <button
           onClick={handleImport}
           disabled={loading || parsing || !csvText}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
+          style={{ background: 'var(--color-brand-primary, #f97316)' }}
         >
-          {loading ? 'Importing…' : 'Import Menu →'}
+          {loading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Importing…
+            </>
+          ) : 'Import Menu →'}
         </button>
       </div>
     </div>
   );
 }
 
+/* ─── Step 3: Done ───────────────────────────────────────────────────────── */
 function Step3({ restaurantId }) {
   const navigate = useNavigate();
+
   const downloadWithAuth = async () => {
     try {
       const res = await fetch(
@@ -257,48 +297,38 @@ function Step3({ restaurantId }) {
   };
 
   return (
-    <div className="text-center space-y-6 py-8">
+    <div className="text-center space-y-6 py-10">
       <div className="text-6xl">🎉</div>
       <div>
-        <h2 className="text-2xl font-bold text-white">Restaurant Onboarded!</h2>
-        <p className="text-slate-400 mt-2">The restaurant, owner account, tables, and menu have been set up.</p>
+        <h2
+          className="text-2xl font-bold"
+          style={{ background: 'linear-gradient(90deg, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+        >
+          Restaurant Onboarded!
+        </h2>
+        <p className="text-slate-500 mt-2 text-sm">The restaurant, owner account, tables, and menu have been set up.</p>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
         <button
           onClick={downloadWithAuth}
-          className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-150 active:scale-95"
+          style={{ background: 'var(--color-brand-primary, #f97316)' }}
         >
           📄 Download QR Codes PDF
         </button>
         <button
           onClick={() => navigate('/superadmin')}
-          className="text-slate-300 hover:text-white font-medium px-6 py-3 rounded-lg border border-white/10 hover:border-white/30 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium px-6 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-all duration-150 text-sm"
         >
-          Back to Restaurants
+          ← Back to Restaurants
         </button>
       </div>
     </div>
   );
 }
 
-function Field({ label, name, value, onChange, type = 'text', placeholder, hint }) {
-  return (
-    <div>
-      <label className="text-sm text-slate-400 block mb-1">{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={e => onChange(name, e.target.value)}
-        placeholder={placeholder}
-        className="w-full bg-slate-800 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-orange-500"
-      />
-      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
-    </div>
-  );
-}
-
+/* ─── Main onboard page ──────────────────────────────────────────────────── */
 export default function OnboardPage() {
   const [step, setStep] = useState(0);
   const [restaurantId, setRestaurantId] = useState(null);
@@ -313,9 +343,12 @@ export default function OnboardPage() {
 
   const handleChange = (name, value) => {
     setForm(p => ({ ...p, [name]: value }));
-    // Auto-slug from name
     if (name === 'name' && !form.slug) {
-      setForm(p => ({ ...p, [name]: value, slug: value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') }));
+      setForm(p => ({
+        ...p,
+        [name]: value,
+        slug: value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      }));
     }
   };
 
@@ -339,14 +372,8 @@ export default function OnboardPage() {
       });
       const rid = data.restaurant._id;
       setRestaurantId(rid);
-
       const count = parseInt(form.table_count);
-      if (count > 0) {
-        await createTables(rid, {
-          count,
-          start_number: parseInt(form.start_number) || 1,
-        });
-      }
+      if (count > 0) await createTables(rid, { count, start_number: parseInt(form.start_number) || 1 });
       setStep(1);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create restaurant.');
@@ -358,33 +385,42 @@ export default function OnboardPage() {
   return (
     <div className="max-w-3xl">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-slate-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
         <button onClick={() => window.history.back()} className="hover:text-white transition-colors">Restaurants</button>
-        <span>/</span>
-        <span className="text-white">Onboard New Restaurant</span>
+        <span className="text-slate-700">/</span>
+        <span className="text-slate-300">Onboard New Restaurant</span>
       </div>
 
       {/* Step indicator */}
       <div className="flex items-center gap-0 mb-8">
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center">
-            <div className={`flex items-center gap-2 text-sm font-medium transition-colors
-              ${i === step ? 'text-orange-400' : i < step ? 'text-green-400' : 'text-slate-500'}`}>
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                ${i === step ? 'bg-orange-500 text-white' : i < step ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
+            <div className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+              i === step ? 'text-orange-400' : i < step ? 'text-green-400' : 'text-slate-600'
+            }`}>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                style={
+                  i === step
+                    ? { background: 'var(--color-brand-primary, #f97316)', color: '#fff' }
+                    : i < step
+                      ? { background: '#22c55e', color: '#fff' }
+                      : { background: 'rgba(255,255,255,0.08)', color: '#64748b' }
+                }
+              >
                 {i < step ? '✓' : i + 1}
               </div>
               <span className="hidden sm:block">{s}</span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`w-8 sm:w-16 h-0.5 mx-2 ${i < step ? 'bg-green-500' : 'bg-slate-700'}`} />
+              <div className={`w-8 sm:w-16 h-0.5 mx-2 rounded-full transition-colors ${i < step ? 'bg-green-500' : 'bg-white/10'}`} />
             )}
           </div>
         ))}
       </div>
 
-      {/* Step content */}
-      <div className="bg-slate-900 rounded-2xl p-6 border border-white/10">
+      {/* Step content panel */}
+      <div className="bg-slate-900 border border-white/10 rounded-2xl p-6">
         {step === 0 && (
           <Step1 form={form} onChange={handleChange} onNext={handleStep1} loading={loading} error={error} />
         )}

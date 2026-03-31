@@ -85,8 +85,15 @@ export default function MenuManagePage() {
     }
   };
 
-  if (loading) return <div className="text-slate-400 text-sm">Loading menu…</div>;
-  if (error) return <div className="text-red-400 text-sm">{error}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-48 gap-3">
+      <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+      <span className="text-slate-500 text-sm">Loading menu…</span>
+    </div>
+  );
+  if (error) return (
+    <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
+  );
 
   const allCategories = [...new Set(items.map(i => i.category || 'Other'))].sort();
 
@@ -117,9 +124,14 @@ export default function MenuManagePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Menu Management</h1>
-        <p className="text-slate-400 text-sm mt-0.5">
-          Click on a name or price to edit it inline. Toggle the switch to show/hide items from customers.
+        <h1
+          className="text-2xl font-bold"
+          style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+        >
+          Menu Management
+        </h1>
+        <p className="text-slate-500 text-sm mt-0.5">
+          Click on a name or price to edit inline. Toggle the switch to show/hide items from customers.
         </p>
       </div>
 
@@ -133,13 +145,13 @@ export default function MenuManagePage() {
             placeholder="Search items…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/60 transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+            style={{ '--tw-border-opacity': 1 }}
+            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onBlur={e => e.target.style.borderColor = ''}
           />
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
-            >
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
               ✕
             </button>
           )}
@@ -149,7 +161,7 @@ export default function MenuManagePage() {
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-orange-500/60 transition-colors"
+          className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
         >
           <option value="">All categories</option>
           {allCategories.map(cat => (
@@ -158,7 +170,7 @@ export default function MenuManagePage() {
         </select>
 
         {/* Availability filter */}
-        <div className="flex rounded-xl border border-white/10 overflow-hidden text-xs font-semibold">
+        <div className="flex rounded-xl border border-white/10 overflow-hidden text-xs font-semibold bg-white/5">
           {[
             { value: 'all',         label: 'All' },
             { value: 'available',   label: 'Available' },
@@ -167,11 +179,12 @@ export default function MenuManagePage() {
             <button
               key={opt.value}
               onClick={() => setAvailFilter(opt.value)}
-              className={`px-3 py-2 transition-colors ${
+              className={`px-3 py-2 transition-all duration-150 ${
                 availFilter === opt.value
-                  ? 'bg-orange-500/20 text-orange-300'
-                  : 'text-slate-400 hover:bg-white/5'
+                  ? 'text-white'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
               }`}
+              style={availFilter === opt.value ? { background: 'var(--color-brand-primary, #f97316)' } : {}}
             >
               {opt.label}
             </button>
@@ -184,7 +197,7 @@ export default function MenuManagePage() {
             onClick={() => { setSearchQuery(''); setCategoryFilter(''); setAvailFilter('all'); }}
             className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
-            Clear filters
+            Clear
           </button>
         )}
       </div>
@@ -198,15 +211,18 @@ export default function MenuManagePage() {
 
       {Object.entries(grouped).map(([category, catItems]) => (
         <div key={category}>
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">{category}</h2>
-          <div className="bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{category}</h2>
+            <span className="text-[11px] text-slate-600">{catItems.length} items</span>
+          </div>
+          <div className="bg-slate-900 rounded-2xl border border-white/10 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10 text-slate-500 text-xs uppercase">
-                  <th className="text-left px-4 py-2 w-6"></th>
-                  <th className="text-left px-4 py-2">Name</th>
-                  <th className="text-left px-4 py-2 w-28">Price</th>
-                  <th className="text-center px-4 py-2 w-28">Available</th>
+                <tr className="border-b border-white/5 text-slate-500 text-[11px] uppercase tracking-wider">
+                  <th className="text-left px-4 py-3 w-6"></th>
+                  <th className="text-left px-4 py-3">Name</th>
+                  <th className="text-left px-4 py-3 w-28">Price</th>
+                  <th className="text-center px-4 py-3 w-28">Available</th>
                 </tr>
               </thead>
               <tbody>
@@ -254,8 +270,17 @@ export default function MenuManagePage() {
       ))}
 
       {visibleItems.length === 0 && (
-        <div className="text-center text-slate-500 py-12">
-          {isFiltering ? 'No items match your search.' : 'No menu items found.'}
+        <div className="bg-slate-900 border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 gap-3 text-center">
+          <span className="text-4xl">{isFiltering ? '🔍' : '📋'}</span>
+          <p className="text-slate-500 text-sm">{isFiltering ? 'No items match your search.' : 'No menu items found.'}</p>
+          {isFiltering && (
+            <button
+              onClick={() => { setSearchQuery(''); setCategoryFilter(''); setAvailFilter('all'); }}
+              className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
       )}
     </div>
