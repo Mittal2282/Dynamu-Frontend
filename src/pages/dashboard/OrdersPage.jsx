@@ -5,36 +5,33 @@ import { apiCaller } from '../../api/apiCaller';
 const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served'];
 
 const STATUS_CONFIG = {
-  pending:   { label: 'New',       color: 'border-yellow-500/50 bg-yellow-500/5',  badge: 'bg-yellow-500/20 text-yellow-400',  next: 'confirmed',  nextLabel: 'Confirm' },
-  confirmed: { label: 'Confirmed', color: 'border-blue-500/50 bg-blue-500/5',      badge: 'bg-blue-500/20 text-blue-400',      next: 'preparing',  nextLabel: 'Start Preparing' },
-  preparing: { label: 'Preparing', color: 'border-purple-500/50 bg-purple-500/5',  badge: 'bg-purple-500/20 text-purple-400',  next: 'ready',      nextLabel: 'Mark Ready' },
-  ready:     { label: 'Ready',     color: 'border-green-500/50 bg-green-500/5',    badge: 'bg-green-500/20 text-green-400',    next: 'served',     nextLabel: 'Mark Served' },
-  served:    { label: 'Served',    color: 'border-slate-500/50 bg-slate-500/5',    badge: 'bg-slate-500/20 text-slate-300',    next: null,         nextLabel: null },
+  pending:   { label: 'New',       dot: 'bg-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-400',  stripe: 'from-yellow-500 to-yellow-400', next: 'confirmed',  nextLabel: 'Confirm' },
+  confirmed: { label: 'Confirmed', dot: 'bg-blue-400',    badge: 'bg-blue-500/20 text-blue-400',      stripe: 'from-blue-500 to-blue-400',    next: 'preparing',  nextLabel: 'Start Preparing' },
+  preparing: { label: 'Preparing', dot: 'bg-purple-400',  badge: 'bg-purple-500/20 text-purple-400',  stripe: 'from-purple-500 to-purple-400', next: 'ready',      nextLabel: 'Mark Ready' },
+  ready:     { label: 'Ready',     dot: 'bg-green-400',   badge: 'bg-green-500/20 text-green-400',    stripe: 'from-green-500 to-green-400',  next: 'served',     nextLabel: 'Mark Served' },
+  served:    { label: 'Served',    dot: 'bg-slate-400',   badge: 'bg-slate-500/20 text-slate-300',    stripe: 'from-slate-500 to-slate-600',  next: null,         nextLabel: null },
 };
 
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
-  if (diff < 60) return `${Math.floor(diff)}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 60) return `${Math.floor(diff)}s`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  return `${Math.floor(diff / 3600)}h`;
 }
 
 function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/* ─── Inline status controls for a single order (used for both original + addons) ── */
+/* ─── Inline status controls (used for both original + add-on batches) ── */
 function OrderStatusRow({ order, onStatusChange, updating, label }) {
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
   const [showPrepInput, setShowPrepInput] = useState(false);
   const [prepTime, setPrepTime] = useState('');
 
   const handleConfirmClick = () => {
-    if (cfg.next === 'confirmed') {
-      setShowPrepInput(true);
-    } else {
-      onStatusChange(order._id, cfg.next);
-    }
+    if (cfg.next === 'confirmed') setShowPrepInput(true);
+    else onStatusChange(order._id, cfg.next);
   };
 
   const handleConfirmWithPrep = () => {
@@ -45,26 +42,30 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {/* Sub-header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {label && <span className="text-xs font-semibold text-orange-300">{label}</span>}
-          <span className="text-slate-500 text-xs">#{order.order_number}</span>
-          <span className="text-slate-600 text-xs">· {formatTime(order.createdAt)} ({timeAgo(order.createdAt)})</span>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {label && (
+            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/20 shrink-0">
+              {label}
+            </span>
+          )}
+          <span className="text-slate-500 text-xs font-mono">#{order.order_number}</span>
+          <span className="text-slate-600 text-xs">· {formatTime(order.createdAt)} ({timeAgo(order.createdAt)} ago)</span>
         </div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
           {order.status}
         </span>
       </div>
 
       {/* Items */}
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {order.items?.map((item, i) => (
-          <li key={i} className="flex justify-between text-sm">
-            <span className="text-slate-300">{item.name}</span>
+          <li key={i} className="flex justify-between items-baseline text-sm gap-2">
+            <span className="text-slate-200 leading-tight">{item.name}</span>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-slate-500">×{item.quantity}</span>
+              <span className="text-slate-500 text-xs">×{item.quantity}</span>
               <span className="text-slate-400 text-xs">₹{Math.round((item.unit_price ?? 0) * item.quantity)}</span>
             </div>
           </li>
@@ -73,34 +74,44 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
 
       {/* Notes */}
       {order.notes && (
-        <p className="text-xs text-slate-400 bg-white/5 rounded px-2 py-1">
-          <span className="font-semibold text-slate-300">Note:</span> {order.notes}
+        <p className="text-xs text-slate-400 bg-white/5 border border-white/5 rounded-lg px-2.5 py-1.5">
+          <span className="font-semibold text-slate-300">Note: </span>{order.notes}
         </p>
       )}
 
       {/* Prep time */}
       {order.estimated_prep_time && (
-        <p className="text-xs text-blue-300">Est. prep time: {order.estimated_prep_time} min</p>
+        <p className="text-xs text-blue-400 flex items-center gap-1">
+          <span>⏱</span> Est. {order.estimated_prep_time} min
+        </p>
       )}
 
       {/* Action row */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-orange-400 font-bold text-sm">₹{Math.round(order.total_amount || 0)}</span>
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <span className="font-bold text-sm" style={{ color: 'var(--color-brand-primary, #f97316)' }}>
+          ₹{Math.round(order.total_amount || 0)}
+        </span>
         {cfg.next && !showPrepInput && (
           <button
             onClick={handleConfirmClick}
             disabled={updating === order._id}
-            className="text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all duration-150 disabled:opacity-40 active:scale-95"
+            style={{ background: 'var(--color-brand-primary, #f97316)' }}
           >
-            {updating === order._id ? '…' : cfg.nextLabel}
+            {updating === order._id ? (
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                <span>Updating</span>
+              </span>
+            ) : cfg.nextLabel}
           </button>
         )}
       </div>
 
-      {/* Prep time inline input */}
+      {/* Prep time input */}
       {showPrepInput && (
-        <div className="space-y-2">
-          <p className="text-xs text-slate-400">Est. prep time (optional):</p>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2">
+          <p className="text-xs text-slate-400">Optional: Est. prep time</p>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -108,17 +119,18 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
               placeholder="e.g. 15"
               value={prepTime}
               onChange={e => setPrepTime(e.target.value)}
-              className="w-20 bg-slate-800 border border-white/20 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-20 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/60 transition-colors"
             />
-            <span className="text-xs text-slate-400">min</span>
+            <span className="text-xs text-slate-500">min</span>
             <button
               onClick={handleConfirmWithPrep}
               disabled={updating === order._id}
-              className="text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ml-auto"
+              className="ml-auto text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 active:scale-95"
+              style={{ background: 'var(--color-brand-primary, #f97316)' }}
             >
-              {updating === order._id ? '…' : 'Confirm Order'}
+              Confirm
             </button>
-            <button onClick={() => setShowPrepInput(false)} className="text-xs text-slate-500 hover:text-slate-300">✕</button>
+            <button onClick={() => setShowPrepInput(false)} className="text-slate-500 hover:text-slate-300 transition-colors text-sm">✕</button>
           </div>
         </div>
       )}
@@ -128,7 +140,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
         <button
           onClick={() => onStatusChange(order._id, 'cancelled')}
           disabled={updating === order._id}
-          className="text-xs text-red-400 hover:text-red-300 transition-colors w-full text-right"
+          className="text-xs text-red-400/70 hover:text-red-400 transition-colors w-full text-right disabled:opacity-40"
         >
           Cancel order
         </button>
@@ -137,56 +149,68 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
   );
 }
 
+/* ─── Combined session card (original + any add-ons) ── */
 function OrderCard({ order, addons, onStatusChange, onCloseTable, updating, closingTable }) {
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
   const sessionKey = String(order.session?._id ?? order.session ?? '');
-
-  // Determine if all orders in this card are served/terminal so Close Table can show
-  const allTerminal = ['served', 'completed', 'cancelled'].includes(order.status) &&
+  const allTerminal =
+    ['served', 'completed', 'cancelled'].includes(order.status) &&
     (addons ?? []).every(a => ['served', 'completed', 'cancelled'].includes(a.status));
 
   return (
-    <div className={`border rounded-xl p-4 space-y-3 ${cfg.color} transition-all`}>
-      {/* Card header */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-bold text-white text-base">
-          Table {order.table?.table_number ?? order.table_number ?? '?'}
-        </span>
-        {addons?.length > 0 && (
-          <span className="text-xs text-slate-400">{1 + addons.length} batches</span>
+    <div className="bg-slate-900 border border-white/10 rounded-xl overflow-hidden transition-all duration-200">
+      {/* Status colour stripe */}
+      <div className={`h-0.5 w-full bg-gradient-to-r ${cfg.stripe}`} />
+
+      <div className="p-4 space-y-3">
+        {/* Card header */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-bold text-white text-sm">
+            Table {order.table?.table_number ?? order.table_number ?? '?'}
+          </span>
+          {addons?.length > 0 && (
+            <span className="text-[11px] text-slate-500 bg-white/5 border border-white/10 rounded-full px-2 py-0.5">
+              {1 + addons.length} batches
+            </span>
+          )}
+        </div>
+
+        {/* Original order */}
+        <OrderStatusRow
+          order={order}
+          onStatusChange={onStatusChange}
+          updating={updating}
+          label={addons?.length > 0 ? 'Order' : null}
+        />
+
+        {/* Add-on batches */}
+        {addons?.map((addon, idx) => (
+          <div key={addon._id} className="pt-3 border-t border-white/5">
+            <OrderStatusRow
+              order={addon}
+              onStatusChange={onStatusChange}
+              updating={updating}
+              label={`Add-on${addons.length > 1 ? ` ${idx + 1}` : ''}`}
+            />
+          </div>
+        ))}
+
+        {/* Close Table */}
+        {allTerminal && sessionKey && (
+          <button
+            onClick={() => onCloseTable(sessionKey)}
+            disabled={closingTable === sessionKey}
+            className="w-full py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white border border-white/10 hover:border-white/20 bg-white/3 hover:bg-white/8 transition-all duration-150 mt-1 disabled:opacity-40"
+          >
+            {closingTable === sessionKey ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="w-3 h-3 border-2 border-slate-400/40 border-t-slate-400 rounded-full animate-spin inline-block" />
+                Closing…
+              </span>
+            ) : '🔒 Close Table'}
+          </button>
         )}
       </div>
-
-      {/* Original order */}
-      <OrderStatusRow
-        order={order}
-        onStatusChange={onStatusChange}
-        updating={updating}
-        label={addons?.length > 0 ? 'Order' : null}
-      />
-
-      {/* Add-on orders */}
-      {addons?.map((addon, idx) => (
-        <div key={addon._id} className="pt-3 border-t border-white/10">
-          <OrderStatusRow
-            order={addon}
-            onStatusChange={onStatusChange}
-            updating={updating}
-            label={`Add-on${addons.length > 1 ? ` ${idx + 1}` : ''}`}
-          />
-        </div>
-      ))}
-
-      {/* Close Table — only when all orders in the session are terminal */}
-      {allTerminal && sessionKey && (
-        <button
-          onClick={() => onCloseTable(sessionKey)}
-          disabled={closingTable === sessionKey}
-          className="text-xs text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 transition-colors w-full py-1.5 rounded-lg mt-1"
-        >
-          {closingTable === sessionKey ? 'Closing…' : '🔒 Close Table'}
-        </button>
-      )}
     </div>
   );
 }
@@ -202,7 +226,6 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async (quiet = false) => {
     try {
       const incoming = await getDashOrders();
-
       const incomingIds = new Set(incoming.map(o => o._id));
       const brandNew = [...incomingIds].filter(id => !prevIdsRef.current.has(id));
       if (brandNew.length > 0 && prevIdsRef.current.size > 0) {
@@ -210,7 +233,6 @@ export default function OrdersPage() {
         setTimeout(() => setNewIds(new Set()), 4000);
       }
       prevIdsRef.current = incomingIds;
-
       setOrders(incoming);
       if (!quiet) setLastRefresh(new Date());
     } catch (err) {
@@ -229,12 +251,7 @@ export default function OrdersPage() {
     try {
       const payload = { status };
       if (prepTime != null) payload.estimated_prep_time = prepTime;
-      await apiCaller({
-        method:   'PUT',
-        endpoint: `/api/restaurant-dash/orders/${orderId}/status`,
-        payload,
-        useAdmin: true,
-      });
+      await apiCaller({ method: 'PUT', endpoint: `/api/restaurant-dash/orders/${orderId}/status`, payload, useAdmin: true });
       await fetchOrders(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status.');
@@ -255,7 +272,6 @@ export default function OrdersPage() {
     }
   };
 
-  // Build a session → add-ons map so add-ons are embedded in the original order's card
   const addonsBySession = {};
   orders.forEach(o => {
     if (!o.is_addon) return;
@@ -265,51 +281,75 @@ export default function OrdersPage() {
     addonsBySession[key].push(o);
   });
 
-  // Only original (non-addon) orders appear as standalone cards in the Kanban
   const byStatus = (status) => orders.filter(o => o.status === status && !o.is_addon);
   const activeCount = orders.filter(o => !['served', 'completed', 'cancelled'].includes(o.status)).length;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Live Orders</h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            {activeCount} active · auto-refreshes every 10s
-            {lastRefresh && <span className="ml-2 text-slate-600">· last at {lastRefresh.toLocaleTimeString()}</span>}
-          </p>
+          <h1
+            className="text-2xl font-bold"
+            style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          >
+            Live Orders
+          </h1>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {activeCount > 0 && (
+              <span
+                className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: 'var(--color-brand-primary-20, rgba(249,115,22,0.2))', color: 'var(--color-brand-primary, #f97316)' }}
+              >
+                {activeCount} active
+              </span>
+            )}
+            <span className="text-slate-500 text-xs">Auto-refreshes every 10s</span>
+            {lastRefresh && (
+              <span className="text-slate-600 text-xs">· {lastRefresh.toLocaleTimeString()}</span>
+            )}
+          </div>
         </div>
         <button
           onClick={() => fetchOrders()}
-          className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all duration-150 shrink-0"
         >
-          ↻ Refresh
+          <span>↻</span> Refresh
         </button>
       </div>
 
-      {/* Kanban columns */}
+      {/* ── Kanban ─────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {STATUSES.map(status => {
           const cfg = STATUS_CONFIG[status];
           const cols = byStatus(status);
           return (
             <div key={status} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-300">{cfg.label}</h2>
+              {/* Column header */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
+                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{cfg.label}</h2>
+                </div>
                 {cols.length > 0 && (
-                  <span className="text-xs bg-white/10 text-slate-400 px-2 py-0.5 rounded-full">{cols.length}</span>
+                  <span className="w-5 h-5 rounded-full bg-white/10 text-slate-400 text-[11px] font-bold flex items-center justify-center">
+                    {cols.length}
+                  </span>
                 )}
               </div>
+
+              {/* Cards */}
               <div className="space-y-3 min-h-[80px]">
                 {cols.length === 0 ? (
-                  <div className="border border-dashed border-white/10 rounded-xl h-16 flex items-center justify-center">
-                    <span className="text-slate-600 text-xs">Empty</span>
+                  <div className="border border-dashed border-white/8 rounded-xl h-14 flex items-center justify-center">
+                    <span className="text-slate-700 text-xs">Empty</span>
                   </div>
                 ) : cols.map(order => (
                   <div
                     key={order._id}
-                    className={newIds.has(order._id) ? 'ring-2 ring-orange-500 ring-offset-1 ring-offset-slate-950 rounded-xl animate-pulse' : ''}
+                    className={newIds.has(order._id)
+                      ? 'ring-2 ring-orange-500/70 ring-offset-2 ring-offset-slate-950 rounded-xl'
+                      : ''}
                   >
                     <OrderCard
                       order={order}
@@ -327,10 +367,12 @@ export default function OrdersPage() {
         })}
       </div>
 
+      {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {orders.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-48 text-center">
-          <p className="text-4xl mb-3">🍽️</p>
-          <p className="text-slate-400">No orders today yet. Waiting for customers…</p>
+        <div className="bg-slate-900 border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 text-center gap-3">
+          <span className="text-5xl">🍽️</span>
+          <p className="text-white font-semibold">No orders yet</p>
+          <p className="text-slate-500 text-sm">Waiting for customers to place orders…</p>
         </div>
       )}
     </div>

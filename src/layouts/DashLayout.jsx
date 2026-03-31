@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { getDashProfile } from '../services/adminService';
 import { authStore } from '../store/authStore';
-import { getInitials } from '../utils/formatters';
 
 const NAV = [
   { to: '/dashboard',       label: 'Live Orders', icon: '🍽️', end: true },
@@ -29,26 +28,46 @@ export default function DashLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex">
-      {/* Sidebar overlay (mobile) */}
+    <div className="min-h-screen bg-slate-950 text-white flex" style={{ fontFamily: "'Outfit', sans-serif" }}>
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-60 bg-slate-900 border-r border-white/10 flex flex-col transition-transform duration-300
+        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-slate-900 border-r border-white/10 flex flex-col transition-transform duration-300
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="px-6 py-5 border-b border-white/10">
-          <h1 className="text-base font-bold text-orange-500 truncate">{restaurantName || 'Dashboard'}</h1>
-          <p className="text-xs text-slate-400 mt-0.5">Restaurant Panel</p>
+        {/* Brand / restaurant identity */}
+        <div
+          className="px-5 py-5 border-b border-white/10 shrink-0"
+          style={{ borderTop: '2.5px solid var(--color-brand-primary, #f97316)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 select-none"
+              style={{ background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)' }}
+            >
+              {restaurantName?.charAt(0)?.toUpperCase() || 'D'}
+            </div>
+            <div className="min-w-0">
+              <p
+                className="text-sm font-bold truncate"
+                style={{ background: 'linear-gradient(90deg, #fb923c, #fdba74)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              >
+                {restaurantName || 'Dashboard'}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5 tracking-wide uppercase">Restaurant Panel</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
           {NAV.map(item => (
             <NavLink
               key={item.to}
@@ -56,48 +75,78 @@ export default function DashLayout() {
               end={item.end}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
                 ${isActive
-                  ? 'bg-orange-500/20 text-orange-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-white'}`
+                  ? 'bg-orange-500/15 text-orange-400 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.2)]'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white'}`
               }
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className="text-base w-5 text-center">{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/10">
+        {/* Footer — user info + logout */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-2 shrink-0">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)',
+                boxShadow: '0 0 0 2px rgba(249,115,22,0.25)',
+              }}
+            >
+              {name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm text-slate-300 truncate">{name}</span>
+          </div>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-150"
           >
-            <span className="text-lg">🚪</span>
+            <span className="text-base w-5 text-center">🚪</span>
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* ── Main ────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="bg-slate-900 border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <header className="bg-slate-900/95 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
             <button
-              className="lg:hidden text-slate-400 hover:text-white"
+              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               onClick={() => setSidebarOpen(true)}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span className="text-sm text-slate-400 font-medium">
-              {restaurantName ? `${restaurantName} — Dashboard` : 'Restaurant Dashboard'}
-            </span>
+
+            {restaurantName && (
+              <span
+                className="text-sm font-semibold hidden sm:block"
+                style={{ background: 'linear-gradient(90deg, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+              >
+                {restaurantName}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-sm font-bold text-orange-400">
+
+          {/* Right: user chip */}
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5"
+          >
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)',
+                boxShadow: '0 0 0 1.5px rgba(249,115,22,0.3)',
+              }}
+            >
               {name.charAt(0).toUpperCase()}
             </div>
             <span className="text-sm text-slate-300 hidden sm:block">{name}</span>
