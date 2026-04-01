@@ -29,6 +29,9 @@ export const restaurantStore = create(
         tableNumber: null,
         tableName:   '',
 
+        /** Menu categories → items (session; not persisted — see partialize) */
+        menu: {},
+
         // ── Setters ──────────────────────────────────────────────────────────
         setRestaurant: (restaurant) =>
           set(() => ({
@@ -53,6 +56,8 @@ export const restaurantStore = create(
             tableName:   table.name,
           })),
 
+        setMenu: (menu) => set(() => ({ menu: menu && typeof menu === 'object' ? menu : {} })),
+
         reset: () =>
           set(() => ({
             id: null, name: '', slug: '', tagline: '',
@@ -65,9 +70,16 @@ export const restaurantStore = create(
             acceptsOnlinePayment: false,
             aiWelcomeMessage:     '',
             tableId: null, tableNumber: null, tableName: '',
+            menu: {},
           })),
       }),
-      { name: 'RestaurantStore' }
+      {
+        name: 'RestaurantStore',
+        partialize: (state) => {
+          const { menu: _m, ...rest } = state;
+          return rest;
+        },
+      }
     )
   )
 );

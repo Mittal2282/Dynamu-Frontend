@@ -25,17 +25,17 @@ export function VegBadge({ isVeg, size = 'md', className='' }) {
  *
  * @param {{ count: number, className?: string }} props
  */
-export function CountBadge({ count, className = '' }) {
-  if (!count) return null;
+export function CountBadge({ count, className = '', showZero = false }) {
+  if (!showZero && !count) return null;
   return (
     <span
       className={[
         'absolute -top-2 -right-2',
-        'bg-brand text-white',
-        'text-[10px] font-bold w-5 h-5 rounded-full',
-        'flex items-center justify-center',
+        'text-[10px] font-bold min-w-[1.25rem] h-5 px-0.5 rounded-full',
+        'flex items-center justify-center text-white',
         className,
       ].join(' ')}
+      style={{ backgroundColor: 'var(--color-brand-primary)' }}
     >
       {count > 99 ? '99+' : count}
     </span>

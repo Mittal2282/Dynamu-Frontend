@@ -45,6 +45,10 @@ export function buildCssTokens(brand = BRAND_DEFAULTS) {
     '--color-brand-neutral-10': `${brand.neutral}1A`,
     '--color-brand-neutral-20': `${brand.neutral}33`,
     '--color-brand-neutral-40': `${brand.neutral}66`,
+
+    // Customer bottom nav — derived from neutral so it tracks dynamic theme
+    '--color-nav-tile-active': `color-mix(in srgb, ${brand.neutral} 88%, white 12%)`,
+    '--color-nav-muted':       `color-mix(in srgb, ${brand.neutral} 28%, white 72%)`,
   };
 }
 

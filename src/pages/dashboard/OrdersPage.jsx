@@ -1,16 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getDashOrders, closeTableSession } from '../../services/adminService';
 import { apiCaller } from '../../api/apiCaller';
-
-const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served'];
-
-const STATUS_CONFIG = {
-  pending:   { label: 'New',       dot: 'bg-yellow-400',  badge: 'bg-yellow-500/20 text-yellow-400',  stripe: 'from-yellow-500 to-yellow-400', next: 'confirmed',  nextLabel: 'Confirm' },
-  confirmed: { label: 'Confirmed', dot: 'bg-blue-400',    badge: 'bg-blue-500/20 text-blue-400',      stripe: 'from-blue-500 to-blue-400',    next: 'preparing',  nextLabel: 'Start Preparing' },
-  preparing: { label: 'Preparing', dot: 'bg-purple-400',  badge: 'bg-purple-500/20 text-purple-400',  stripe: 'from-purple-500 to-purple-400', next: 'ready',      nextLabel: 'Mark Ready' },
-  ready:     { label: 'Ready',     dot: 'bg-green-400',   badge: 'bg-green-500/20 text-green-400',    stripe: 'from-green-500 to-green-400',  next: 'served',     nextLabel: 'Mark Served' },
-  served:    { label: 'Served',    dot: 'bg-slate-400',   badge: 'bg-slate-500/20 text-slate-300',    stripe: 'from-slate-500 to-slate-600',  next: null,         nextLabel: null },
-};
+import {
+  ORDER_STATUS_CONFIG as STATUS_CONFIG,
+  ORDER_STATUSES as STATUSES,
+  getOrderStatusConfig,
+} from '../../constants/orderStatusConfig';
 
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
@@ -25,7 +20,7 @@ function formatTime(date) {
 
 /* ─── Inline status controls (used for both original + add-on batches) ── */
 function OrderStatusRow({ order, onStatusChange, updating, label }) {
-  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
+  const cfg = getOrderStatusConfig(order.status);
   const [showPrepInput, setShowPrepInput] = useState(false);
   const [prepTime, setPrepTime] = useState('');
 
@@ -151,7 +146,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
 
 /* ─── Combined session card (original + any add-ons) ── */
 function OrderCard({ order, addons, onStatusChange, onCloseTable, updating, closingTable }) {
-  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.served;
+  const cfg = getOrderStatusConfig(order.status);
   const sessionKey = String(order.session?._id ?? order.session ?? '');
   const allTerminal =
     ['served', 'completed', 'cancelled'].includes(order.status) &&

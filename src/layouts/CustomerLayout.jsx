@@ -3,33 +3,10 @@ import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import AIChatDrawer from '../components/AIChatDrawer';
 import BottomNavigator from '../components/BottomNavigator';
 import CartDrawer from '../components/CartDrawer';
-import { CountBadge } from '../components/ui/Badge';
+import Header from '../components/Header';
 import Button from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
-
-/* ─── Header icons ──────────────────────────────────────────────────────────── */
-function IconCutlery({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="3" y1="2" x2="3" y2="22" />
-      <path d="M7 2v8a4 4 0 0 1-4 4" />
-      <line x1="7" y1="2" x2="7" y2="22" />
-      <path d="M21 2l-1 10a2 2 0 0 1-2 2h0a2 2 0 0 1-2-2L15 2" />
-      <line x1="18" y1="14" x2="18" y2="22" />
-    </svg>
-  );
-}
-
-function IconCartBag({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-      <line x1="3" y1="6" x2="21" y2="6" />
-      <path d="M16 10a4 4 0 0 1-8 0" />
-    </svg>
-  );
-}
 import useTheme from '../hooks/useTheme';
 import {
   getCart, placeOrder, startSession, syncCart,
@@ -53,11 +30,10 @@ export default function CustomerLayout() {
   const items = useCartItems();
   const count = useCartCount();
   const total = useCartTotal();
-  const { name, tagline, currencySymbol, tableNumber: storedTable } = restaurantStore();
+  const { name, tagline, currencySymbol, tableNumber: storedTable, menu } = restaurantStore();
 
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
-  const [menu, setMenu]         = useState({});
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [ordering, setOrdering]     = useState(false);
@@ -86,8 +62,7 @@ export default function CustomerLayout() {
         authStore.getState().setSessionToken(sessionData.session_token);
         restaurantStore.getState().setRestaurant(sessionData.restaurant);
         restaurantStore.getState().setTable(sessionData.table);
-
-        setMenu(sessionData.menu);
+        restaurantStore.getState().setMenu(sessionData.menu ?? {});
 
         // Connect socket — listeners are attached in a separate effect below
         connectSocket(sessionData.session_token);
@@ -222,48 +197,11 @@ export default function CustomerLayout() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-slate-950 text-white flex flex-col">
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="bg-[#0a0a0a] px-5 py-4 sticky top-0 z-20 border-b border-white/[0.06]">
-        <div className="flex items-center justify-between">
-
-          {/* Branding */}
-          <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'color-mix(in srgb, var(--color-brand-primary) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--color-brand-primary) 30%, transparent)' }}
-            >
-              <IconCutlery className="w-[18px] h-[18px]" style={{ color: 'var(--color-brand-primary)' }} />
-            </div>
-            <div>
-              <p
-                className="text-[15px] font-bold uppercase tracking-wider leading-tight"
-                style={{ color: 'var(--color-brand-primary)' }}
-              >
-                {name || 'Restaurant'}
-              </p>
-              <p className="text-[11px] text-slate-500 tracking-wide mt-0.5">
-                Table {storedTable ?? tableNumber}
-              </p>
-            </div>
-          </div>
-
-          {/* Cart icon */}
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="relative w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-            aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
-          >
-            <IconCartBag className="w-5 h-5 text-slate-300" />
-            {count > 0 && <CountBadge count={count} />}
-          </button>
-
-        </div>
-      </div>
+      <Header variant="customer" onCartClick={() => setDrawerOpen(true)} />
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion }} />
+        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion, basePath }} />
       </div>
 
       {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}

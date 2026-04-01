@@ -70,6 +70,32 @@ export async function getCustomerOrders() {
 }
 
 /**
+ * Request final bill / end the customer table session.
+ * @param {{ reason?: string }} [payload]
+ * @returns {Promise<{ success?: boolean, message?: string }>}
+ */
+export async function endCustomerSession(payload = {}) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.SESSION_END,
+    payload:  { reason: 'request_bill', ...payload },
+  });
+  return data.data ?? data;
+}
+
+/**
+ * Request final bill (customer). Prefer this for QR flow; backend may alias SESSION_END.
+ * @returns {Promise<*>}
+ */
+export async function requestBill() {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.REQUEST_BILL,
+  });
+  return data.data ?? data;
+}
+
+/**
  * Get AI-powered cart suggestions (3 complementary items).
  * @param {string[]} cartItemIds
  * @returns {Promise<Array>}

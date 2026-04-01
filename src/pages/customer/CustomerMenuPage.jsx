@@ -9,7 +9,10 @@ import { restaurantStore } from '../../store/restaurantStore';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function CustomerMenuPage() {
-  const { menu } = useOutletContext();
+  const menuFromStore = restaurantStore((s) => s.menu);
+  const { menu: menuFromOutlet } = useOutletContext() || {};
+  const menu =
+    menuFromStore && Object.keys(menuFromStore).length > 0 ? menuFromStore : (menuFromOutlet ?? {});
   const { currencySymbol } = restaurantStore();
   const count = useCartCount();
 

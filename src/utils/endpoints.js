@@ -7,6 +7,8 @@
 export const ENDPOINTS = {
   // Session
   SESSION_START:   '/api/customer/session/start',
+  SESSION_END:     '/api/customer/session/end',
+  REQUEST_BILL:    '/api/customer/bill/request',
 
   // Cart
   CART:            '/api/customer/cart',

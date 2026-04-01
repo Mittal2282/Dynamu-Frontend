@@ -1,17 +1,17 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useParams, useLocation } from 'react-router-dom';
 
 /* ─── SVG Icons ─────────────────────────────────────────────────────────────── */
-function IconHome({ className }) {
+function IconHome({ className, style }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z" />
     </svg>
   );
 }
 
-function IconMenu({ className }) {
+function IconMenu({ className, style }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
       <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
       <line x1="6" y1="1" x2="6" y2="4" />
@@ -21,9 +21,9 @@ function IconMenu({ className }) {
   );
 }
 
-function IconAI({ className }) {
+function IconAI({ className, style }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
       <path d="M8 14s1.5 2 4 2 4-2 4-2" />
       <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="3" strokeLinecap="round" />
@@ -32,9 +32,9 @@ function IconAI({ className }) {
   );
 }
 
-function IconOrders({ className }) {
+function IconOrders({ className, style }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <line x1="16" y1="13" x2="8" y2="13" />
@@ -44,89 +44,144 @@ function IconOrders({ className }) {
   );
 }
 
-/* ─── BottomNavigator ───────────────────────────────────────────────────────── */
 /**
  * @param {string}   basePath    — e.g. "/:qrCodeId/:tableNumber"
- * @param {boolean}  aiChatOpen  — whether the AI drawer is open
- * @param {function} onChatClick — open AI chat drawer
- * @param {function} onNavigate  — called before any route navigation (close drawers)
+ * @param {boolean}  aiChatOpen
+ * @param {function} onChatClick
+ * @param {function} onNavigate
  */
-export default function BottomNavigator({ basePath, aiChatOpen, onChatClick, onNavigate }) {
+export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, onChatClick, onNavigate }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { qrCodeId, tableNumber } = useParams();
+  const basePath =
+    basePathProp ||
+    (qrCodeId != null && tableNumber != null ? `/${qrCodeId}/${tableNumber}` : '/');
 
-  const p = location.pathname;
-  const isHome   = p === basePath || p === `${basePath}/`;
-  const isMenu   = p === `${basePath}/menu`;
-  const isOrders = p === `${basePath}/orders`;
+  const base = basePath.replace(/\/$/, '');
 
-  const handleNav = (path) => {
-    onNavigate?.();
-    navigate(path);
+  const tabClass = ({ isActive }) => {
+    const active = isActive && !aiChatOpen;
+    return [
+      'flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-neutral)]',
+      'transition-opacity active:opacity-80 no-underline',
+    ].join(' ');
   };
 
-  const tabs = [
-    {
-      key:    'home',
-      label:  'Home',
-      Icon:   IconHome,
-      active: isHome && !aiChatOpen,
-      onClick: () => handleNav(basePath),
-    },
-    {
-      key:    'menu',
-      label:  'Menu',
-      Icon:   IconMenu,
-      active: isMenu && !aiChatOpen,
-      onClick: () => handleNav(`${basePath}/menu`),
-    },
-    {
-      key:    'ai',
-      label:  'AI Assistant',
-      Icon:   IconAI,
-      active: !!aiChatOpen,
-      onClick: onChatClick,
-    },
-    {
-      key:    'orders',
-      label:  'Orders',
-      Icon:   IconOrders,
-      active: isOrders && !aiChatOpen,
-      onClick: () => handleNav(`${basePath}/orders`),
-    },
-  ];
+  const innerClass = (active) =>
+    [
+      'w-full flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1 transition-colors duration-200',
+    ].join(' ');
+
+  const iconStyle = (active) => ({
+    color: active ? 'var(--color-brand-primary)' : 'var(--color-nav-muted)',
+  });
+
+  const labelStyle = (active) => ({
+    color: active ? 'var(--color-brand-primary)' : 'var(--color-nav-muted)',
+  });
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="max-w-md mx-auto bg-[#0d0d0d] rounded-t-2xl overflow-hidden border-t border-white/[0.06]">
-        <div className="flex">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={tab.onClick}
-              className="flex-1 flex flex-col items-center gap-1.5 pt-2.5 pb-3.5 relative focus:outline-none active:opacity-70 transition-opacity"
-            >
-              {/* Full-width active stripe across the top of the tab */}
-              <span
-                className="absolute inset-x-0 top-0 h-[2px] transition-opacity duration-200"
-                style={{
-                  background: 'var(--color-brand-primary)',
-                  opacity: tab.active ? 1 : 0,
-                }}
-              />
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+      <div
+        className="w-full max-w-md pointer-events-auto overflow-hidden"
+        style={{
+          borderTop: '2.5px solid var(--color-brand-primary)',
+          backgroundColor: 'var(--color-brand-neutral)',
+        }}
+      >
+        <div className="flex items-stretch px-1 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <NavLink
+            to={base}
+            end
+            onClick={() => onNavigate?.()}
+            className={tabClass}
+          >
+            {({ isActive }) => {
+              const active = isActive && !aiChatOpen;
+              return (
+                <div
+                  className={innerClass(active)}
+                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                >
+                  <IconHome className="w-5 h-5 shrink-0" style={iconStyle(active)} />
+                  <span
+                    className="text-[8px] font-semibold uppercase tracking-[0.06em] leading-tight text-center max-w-full truncate"
+                    style={labelStyle(active)}
+                  >
+                    Home
+                  </span>
+                </div>
+              );
+            }}
+          </NavLink>
 
-              <tab.Icon
-                className="w-5 h-5 transition-colors duration-200"
-                style={{ color: tab.active ? 'var(--color-brand-primary)' : '#475569' }}
-              />
+          <NavLink
+            to={`${base}/menu`}
+            onClick={() => onNavigate?.()}
+            className={tabClass}
+          >
+            {({ isActive }) => {
+              const active = isActive && !aiChatOpen;
+              return (
+                <div
+                  className={innerClass(active)}
+                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                >
+                  <IconMenu className="w-5 h-5 shrink-0" style={iconStyle(active)} />
+                  <span
+                    className="text-[8px] font-semibold uppercase tracking-[0.06em] leading-tight text-center max-w-full truncate"
+                    style={labelStyle(active)}
+                  >
+                    Menu
+                  </span>
+                </div>
+              );
+            }}
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={onChatClick}
+            className="flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] transition-opacity active:opacity-80"
+          >
+            <div
+              className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1"
+              style={{ background: aiChatOpen ? 'var(--color-nav-tile-active)' : 'transparent' }}
+            >
+              <IconAI className="w-5 h-5 shrink-0" style={iconStyle(aiChatOpen)} />
               <span
-                className="text-[9px] font-semibold uppercase tracking-widest transition-colors duration-200"
-                style={{ color: tab.active ? 'var(--color-brand-primary)' : '#475569' }}
+                className="text-[8px] font-semibold uppercase tracking-[0.06em] leading-tight text-center max-w-full truncate"
+                style={labelStyle(aiChatOpen)}
               >
-                {tab.label}
+                AI Assistant
               </span>
-            </button>
-          ))}
+            </div>
+          </button>
+
+          <NavLink
+            to={`${base}/orders`}
+            onClick={() => onNavigate?.()}
+            className={tabClass}
+          >
+            {({ isActive }) => {
+              const active = isActive && !aiChatOpen;
+              return (
+                <div
+                  className={innerClass(active)}
+                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                >
+                  <IconOrders className="w-5 h-5 shrink-0" style={iconStyle(active)} />
+                  <span
+                    className="text-[8px] font-semibold uppercase tracking-[0.06em] leading-tight text-center max-w-full truncate"
+                    style={labelStyle(active)}
+                  >
+                    Orders
+                  </span>
+                </div>
+              );
+            }}
+          </NavLink>
         </div>
       </div>
     </nav>
