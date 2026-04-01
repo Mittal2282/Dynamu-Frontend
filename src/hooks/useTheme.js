@@ -6,7 +6,7 @@ import { buildCssTokens, applyCssTokens, BRAND_DEFAULTS } from '../theme/tokens'
  * useTheme — applies restaurant brand colors as CSS variables on mount
  * and whenever the restaurant store changes.
  *
- * Mount this once at the top level of the customer-facing app (QRLandingPage).
+ * Mount this once at the top level of the customer-facing app (e.g. CustomerLayout).
  * The CSS variables are then available to Tailwind via the `brand-*` color tokens.
  */
 export default function useTheme() {
