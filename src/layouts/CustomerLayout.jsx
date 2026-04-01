@@ -7,6 +7,29 @@ import { CountBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
+
+/* ─── Header icons ──────────────────────────────────────────────────────────── */
+function IconCutlery({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="2" x2="3" y2="22" />
+      <path d="M7 2v8a4 4 0 0 1-4 4" />
+      <line x1="7" y1="2" x2="7" y2="22" />
+      <path d="M21 2l-1 10a2 2 0 0 1-2 2h0a2 2 0 0 1-2-2L15 2" />
+      <line x1="18" y1="14" x2="18" y2="22" />
+    </svg>
+  );
+}
+
+function IconCartBag({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  );
+}
 import useTheme from '../hooks/useTheme';
 import {
   getCart, placeOrder, startSession, syncCart,
@@ -137,62 +160,45 @@ export default function CustomerLayout() {
 
   const drawerSubtitle = name ? `${name} · Table ${storedTable ?? tableNumber}` : '';
 
-  const TABS = [
-    { label: 'Home',      path: basePath,            active: isHome },
-    { label: 'Menu',      path: `${basePath}/menu`,   active: isMenu },
-    { label: 'My Orders', path: `${basePath}/orders`, active: isOrders },
-  ];
-
   return (
     <div className="max-w-md mx-auto min-h-screen bg-slate-950 text-white flex flex-col">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 px-4 pt-6 pb-3 sticky top-0 z-20 border-b border-white/5">
+      <div className="bg-[#0a0a0a] px-5 py-4 sticky top-0 z-20 border-b border-white/[0.06]">
         <div className="flex items-center justify-between">
-          <div>
-            <Text as="h1" size="xl" weight="bold">{name}</Text>
-            {tagline && <Text size="xs" color="muted" className="mt-0.5">{tagline}</Text>}
-            <Text size="xs" color="secondary" className="mt-0.5">
-              Table {storedTable ?? tableNumber}
-            </Text>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAiChatOpen(true)}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xl active:scale-95 transition-transform"
-              aria-label="AI Menu Assistant"
+          {/* Branding */}
+          <div className="flex items-center gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'color-mix(in srgb, var(--color-brand-primary) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--color-brand-primary) 30%, transparent)' }}
             >
-              🤖
-            </button>
-            {count > 0 && (
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="relative"
-                aria-label={`View cart — ${count} items`}
+              <IconCutlery className="w-[18px] h-[18px]" style={{ color: 'var(--color-brand-primary)' }} />
+            </div>
+            <div>
+              <p
+                className="text-[15px] font-bold uppercase tracking-wider leading-tight"
+                style={{ color: 'var(--color-brand-primary)' }}
               >
-                <span className="text-2xl">🛒</span>
-                <CountBadge count={count} />
-              </button>
-            )}
+                {name || 'Restaurant'}
+              </p>
+              <p className="text-[11px] text-slate-500 tracking-wide mt-0.5">
+                Table {storedTable ?? tableNumber}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Tab navigation */}
-        <div className="flex mt-3 border-b border-white/10">
-          {TABS.map(tab => (
-            <button
-              key={tab.path}
-              onClick={() => navigate(tab.path)}
-              className={`flex-1 py-2 text-sm font-semibold transition-colors ${
-                tab.active
-                  ? 'text-orange-400 border-b-2 border-orange-400'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {/* Cart icon */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
+          >
+            <IconCartBag className="w-5 h-5 text-slate-300" />
+            {count > 0 && <CountBadge count={count} />}
+          </button>
+
         </div>
       </div>
 
@@ -201,8 +207,8 @@ export default function CustomerLayout() {
         <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems }} />
       </div>
 
-      {/* ── Cart bottom bar — only on Menu route ──────────────────────────── */}
-      {count > 0 && isMenu && (
+      {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}
+      {count > 0 && !isOrders && (
         <div className="fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
           <div className="w-full max-w-md bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-brand-primary-40">
             <div>
@@ -225,10 +231,10 @@ export default function CustomerLayout() {
 
       {/* ── Bottom navigator ──────────────────────────────────────────────── */}
       <BottomNavigator
-        activeTab={aiChatOpen ? 'chat' : drawerOpen ? 'cart' : 'menu'}
-        onMenuClick={() => { setAiChatOpen(false); setDrawerOpen(false); navigate(`${basePath}/menu`); }}
-        onChatClick={() => { setAiChatOpen(true); setDrawerOpen(false); }}
-        onCartClick={() => { setDrawerOpen(true); setAiChatOpen(false); }}
+        basePath={basePath}
+        aiChatOpen={aiChatOpen}
+        onChatClick={() => { setAiChatOpen(v => !v); setDrawerOpen(false); }}
+        onNavigate={() => { setAiChatOpen(false); setDrawerOpen(false); }}
       />
 
       {/* ── Drawers ───────────────────────────────────────────────────────── */}
