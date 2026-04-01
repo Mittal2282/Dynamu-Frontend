@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { getDashMenu, updateDashMenuItem, toggleDashMenuItem } from '../../services/adminService';
+import { getDashMenu, updateDashMenuItem, toggleDashMenuItem, toggleChefsSpecial, toggleFeatured } from '../../services/adminService';
 
 const VEG_INDICATOR = { true: '🟢', false: '🔴' };
 
@@ -80,6 +80,30 @@ export default function MenuManagePage() {
       setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
     } catch {
       alert('Failed to toggle availability.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleToggleChefsSpecial = async (id) => {
+    setSaving(id);
+    try {
+      const updated = await toggleChefsSpecial(id);
+      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+    } catch {
+      alert('Failed to toggle Chef\'s Special.');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleToggleFeatured = async (id) => {
+    setSaving(id);
+    try {
+      const updated = await toggleFeatured(id);
+      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+    } catch {
+      alert('Failed to toggle Featured.');
     } finally {
       setSaving(null);
     }
@@ -223,6 +247,8 @@ export default function MenuManagePage() {
                   <th className="text-left px-4 py-3">Name</th>
                   <th className="text-left px-4 py-3 w-28">Price</th>
                   <th className="text-center px-4 py-3 w-28">Available</th>
+                  <th className="text-center px-4 py-3 w-28">Chef's Special</th>
+                  <th className="text-center px-4 py-3 w-24">Featured</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,6 +283,38 @@ export default function MenuManagePage() {
                         <span
                           className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
                             item.is_available ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleToggleChefsSpecial(item._id)}
+                        disabled={saving === item._id}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                          item.is_chefs_special ? 'bg-amber-500' : 'bg-slate-600'
+                        }`}
+                        title={item.is_chefs_special ? "Chef's Special — click to remove" : "Mark as Chef's Special"}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
+                            item.is_chefs_special ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleToggleFeatured(item._id)}
+                        disabled={saving === item._id}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                          item.is_featured ? 'bg-blue-500' : 'bg-slate-600'
+                        }`}
+                        title={item.is_featured ? 'Featured — click to unfeature' : 'Mark as Featured'}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
+                            item.is_featured ? 'translate-x-4' : 'translate-x-0'
                           }`}
                         />
                       </button>
