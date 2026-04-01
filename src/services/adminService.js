@@ -189,6 +189,32 @@ export async function toggleDashMenuItem(id) {
 }
 
 /**
+ * Toggle Chef's Special flag on a menu item.
+ * @param {string} id
+ */
+export async function toggleChefsSpecial(id) {
+  const data = await apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_MENU_CHEFS_SPECIAL(id),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
+ * Toggle Featured flag on a menu item.
+ * @param {string} id
+ */
+export async function toggleFeatured(id) {
+  const data = await apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_MENU_FEATURED(id),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
  * Fetch orders for a specific restaurant (superadmin).
  * @param {string} restaurantId
  */

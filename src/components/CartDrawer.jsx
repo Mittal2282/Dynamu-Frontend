@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cartStore } from '../store/cartStore';
 import { restaurantStore } from '../store/restaurantStore';
 import { formatCurrency } from '../utils/formatters';
@@ -7,16 +7,11 @@ import Button from './ui/Button';
 import Drawer from './ui/Drawer';
 import Modal from './ui/Modal';
 import Text from './ui/Text';
+import { getCartSuggestions } from '../services/customerService';
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 const SERVICE_CHARGE = 10; // fixed ₹10
 const TAX_RATE       = 0.05; // 5 %
-
-// Hardcoded "You might also like" items — swap for API call later
-const SUGGESTIONS = [
-  { _id: 'sug1', name: 'Truffle Infused Fries', is_veg: true },
-  { _id: 'sug2', name: 'Organic Matcha Latte',  is_veg: true },
-];
 
 /* ─── Qty stepper ──────────────────────────────────────────────────────────── */
 function Stepper({ qty, onAdd, onRemove }) {
@@ -155,7 +150,26 @@ export default function CartDrawer({
   subtitle    = '',
 }) {
   const { currencySymbol } = restaurantStore();
-  
+
+  // AI suggestions — stale-while-revalidate, no loader
+  const [suggestions, setSuggestions] = useState([]);
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (items.length === 0) { setSuggestions([]); return; }
+
+    // Don't clear stale suggestions — they stay visible until new ones arrive
+    debounceRef.current = setTimeout(() => {
+      getCartSuggestions(items.map(i => i._id))
+        .then(data => { if (data.length > 0) setSuggestions(data); })
+        .catch(() => {});
+    }, 800);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map(i => i._id).join(',')]);
+
   // Instruction Modal State
   const [instructionModalOpen, setInstructionModalOpen] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
@@ -234,22 +248,21 @@ export default function CartDrawer({
               ))}
             </div>
 
-            {/* You might also like */}
-            <div className="px-5 pt-4 pb-2">
-              <Text as="p" size="xs" weight="bold" color="white" className="opacity-30 uppercase tracking-widest mb-1">
-                You Might Also Like
-              </Text>
-              {SUGGESTIONS.map((s) => (
-                <SuggestionRow
-                  key={s._id}
-                  item={s}
-                  onAdd={(suggItem) => {
-                    // Suggestions don't have price/extra data yet; gracefully no-op or pass minimal obj
-                    onAdd({ ...suggItem, price: 0, qty: 0 });
-                  }}
-                />
-              ))}
-            </div>
+            {/* You might also like — shown only when suggestions are available */}
+            {suggestions.length > 0 && (
+              <div className="px-5 pt-4 pb-2">
+                <Text as="p" size="xs" weight="bold" color="white" className="opacity-30 uppercase tracking-widest mb-1">
+                  You Might Also Like
+                </Text>
+                {suggestions.map((s) => (
+                  <SuggestionRow
+                    key={s._id}
+                    item={s}
+                    onAdd={(suggItem) => onAdd({ ...suggItem, qty: 0 })}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Divider */}
             <div className="mx-5 my-2 border-t border-white/10" />

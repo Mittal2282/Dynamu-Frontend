@@ -29,10 +29,18 @@ export const ENDPOINTS = {
   DASH_PROFILE:    '/api/restaurant-dash/profile',
   DASH_ORDERS:     '/api/restaurant-dash/orders',
   DASH_STATS:      '/api/restaurant-dash/stats',
-  DASH_MENU:         '/api/restaurant-dash/menu',
-  DASH_MENU_ITEM:    (id) => `/api/restaurant-dash/menu/${id}`,
-  DASH_MENU_TOGGLE:  (id) => `/api/restaurant-dash/menu/${id}/toggle`,
-  DASH_CLOSE_SESSION:(id) => `/api/restaurant-dash/sessions/${id}/close`,
+  DASH_MENU:               '/api/restaurant-dash/menu',
+  DASH_MENU_ITEM:          (id) => `/api/restaurant-dash/menu/${id}`,
+  DASH_MENU_TOGGLE:        (id) => `/api/restaurant-dash/menu/${id}/toggle`,
+  DASH_MENU_CHEFS_SPECIAL: (id) => `/api/restaurant-dash/menu/${id}/chefs-special`,
+  DASH_MENU_FEATURED:      (id) => `/api/restaurant-dash/menu/${id}/featured`,
+  DASH_CLOSE_SESSION:      (id) => `/api/restaurant-dash/sessions/${id}/close`,
+
+  // Customer — special sections
+  CART_SUGGESTIONS:   '/api/customer/suggestions',
+  MENU_TRENDING:      '/api/customer/menu/trending',
+  MENU_CHEFS_SPECIAL: '/api/customer/menu/chefs-special',
+  MENU_FEATURED:      '/api/customer/menu/featured',
 
   // Superadmin
   SA_RESTAURANTS:  '/api/superadmin/restaurants',

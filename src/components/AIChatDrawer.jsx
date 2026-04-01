@@ -81,7 +81,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           setMessages(history.map(m => ({
             role:  m.role === 'user' ? 'user' : 'ai',
             text:  m.content,
-            items: [],
+            items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
           })));
         } else {
           return getWelcomeMessage();

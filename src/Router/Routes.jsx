@@ -2,7 +2,10 @@ import React from 'react';
 import { Route, Routes as RouterRoutes, Navigate } from 'react-router-dom';
 
 // Customer-facing
-import QRLandingPage from '../pages/QRLandingPage';
+import CustomerLayout from '../layouts/CustomerLayout';
+import CustomerHomePage from '../pages/customer/CustomerHomePage';
+import CustomerMenuPage from '../pages/customer/CustomerMenuPage';
+import CustomerOrdersPage from '../pages/customer/CustomerOrdersPage';
 
 // Auth
 import LoginPage from '../pages/auth/LoginPage';
@@ -26,7 +29,11 @@ export default function Routes() {
   return (
     <RouterRoutes>
       {/* QR scan entry point — /:qrCodeId/:tableNumber */}
-      <Route path="/:qrCodeId/:tableNumber" element={<QRLandingPage />} />
+      <Route path="/:qrCodeId/:tableNumber" element={<CustomerLayout />}>
+        <Route index element={<CustomerHomePage />} />
+        <Route path="menu"   element={<CustomerMenuPage />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
+      </Route>
 
       {/* Auth */}
       <Route path="/login" element={<LoginPage />} />

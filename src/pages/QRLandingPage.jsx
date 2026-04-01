@@ -8,7 +8,7 @@ import Button from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
 import useTheme from '../hooks/useTheme';
-import { getCart, placeOrder, startSession, syncCart, getCustomerOrders } from '../services/customerService';
+import { getCart, placeOrder, startSession, syncCart, getCustomerOrders, getTrendingItems, getChefsSpecials, getFeaturedItems } from '../services/customerService';
 import { authStore } from '../store/authStore';
 import { cartStore, useCartCount, useCartItems, useCartTotal } from '../store/cartStore';
 import { restaurantStore } from '../store/restaurantStore';
@@ -171,6 +171,41 @@ function MyOrders({ currencySymbol }) {
   );
 }
 
+/* ─── Special section horizontal card strip ─────────────────────────────────── */
+function MenuCardStrip({ title, items, currencySymbol }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="px-4 pt-4 pb-1">
+      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">{title}</p>
+      <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+        {items.map(item => (
+          <div
+            key={item._id}
+            className="w-36 shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col gap-2"
+          >
+            <div className="flex items-center gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: item.is_veg ? '#22c55e' : '#ef4444' }}
+              />
+              <Text as="p" size="xs" color="muted" className="truncate">{item.category || ''}</Text>
+            </div>
+            <Text as="p" size="sm" weight="semibold" color="white" className="line-clamp-2 leading-snug flex-1">
+              {item.name}
+            </Text>
+            <Text as="p" size="sm" weight="bold" color="brand">
+              {formatCurrency(item.price, currencySymbol)}
+            </Text>
+            <div className="flex justify-center">
+              <CartControl item={item} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── QR Landing Page ───────────────────────────────────────────────────────── */
 export default function QRLandingPage() {
   const { qrCodeId, tableNumber } = useParams();
@@ -190,8 +225,13 @@ export default function QRLandingPage() {
   const [drawerOpen, setDrawerOpen]     = useState(false);
   const [aiChatOpen, setAiChatOpen]     = useState(false);
   const [ordering, setOrdering]         = useState(false);
-  // 'menu' | 'orders'
-  const [activeTab, setActiveTab] = useState('menu');
+  // 'home' | 'menu' | 'orders'
+  const [activeTab, setActiveTab] = useState('home');
+
+  // Special menu sections
+  const [trendingItems, setTrendingItems]   = useState([]);
+  const [chefsSpecials, setChefsSpecials]   = useState([]);
+  const [featuredItems, setFeaturedItems]   = useState([]);
 
   // ── Search & filter state ────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
@@ -212,6 +252,11 @@ export default function QRLandingPage() {
 
         setMenu(sessionData.menu);
         setSelected(Object.keys(sessionData.menu)[0] ?? null);
+
+        // Fetch special sections in parallel (non-blocking)
+        getTrendingItems().then(setTrendingItems).catch(() => {});
+        getChefsSpecials().then(setChefsSpecials).catch(() => {});
+        getFeaturedItems().then(setFeaturedItems).catch(() => {});
 
         // Restore server-side cart
         try {
@@ -362,28 +407,25 @@ export default function QRLandingPage() {
           </div>
         </div>
 
-        {/* Menu / Orders tabs */}
+        {/* Home / Menu / Orders tabs */}
         <div className="flex mt-3 border-b border-white/10">
-          <button
-            onClick={() => setActiveTab('menu')}
-            className={`flex-1 py-2 text-sm font-semibold transition-colors ${
-              activeTab === 'menu'
-                ? 'text-orange-400 border-b-2 border-orange-400'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Menu
-          </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`flex-1 py-2 text-sm font-semibold transition-colors ${
-              activeTab === 'orders'
-                ? 'text-orange-400 border-b-2 border-orange-400'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            My Orders
-          </button>
+          {[
+            { key: 'home',   label: 'Home' },
+            { key: 'menu',   label: 'Menu' },
+            { key: 'orders', label: 'My Orders' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-2 text-sm font-semibold transition-colors ${
+                activeTab === tab.key
+                  ? 'text-orange-400 border-b-2 border-orange-400'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Search bar + filter button (only on menu tab) */}
@@ -425,7 +467,7 @@ export default function QRLandingPage() {
           </div>
         )}
 
-        {/* Category strip — hidden when search is active */}
+        {/* Category strip — menu tab only, hidden when search is active */}
         {activeTab === 'menu' && !isSearchActive && (
           <div className="flex gap-2 overflow-x-auto mt-3 pb-1 no-scrollbar">
             {categories.map(cat => (
@@ -449,7 +491,21 @@ export default function QRLandingPage() {
       {/* ── Content ─────────────────────────────────────────────────────────── */}
       {activeTab === 'orders' ? (
         <MyOrders currencySymbol={currencySymbol} />
+      ) : activeTab === 'home' ? (
+        /* ── Home tab ── */
+        <div className={`flex-1 ${count > 0 ? 'pb-40' : 'pb-24'} py-2`}>
+          <MenuCardStrip title="Featured ⭐" items={featuredItems} currencySymbol={currencySymbol} />
+          <MenuCardStrip title="Chef's Special 👨‍🍳" items={chefsSpecials} currencySymbol={currencySymbol} />
+          <MenuCardStrip title="Trending This Week 🔥" items={trendingItems} currencySymbol={currencySymbol} />
+          {featuredItems.length === 0 && chefsSpecials.length === 0 && trendingItems.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-6">
+              <span className="text-4xl">🍽️</span>
+              <Text color="muted" size="sm">Highlights will appear here soon.</Text>
+            </div>
+          )}
+        </div>
       ) : (
+        /* ── Menu tab ── */
         <div className={`flex-1 ${count > 0 ? 'pb-40' : 'pb-24'}`}>
 
           {/* Filter panel */}
