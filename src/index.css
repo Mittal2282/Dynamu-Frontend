@@ -107,6 +107,45 @@ body {
   to   { opacity: 1; transform: translateY(0);   }
 }
 
+/* AI Chat Drawer — welcome badge + entrance */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--color-brand-secondary-20);
+  }
+  50% {
+    opacity: 0.92;
+    box-shadow: 0 0 16px 2px var(--color-brand-secondary-40);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-chat-badge-pulse {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.ai-chat-fade-in-up {
+  animation: fadeInUp 0.55s ease-out both;
+}
+
+.ai-chat-gradient-text {
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, #ffb347 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 14px var(--color-brand-primary-40));
+}
+
 /* Brand button — inherits CSS var so it follows restaurant theme */
 .btn-brand {
   background-color: var(--color-brand-primary);

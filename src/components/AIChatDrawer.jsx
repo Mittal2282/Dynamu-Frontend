@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { VegBadge } from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Drawer from '../components/ui/Drawer';
@@ -10,6 +10,23 @@ import { chatStore } from '../store/chatStore';
 import { restaurantStore } from '../store/restaurantStore';
 import { QUICK_CHAT_CHIPS } from '../utils/constants';
 import { formatCurrency } from '../utils/formatters';
+
+const WELCOME_FALLBACK =
+  "I can help you find dishes based on your mood, budget, or dietary needs. What are you craving today?";
+
+const INFRA_FOOTER = 'SECURE AI INFRASTRUCTURE v2.4.0';
+
+function parseChatTimestamp(m) {
+  const raw = m.created_at ?? m.createdAt ?? m.timestamp ?? m.time;
+  if (raw == null) return undefined;
+  const t = typeof raw === 'number' ? raw : new Date(raw).getTime();
+  return Number.isFinite(t) ? t : undefined;
+}
+
+function formatMessageTime(ts) {
+  if (ts == null) return null;
+  return new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
 
 /* ─── Spice level dots ──────────────────────────────────────────────────────── */
 function SpiceIndicator({ level }) {
@@ -26,37 +43,216 @@ function SpiceIndicator({ level }) {
   );
 }
 
-/* ─── Recommendation card ───────────────────────────────────────────────────── */
-function ItemCard({ item }) {
+/* ─── Same stepper pattern as CartDrawer ────────────────────────────────────── */
+function Stepper({ qty, onAdd, onRemove }) {
+  return (
+    <div
+      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
+      style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+    >
+      <button
+        type="button"
+        onClick={onRemove}
+        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
+        aria-label="Remove one"
+      >
+        −
+      </button>
+      <Text
+        as="span"
+        size="sm"
+        weight="bold"
+        color="white"
+        className="w-8 text-center select-none"
+        style={{ lineHeight: '2rem' }}
+      >
+        {String(qty).padStart(2, '0')}
+      </Text>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
+        aria-label="Add one"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+/* ─── Full-width recommendation row (CartItem-style, no instructions) ─────── */
+function RecommendationRow({ item }) {
   const { add, remove, getQty } = cartStore();
   const { currencySymbol } = restaurantStore();
-  const q = getQty(item._id);
+  const id = item._id ?? item.id;
+  const q = getQty(id);
 
   return (
-    <div className="bg-slate-800/80 border border-white/10 rounded-xl p-3 flex items-center gap-3 min-w-[210px] max-w-[250px] shrink-0">
-      <VegBadge isVeg={item.is_veg} size="sm" />
+    <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+      <div className="flex items-start gap-3">
+        <VegBadge isVeg={item.is_veg} className="mt-0.5 shrink-0" />
 
-      <div className="flex-1 min-w-0">
-        <Text size="xs" weight="semibold" className="truncate leading-snug">{item.name}</Text>
-        <div className="flex items-center gap-2 mt-0.5">
-          <Text size="xs" weight="bold" color="brand">
-            {formatCurrency(item.price, currencySymbol)}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
+            {item.name}
           </Text>
-          <SpiceIndicator level={item.spice_level} />
+          {item.description && (
+            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
+              {item.description}
+            </Text>
+          )}
+          <div className="flex items-center gap-2 mt-1">
+            <Text as="p" size="sm" weight="bold" color="brand">
+              {formatCurrency(item.price, currencySymbol)}
+            </Text>
+            <SpiceIndicator level={item.spice_level} />
+          </div>
         </div>
+
+        {q === 0 ? (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => add(item)}
+            className="shrink-0 !uppercase !tracking-wide !text-[10px] !px-3 !py-2 !rounded-xl"
+          >
+            ＋ ADD TO CART
+          </Button>
+        ) : (
+          <Stepper qty={q} onAdd={() => add(item)} onRemove={() => remove(item)} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BookIcon({ className }) {
+  return (
+    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.5 2H20V20H6.5C5.83696 20 5.20107 19.7366 4.73223 19.2678C4.26339 18.7989 4 18.163 4 17.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+    </svg>
+  );
+}
+
+/** Renders plain text with **segments** as bold brand-colored spans */
+function RichChatText({ text, className }) {
+  if (!text) return null;
+  const parts = String(text).split(/\*\*/);
+  return (
+    <span className={className}>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <span key={i} className="font-bold text-[var(--color-brand-primary)]">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  );
+}
+
+function WelcomeScreen({ welcomeParagraph, onSuggest }) {
+  return (
+    <div className="flex flex-col items-stretch px-1 pt-2 pb-4">
+      <div
+        className="self-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95 mb-6 ai-chat-badge-pulse"
+        style={{
+          background: 'var(--color-brand-secondary-20)',
+          border: '1px solid var(--color-brand-secondary-40)',
+          color: 'var(--color-brand-secondary)',
+        }}
+      >
+        ✨ INTELLIGENCE ACTIVE
       </div>
 
-      {q === 0 ? (
-        <Button size="sm" onClick={() => add(item)} className="shrink-0 text-xs px-2.5 py-1">
-          + Add
-        </Button>
-      ) : (
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={() => remove(item)} className="w-6 h-6 rounded-full bg-brand text-white text-sm font-bold flex items-center justify-center active:scale-95 transition-transform">−</button>
-          <Text as="span" size="xs" weight="bold" className="w-4 text-center">{q}</Text>
-          <button onClick={() => add(item)} className="w-6 h-6 rounded-full bg-brand text-white text-sm font-bold flex items-center justify-center active:scale-95 transition-transform">+</button>
-        </div>
-      )}
+      <h2
+        className="text-2xl sm:text-[1.65rem] font-bold text-white leading-tight text-center ai-chat-fade-in-up"
+        style={{ animationDelay: '60ms' }}
+      >
+        Hello! I&apos;m your{' '}
+        <span className="ai-chat-gradient-text">AI Sommelier.</span>
+      </h2>
+
+      <Text
+        as="p"
+        size="sm"
+        color="muted"
+        className="text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
+        style={{ animationDelay: '120ms' }}
+      >
+        {welcomeParagraph || WELCOME_FALLBACK}
+      </Text>
+
+      <Text
+        as="p"
+        size="xs"
+        className="mt-10 mb-3 text-white/35 uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
+        style={{ animationDelay: '180ms' }}
+      >
+        TRY THESE SUGGESTIONS
+      </Text>
+
+      <div className="flex flex-col gap-2.5">
+        {QUICK_CHAT_CHIPS.map((chip, i) => (
+          <button
+            key={chip.label}
+            type="button"
+            onClick={() => onSuggest(chip.text)}
+            className="w-full text-left px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-sm text-white/90 hover:bg-white/10 hover:border-white/15 active:scale-[0.99] transition-all ai-chat-fade-in-up"
+            style={{ animationDelay: `${220 + i * 50}ms` }}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChatHeader({ onClose }) {
+  return (
+    <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="text-[var(--color-brand-primary)] shrink-0">
+          <BookIcon />
+        </span>
+        <Text as="h2" size="md" weight="bold" color="white" className="truncate uppercase tracking-wide">
+          AI Menu Assistant
+        </Text>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg shrink-0 cursor-pointer active:scale-95"
+        aria-label="Close chat"
+      >
+        ✕
+      </button>
     </div>
   );
 }
@@ -67,10 +263,13 @@ function ItemCard({ item }) {
  */
 export default function AIChatDrawer({ isOpen, onClose }) {
   const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } = chatStore();
+  const [welcomeText, setWelcomeText] = useState('');
   const inputRef = useRef(null);
-  const endRef   = useRef(null);
+  const endRef = useRef(null);
 
-  // Load history once on first open
+  const hasUserMessage = messages.some(m => m.role === 'user');
+  const showWelcomeLayout = messages.length === 0 && !loading;
+
   useEffect(() => {
     if (!isOpen || initialized) return;
     setInitialized(true);
@@ -78,142 +277,225 @@ export default function AIChatDrawer({ isOpen, onClose }) {
     getChatHistory()
       .then((history) => {
         if (Array.isArray(history) && history.length > 0) {
-          setMessages(history.map(m => ({
-            role:  m.role === 'user' ? 'user' : 'ai',
-            text:  m.content,
-            items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
-          })));
-        } else {
-          return getWelcomeMessage();
+          setMessages(
+            history.map(m => ({
+              role: m.role === 'user' ? 'user' : 'ai',
+              text: m.content,
+              items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
+              timestamp: parseChatTimestamp(m),
+            }))
+          );
+          return undefined;
         }
+        setMessages([]);
+        return getWelcomeMessage();
       })
       .then((welcome) => {
-        if (typeof welcome === 'string' && welcome) {
-          setMessages([{ role: 'ai', text: welcome, items: [] }]);
+        if (typeof welcome === 'string' && welcome.trim()) {
+          setWelcomeText(welcome.trim());
         }
       })
       .catch(() => {
-        setMessages([{
-          role: 'ai',
-          text: "Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️",
-          items: [],
-        }]);
+        setMessages([]);
+        setWelcomeText("Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️");
       });
-  }, [isOpen, initialized]);
+  }, [isOpen, initialized, setInitialized, setMessages]);
 
-  // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, loading, showWelcomeLayout]);
 
-  // Focus input when opened
   useEffect(() => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 350);
   }, [isOpen]);
 
-  const send = useCallback(async (overrideText) => {
-    const text = (overrideText ?? inputRef.current?.value ?? '').trim();
-    if (!text) return;
-    if (!overrideText && inputRef.current) inputRef.current.value = '';
+  const send = useCallback(
+    async (overrideText) => {
+      const text = (overrideText ?? inputRef.current?.value ?? '').trim();
+      if (!text) return;
+      if (!overrideText && inputRef.current) inputRef.current.value = '';
 
-    addMessage({ role: 'user', text, items: [] });
-    setLoading(true);
+      addMessage({ role: 'user', text, items: [], timestamp: Date.now() });
+      setLoading(true);
 
-    try {
-      const { reply, recommended_items } = await sendChatMessage(text);
-      addMessage({ role: 'ai', text: reply, items: recommended_items || [] });
-    } catch {
-      addMessage({
-        role:  'ai',
-        text:  "Sorry, I'm having trouble right now. Please try again in a moment.",
-        items: [],
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addMessage, setLoading]);
+      try {
+        const { reply, recommended_items } = await sendChatMessage(text);
+        addMessage({
+          role: 'ai',
+          text: reply,
+          items: recommended_items || [],
+          timestamp: Date.now(),
+        });
+      } catch {
+        addMessage({
+          role: 'ai',
+          text: "Sorry, I'm having trouble right now. Please try again in a moment.",
+          items: [],
+          timestamp: Date.now(),
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [addMessage, setLoading]
+  );
+
+  const inputPlaceholder = hasUserMessage ? 'Ask follow-up…' : 'Ask for suggestions…';
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} maxHeight="85vh">
-      {/* Header */}
-      <div className="px-5 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
-        <div>
-          <Text as="h2" size="lg" weight="bold">🤖 AI Menu Assistant</Text>
-          <Text size="xs" color="muted" className="mt-0.5">Ask me about any dish or preference</Text>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-white text-3xl leading-none w-8 h-8 flex items-center justify-center transition-colors"
-          aria-label="Close chat"
-        >
-          &times;
-        </button>
-      </div>
+      <ChatHeader onClose={onClose} />
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {messages.map((m, i) => (
-          <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={[
-              'max-w-[82%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
-              m.role === 'user'
-                ? 'bg-brand text-white rounded-tr-none'
-                : 'bg-white/10 text-white rounded-tl-none border border-white/10',
-            ].join(' ')}>
-              {m.text}
-            </div>
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 min-h-0">
+        {showWelcomeLayout ? (
+          <WelcomeScreen welcomeParagraph={welcomeText} onSuggest={send} />
+        ) : (
+          <div className="space-y-5">
+            {messages.map((m, i) => {
+              const isUser = m.role === 'user';
+              const t = formatMessageTime(m.timestamp);
 
-            {m.role === 'ai' && m.items?.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto mt-2 pb-1 max-w-full no-scrollbar">
-                {m.items.map(item => <ItemCard key={item._id} item={item} />)}
+              return (
+                <div key={i} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                  {!isUser && (
+                    <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
+                      <span
+                        className="w-1.5 h-1.5 rounded-sm shrink-0"
+                        style={{ background: 'var(--color-brand-secondary)', boxShadow: '0 0 6px var(--color-brand-secondary-40)' }}
+                      />
+                      <Text
+                        as="span"
+                        size="xs"
+                        weight="bold"
+                        className="uppercase tracking-widest"
+                        style={{ color: 'var(--color-brand-secondary)' }}
+                      >
+                        INTELLIGENCE AGENT
+                      </Text>
+                    </div>
+                  )}
+
+                  <div
+                    className={[
+                      'max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                      isUser
+                        ? 'bg-brand text-white rounded-tr-sm'
+                        : 'bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4',
+                    ].join(' ')}
+                    style={!isUser ? { borderLeftColor: 'var(--color-brand-secondary)' } : undefined}
+                  >
+                    {isUser ? (
+                      m.text
+                    ) : (
+                      <RichChatText text={m.text} className="whitespace-pre-wrap break-words" />
+                    )}
+                  </div>
+
+                  {t && (
+                    <Text
+                      as="span"
+                      size="xs"
+                      className="mt-1.5 px-1 uppercase tracking-wide text-white/35"
+                    >
+                      {isUser ? 'YOU' : 'ASSISTANT'} · {t}
+                    </Text>
+                  )}
+
+                  {!isUser && m.items?.length > 0 && (
+                    <div className="mt-3 w-full max-w-full space-y-2.5 pl-0">
+                      {m.items.map(item => (
+                        <RecommendationRow key={item._id ?? item.id} item={item} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {loading && (
+              <div className="flex flex-col items-start">
+                <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-sm shrink-0"
+                    style={{ background: 'var(--color-brand-secondary)', boxShadow: '0 0 6px var(--color-brand-secondary-40)' }}
+                  />
+                  <Text
+                    as="span"
+                    size="xs"
+                    weight="bold"
+                    className="uppercase tracking-widest"
+                    style={{ color: 'var(--color-brand-secondary)' }}
+                  >
+                    INTELLIGENCE AGENT
+                  </Text>
+                </div>
+                <div
+                  className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-sm border border-white/10 border-l-4"
+                  style={{ borderLeftColor: 'var(--color-brand-secondary)' }}
+                >
+                  <div className="flex gap-1 items-center">
+                    {[0, 150, 300].map(delay => (
+                      <span
+                        key={delay}
+                        className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
+                        style={{ animationDelay: `${delay}ms` }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-white/10 px-4 py-3 rounded-2xl rounded-tl-none border border-white/10">
-              <div className="flex gap-1 items-center">
-                {[0, 150, 300].map(delay => (
-                  <span key={delay} className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                ))}
-              </div>
-            </div>
+            <div ref={endRef} />
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
-      {/* Input area */}
-      <div className="px-4 pb-6 pt-3 border-t border-white/10 shrink-0">
-        {/* Quick chips */}
-        <div className="flex gap-2 overflow-x-auto mb-3 pb-1 no-scrollbar">
+      <div className="px-4 pt-3 pb-5 border-t border-white/10 shrink-0">
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            defaultValue=""
+            onKeyDown={e => {
+              if (e.key === 'Enter') send();
+            }}
+            placeholder={inputPlaceholder}
+            disabled={loading}
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-brand-primary)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
+          />
+          <button
+            type="button"
+            onClick={() => send()}
+            disabled={loading}
+            className="w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
+            style={{ background: 'var(--color-brand-primary)' }}
+            aria-label="Send"
+          >
+            {loading ? (
+              <Spinner size="sm" className="!border-black/35 !border-t-black" />
+            ) : (
+              <SendIcon />
+            )}
+          </button>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto mt-3 pb-0.5 no-scrollbar">
           {QUICK_CHAT_CHIPS.map(chip => (
             <button
               key={chip.label}
+              type="button"
               onClick={() => send(chip.text)}
-              className="px-3 py-1.5 bg-white/10 border border-white/10 rounded-full text-xs text-slate-300 whitespace-nowrap active:scale-95 transition-transform hover:bg-white/20"
+              disabled={loading}
+              className="px-3 py-1.5 bg-transparent border border-white/15 rounded-full text-xs text-white/85 whitespace-nowrap active:scale-95 transition-transform hover:border-white/25 hover:bg-white/5 disabled:opacity-50 shrink-0"
             >
               {chip.label}
             </button>
           ))}
         </div>
 
-        {/* Text input + send */}
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            defaultValue=""
-            onKeyDown={e => { if (e.key === 'Enter') send(); }}
-            placeholder="Ask for suggestions…"
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-brand text-white transition-colors"
-          />
-          <Button onClick={() => send()} disabled={loading} className="px-3">
-            {loading ? <Spinner size="sm" /> : '🚀'}
-          </Button>
-        </div>
+        <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
+          {INFRA_FOOTER}
+        </Text>
       </div>
     </Drawer>
   );
