@@ -1,5 +1,6 @@
 import { apiCaller } from '../api/apiCaller';
 import { ENDPOINTS } from '../utils/endpoints';
+import { getSocket } from './socketService';
 
 /**
  * AI chat API services.
@@ -32,7 +33,7 @@ export async function sendChatMessage(message) {
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.CHAT,
-    payload:  { message },
+    payload:  { message, socket_id: getSocket()?.id ?? null },
   });
   return data.data;
 }

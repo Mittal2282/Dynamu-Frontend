@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import AIChatDrawer from '../components/AIChatDrawer';
 import BottomNavigator from '../components/BottomNavigator';
@@ -35,8 +35,10 @@ import {
   getCart, placeOrder, startSession, syncCart,
   getTrendingItems, getChefsSpecials, getFeaturedItems,
 } from '../services/customerService';
+import { connectSocket, disconnectSocket, getSocket } from '../services/socketService';
 import { authStore } from '../store/authStore';
 import { cartStore, useCartCount, useCartItems, useCartTotal } from '../store/cartStore';
+import { chatStore } from '../store/chatStore';
 import { restaurantStore } from '../store/restaurantStore';
 import { formatCurrency } from '../utils/formatters';
 
@@ -59,6 +61,8 @@ export default function CustomerLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [ordering, setOrdering]     = useState(false);
+  const [orderVersion, setOrderVersion] = useState(0);
+  const isRemoteCartUpdate = useRef(false);
 
   const [trendingItems, setTrendingItems] = useState([]);
   const [chefsSpecials, setChefsSpecials] = useState([]);
@@ -84,6 +88,9 @@ export default function CustomerLayout() {
         restaurantStore.getState().setTable(sessionData.table);
 
         setMenu(sessionData.menu);
+
+        // Connect socket — listeners are attached in a separate effect below
+        connectSocket(sessionData.session_token);
 
         // Fetch special sections in parallel (non-blocking)
         getTrendingItems().then(setTrendingItems).catch(() => {});
@@ -119,10 +126,62 @@ export default function CustomerLayout() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrCodeId, tableNumber]);
 
+  // ── Disconnect socket on unmount ───────────────────────────────────────────
+  useEffect(() => () => disconnectSocket(), []);
+
+  // ── Socket event listeners — run once session is loaded ───────────────────
+  useEffect(() => {
+    if (loading) return;
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onCartUpdated = (serverCart) => {
+      isRemoteCartUpdate.current = true;
+      const cartMap = {};
+      (serverCart.items || []).forEach(({ menu_item, quantity }) => {
+        if (menu_item?._id) {
+          cartMap[menu_item._id] = {
+            _id:         menu_item._id,
+            name:        menu_item.name,
+            price:       menu_item.price,
+            is_veg:      menu_item.is_veg,
+            description: menu_item.description,
+            qty:         quantity,
+          };
+        }
+      });
+      cartStore.getState().setCart(cartMap);
+      setTimeout(() => { isRemoteCartUpdate.current = false; }, 100);
+    };
+
+    const onOrderPlaced  = () => setOrderVersion(v => v + 1);
+    const onOrderUpdated = () => setOrderVersion(v => v + 1);
+
+    const onChatMessage = (payload) => {
+      // Skip on the device that sent it — messages already added optimistically
+      if (payload.origin_socket_id && payload.origin_socket_id === socket.id) return;
+      chatStore.getState().addMessage({ role: 'user', text: payload.user_text, items: [] });
+      chatStore.getState().addMessage({ role: 'ai',   text: payload.ai_text,   items: payload.items || [] });
+    };
+
+    socket.on('cart:updated',  onCartUpdated);
+    socket.on('order:placed',  onOrderPlaced);
+    socket.on('order:updated', onOrderUpdated);
+    socket.on('chat:message',  onChatMessage);
+
+    return () => {
+      socket.off('cart:updated',  onCartUpdated);
+      socket.off('order:placed',  onOrderPlaced);
+      socket.off('order:updated', onOrderUpdated);
+      socket.off('chat:message',  onChatMessage);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   // ── Sync cart to backend ───────────────────────────────────────────────────
   const itemsStr = JSON.stringify(items.map(i => ({ _id: i._id, qty: i.qty })));
   useEffect(() => {
-    if (!authStore.getState().sessionToken || loading) return;
+    if (!authStore.getState().sessionToken || loading || isRemoteCartUpdate.current) return;
     syncCart(items).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsStr, loading]);
@@ -204,7 +263,7 @@ export default function CustomerLayout() {
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems }} />
+        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion }} />
       </div>
 
       {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}

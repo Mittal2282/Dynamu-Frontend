@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import Text from '../../components/ui/Text';
 import { Spinner } from '../../components/ui/Spinner';
 import { getCustomerOrders } from '../../services/customerService';
@@ -26,6 +27,7 @@ const ORDER_STATUS_LABEL = {
 };
 
 export default function CustomerOrdersPage() {
+  const { orderVersion } = useOutletContext();
   const { currencySymbol, tableNumber: storedTable } = restaurantStore();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +43,18 @@ export default function CustomerOrdersPage() {
     }
   }, []);
 
+  // Poll every 15s
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 15000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
+
+  // Immediate re-fetch on socket push (order placed or status changed)
+  useEffect(() => {
+    if (orderVersion > 0) fetchOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderVersion]);
 
   if (loading) return (
     <div className="flex justify-center py-10">
