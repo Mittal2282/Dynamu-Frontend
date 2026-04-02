@@ -1,16 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import AIChatDrawer from '../components/AIChatDrawer';
 import BottomNavigator from '../components/BottomNavigator';
 import CartDrawer from '../components/CartDrawer';
 import Header from '../components/Header';
+import SessionGate from '../components/customer/SessionGate';
 import Button from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
 import useTheme from '../hooks/useTheme';
 import {
-  getCart, placeOrder, startSession, syncCart,
+  getCart, placeOrder, syncCart,
   getTrendingItems, getChefsSpecials, getFeaturedItems,
+  respondToJoin,
 } from '../services/customerService';
 import { connectSocket, disconnectSocket, getSocket } from '../services/socketService';
 import { authStore } from '../store/authStore';
@@ -32,12 +34,15 @@ export default function CustomerLayout() {
   const total = useCartTotal();
   const { name, tagline, currencySymbol, tableNumber: storedTable, menu } = restaurantStore();
 
+  const [gateComplete, setGateComplete] = useState(false);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [ordering, setOrdering]     = useState(false);
   const [orderVersion, setOrderVersion] = useState(0);
+  const [pendingJoinRequests, setPendingJoinRequests] = useState([]);
+  const [sessionReplaced, setSessionReplaced] = useState(false);
   const isRemoteCartUpdate = useRef(false);
 
   const [trendingItems, setTrendingItems] = useState([]);
@@ -53,53 +58,52 @@ export default function CustomerLayout() {
   const isOrders = path === `${basePath}/orders`;
   const isHome   = !isMenu && !isOrders;
 
-  // ── Session start ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    async function init() {
+  // ── Gate callback — called by SessionGate once name/session is confirmed ──
+  const handleGateComplete = useCallback(async (sessionData, guestName) => {
+    try {
+      authStore.getState().setSessionToken(sessionData.session_token);
+      authStore.getState().setGuestName(guestName || '');
+      restaurantStore.getState().setRestaurant(sessionData.restaurant);
+      restaurantStore.getState().setTable(sessionData.table);
+      restaurantStore.getState().setMenu(sessionData.menu ?? {});
+
+      // Connect socket — listeners attached in the effect below
+      connectSocket(sessionData.session_token);
+
+      // Fetch special sections in parallel
+      getTrendingItems().then(setTrendingItems).catch(() => {});
+      getChefsSpecials().then(setChefsSpecials).catch(() => {});
+      getFeaturedItems().then(setFeaturedItems).catch(() => {});
+
+      // Restore server-side cart
       try {
-        const sessionData = await startSession(qrCodeId, tableNumber);
+        const cartData = await getCart();
+        const apiItems = cartData?.items;
+        if (Array.isArray(apiItems) && apiItems.length > 0) {
+          const cartMap = {};
+          apiItems.forEach(({ menu_item, quantity }) => {
+            cartMap[menu_item._id] = {
+              _id:         menu_item._id,
+              name:        menu_item.name,
+              price:       menu_item.price,
+              is_veg:      menu_item.is_veg,
+              description: menu_item.description,
+              qty:         quantity,
+            };
+          });
+          setCart(cartMap);
+        }
+      } catch { /* keep existing cart */ }
 
-        authStore.getState().setSessionToken(sessionData.session_token);
-        restaurantStore.getState().setRestaurant(sessionData.restaurant);
-        restaurantStore.getState().setTable(sessionData.table);
-        restaurantStore.getState().setMenu(sessionData.menu ?? {});
-
-        // Connect socket — listeners are attached in a separate effect below
-        connectSocket(sessionData.session_token);
-
-        // Fetch special sections in parallel (non-blocking)
-        getTrendingItems().then(setTrendingItems).catch(() => {});
-        getChefsSpecials().then(setChefsSpecials).catch(() => {});
-        getFeaturedItems().then(setFeaturedItems).catch(() => {});
-
-        // Restore server-side cart
-        try {
-          const cartData = await getCart();
-          const apiItems = cartData?.items;
-          if (Array.isArray(apiItems) && apiItems.length > 0) {
-            const cartMap = {};
-            apiItems.forEach(({ menu_item, quantity }) => {
-              cartMap[menu_item._id] = {
-                _id:         menu_item._id,
-                name:        menu_item.name,
-                price:       menu_item.price,
-                is_veg:      menu_item.is_veg,
-                description: menu_item.description,
-                qty:         quantity,
-              };
-            });
-            setCart(cartMap);
-          }
-        } catch { /* keep localStorage cart */ }
-      } catch (err) {
-        setError(err.response?.data?.message || 'Could not load the menu. Please scan the QR again.');
-      } finally {
-        setLoading(false);
-      }
+      setGateComplete(true);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Could not load the menu. Please scan the QR again.');
+      setGateComplete(true); // show error screen
+    } finally {
+      setLoading(false);
     }
-    init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qrCodeId, tableNumber]);
+  }, []);
 
   // ── Disconnect socket on unmount ───────────────────────────────────────────
   useEffect(() => () => disconnectSocket(), []);
@@ -139,16 +143,28 @@ export default function CustomerLayout() {
       chatStore.getState().addMessage({ role: 'ai',   text: payload.ai_text,   items: payload.items || [] });
     };
 
-    socket.on('cart:updated',  onCartUpdated);
-    socket.on('order:placed',  onOrderPlaced);
-    socket.on('order:updated', onOrderUpdated);
-    socket.on('chat:message',  onChatMessage);
+    const onJoinRequest = (payload) => {
+      setPendingJoinRequests(prev => [...prev, payload]);
+    };
+
+    const onSessionReplaced = () => {
+      setSessionReplaced(true);
+    };
+
+    socket.on('cart:updated',    onCartUpdated);
+    socket.on('order:placed',    onOrderPlaced);
+    socket.on('order:updated',   onOrderUpdated);
+    socket.on('chat:message',    onChatMessage);
+    socket.on('join:request',    onJoinRequest);
+    socket.on('session:replaced', onSessionReplaced);
 
     return () => {
-      socket.off('cart:updated',  onCartUpdated);
-      socket.off('order:placed',  onOrderPlaced);
-      socket.off('order:updated', onOrderUpdated);
-      socket.off('chat:message',  onChatMessage);
+      socket.off('cart:updated',    onCartUpdated);
+      socket.off('order:placed',    onOrderPlaced);
+      socket.off('order:updated',   onOrderUpdated);
+      socket.off('chat:message',    onChatMessage);
+      socket.off('join:request',    onJoinRequest);
+      socket.off('session:replaced', onSessionReplaced);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
@@ -178,10 +194,30 @@ export default function CustomerLayout() {
     }
   };
 
+  // Show gate screen until name/session is confirmed
+  if (!gateComplete) return (
+    <SessionGate
+      qrCodeId={qrCodeId}
+      tableNumber={tableNumber}
+      onSessionReady={handleGateComplete}
+    />
+  );
+
   if (loading) return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
       <Spinner size="xl" />
       <Text size="sm" color="muted">Loading menu…</Text>
+    </div>
+  );
+
+  // Full-screen overlay when this session was evicted by a new session
+  if (sessionReplaced) return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="text-5xl">🔄</div>
+      <Text as="h1" size="xl" weight="bold">Session Ended</Text>
+      <Text size="sm" color="muted">
+        A new session has been started at this table. Please scan the QR code again to continue.
+      </Text>
     </div>
   );
 
@@ -222,6 +258,47 @@ export default function CustomerLayout() {
             >
               View Cart →
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pending join requests panel ──────────────────────────────────── */}
+      {pendingJoinRequests.length > 0 && (
+        <div className="fixed bottom-[85px] left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+          <div className="w-full max-w-md bg-slate-800 border border-white/10 rounded-2xl shadow-xl overflow-hidden pointer-events-auto">
+            <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2">
+              <span className="text-base">🔔</span>
+              <Text size="sm" weight="semibold">
+                Join Requests ({pendingJoinRequests.length})
+              </Text>
+            </div>
+            <div className="divide-y divide-white/5">
+              {pendingJoinRequests.map((req) => (
+                <div key={req.request_id} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <Text size="sm" color="muted" className="flex-1 truncate">
+                    <span className="text-white font-medium">{req.joiner_name}</span> wants to join
+                  </Text>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={async () => {
+                        await respondToJoin(req.request_id, true).catch(() => {});
+                        setPendingJoinRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                      }}
+                      className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 flex items-center justify-center text-base hover:bg-green-500/40 transition-colors"
+                      title="Accept"
+                    >✓</button>
+                    <button
+                      onClick={async () => {
+                        await respondToJoin(req.request_id, false).catch(() => {});
+                        setPendingJoinRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                      }}
+                      className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center text-base hover:bg-red-500/40 transition-colors"
+                      title="Reject"
+                    >✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -6,8 +6,12 @@
 // ─── Customer ─────────────────────────────────────────────────────────────────
 export const ENDPOINTS = {
   // Session
-  SESSION_START:   '/api/customer/session/start',
-  SESSION_END:     '/api/customer/session/end',
+  SESSION_START:        '/api/customer/session/start',
+  SESSION_CHECK:        '/api/customer/session/check',
+  SESSION_REQUEST_JOIN: '/api/customer/session/request-join',
+  SESSION_JOIN_STATUS:  (id) => `/api/customer/session/join-status/${id}`,
+  SESSION_RESPOND_JOIN: '/api/customer/session/respond-join',
+  SESSION_END:          '/api/customer/session/end',
   REQUEST_BILL:    '/api/customer/bill/request',
 
   // Cart
