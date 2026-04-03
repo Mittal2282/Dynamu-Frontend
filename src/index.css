@@ -2,99 +2,87 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
-/* ─── Design token defaults (overridden dynamically by useTheme) ────────────── */
+/* ─── Design token defaults (Theme 1 — Ember Dark) ──────────────────────────
+   These are the CSS fallback values loaded before useTheme() fires.
+   At runtime, useTheme() calls applyCssTokens() which sets these on :root
+   via inline style, overriding the :root block below.
+   ──────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* Brand (CyberPlate Noir Defaults) — overridden per restaurant */
-  --color-brand-primary:      #FF6B00;
-  --color-brand-secondary:    #00F0FF;
-  --color-brand-tertiary:     #7000FF;
-  --color-brand-neutral:      #0B0E14;
+  /* ── Core 10 theme colors ─────────────────────────────────────────────── */
+  --t-accent:  #FF6B00;   /* Primary accent   (buttons, icons, prices)     */
+  --t-accent2: #00F0FF;   /* Secondary accent (AI chat, decorations)        */
+  --t-accent3: #7B00FF;   /* Tertiary accent  (tags, extra highlights)      */
+  --t-bg:      #0A0C10;   /* Page background  (deepest / nav / drawers)     */
+  --t-surface: #11141C;   /* Raised surface   (cards, sections)             */
+  --t-float:   #1A1D26;   /* Elevated surface (modals, overlays, input bg)  */
+  --t-text:    #F5F6FA;   /* Primary text                                   */
+  --t-dim:     #7B8594;   /* Muted / secondary text                         */
+  --t-line:    rgba(255,255,255,0.08); /* Border / divider                  */
+  --t-glow:    #FF6B00;   /* Glow / shadow base                             */
 
-  /* Alpha Variants for Primary */
-  --color-brand-primary-10:   rgba(255, 107, 0, 0.1);
-  --color-brand-primary-20:   rgba(255, 107, 0, 0.2);
-  --color-brand-primary-40:   rgba(255, 107, 0, 0.4);
+  /* ── Auto alpha variants (10 / 20 / 40 % opacity) ────────────────────── */
+  --t-accent-10:  #FF6B001A;
+  --t-accent-20:  #FF6B0033;
+  --t-accent-40:  #FF6B0066;
 
-  /* Alpha Variants for Secondary */
-  --color-brand-secondary-10:  rgba(0, 240, 255, 0.1);
-  --color-brand-secondary-20:  rgba(0, 240, 255, 0.2);
-  --color-brand-secondary-40:  rgba(0, 240, 255, 0.4);
+  --t-accent2-10: #00F0FF1A;
+  --t-accent2-20: #00F0FF33;
+  --t-accent2-40: #00F0FF66;
 
-  /* Alpha Variants for Tertiary */
-  --color-brand-tertiary-10:   rgba(112, 0, 255, 0.1);
-  --color-brand-tertiary-20:   rgba(112, 0, 255, 0.2);
-  --color-brand-tertiary-40:   rgba(112, 0, 255, 0.4);
+  --t-accent3-10: #7B00FF1A;
+  --t-accent3-20: #7B00FF33;
+  --t-accent3-40: #7B00FF66;
 
-  /* Alpha Variants for Neutral */
-  --color-brand-neutral-10:    rgba(11, 14, 20, 0.1);
-  --color-brand-neutral-20:    rgba(11, 14, 20, 0.2);
-  --color-brand-neutral-40:    rgba(11, 14, 20, 0.4);
+  --t-glow-20: #FF6B0033;
+  --t-glow-40: #FF6B0066;
 
-  /* UI Surface */
-  --color-surface-base:       #0f172a; /* slate-950 */
-  --color-surface-raised:     #1e293b; /* slate-800 */
-  --color-surface-overlay:    rgba(255, 255, 255, 0.05);
+  /* ── Nav-derived helpers ──────────────────────────────────────────────── */
+  --t-nav-active: color-mix(in srgb, #0A0C10 85%, white 15%);
+  --t-nav-muted:  color-mix(in srgb, #0A0C10 28%, white 72%);
 
-  /* Text */
-  --color-text-primary:       #f8fafc;
-  --color-text-secondary:     #94a3b8;
-  --color-text-muted:         #64748b;
-
-  /* Border */
-  --color-border:             rgba(255, 255, 255, 0.10);
-  --color-border-strong:      rgba(255, 255, 255, 0.20);
-
-  /* Feedback */
-  --color-success:   #22c55e;
-  --color-warning:   #f59e0b;
-  --color-error:     #ef4444;
+  /* ── Fixed semantic (same across all themes) ──────────────────────────── */
+  --t-success: #22c55e;
+  --t-warning: #f59e0b;
+  --t-error:   #ef4444;
 }
 
 /* ─── Tailwind v4 theme ────────────────────────────────────────────────────── */
 @theme {
-  --color-brand:                 var(--color-brand-primary);
-  --color-brand-secondary:       var(--color-brand-secondary);
-  --color-brand-tertiary:        var(--color-brand-tertiary);
-  --color-brand-neutral:         var(--color-brand-neutral);
+  /* Map --t-* vars into Tailwind color utilities */
+  --color-brand:    var(--t-accent);   /* bg-brand  / text-brand             */
+  --color-accent2:  var(--t-accent2);  /* bg-accent2 / text-accent2          */
+  --color-accent3:  var(--t-accent3);  /* bg-accent3 / text-accent3          */
+  --color-base:     var(--t-bg);       /* bg-base                            */
+  --color-surface:  var(--t-surface);  /* bg-surface                         */
+  --color-float:    var(--t-float);    /* bg-float                           */
+  --color-ink:      var(--t-text);     /* text-ink                           */
+  --color-dim:      var(--t-dim);      /* text-dim                           */
+  --color-success:  var(--t-success);  /* text-success / bg-success          */
+  --color-warning:  var(--t-warning);
+  --color-error:    var(--t-error);
 
-  /* Alpha transparency tokens */
-  --color-brand-primary-10:      var(--color-brand-primary-10);
-  --color-brand-primary-20:      var(--color-brand-primary-20);
-  --color-brand-primary-40:      var(--color-brand-primary-40);
+  /* Alpha token shortcuts (for Tailwind shadow / bg utilities) */
+  --color-glow-20:    var(--t-glow-20);
+  --color-glow-40:    var(--t-glow-40);
+  --color-accent-40:  var(--t-accent-40);
 
-  --color-brand-secondary-10:    var(--color-brand-secondary-10);
-  --color-brand-secondary-20:    var(--color-brand-secondary-20);
-  --color-brand-secondary-40:    var(--color-brand-secondary-40);
-
-  --color-brand-tertiary-10:     var(--color-brand-tertiary-10);
-  --color-brand-tertiary-20:     var(--color-brand-tertiary-20);
-  --color-brand-tertiary-40:     var(--color-brand-tertiary-40);
-
-  --color-brand-neutral-10:      var(--color-brand-neutral-10);
-  --color-brand-neutral-20:      var(--color-brand-neutral-20);
-  --color-brand-neutral-40:      var(--color-brand-neutral-40);
-
-  --color-primary:               #833ab4; /* legacy – consoles */
-  --color-secondary:             #fd1d1d; /* legacy – consoles */
-  --color-accent:                #fcb045; /* legacy – consoles */
-  --color-slate-950:             #0f172a;
-  --font-sans:                   'Outfit', sans-serif;
+  --font-sans: 'Outfit', sans-serif;
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
 body {
-  background-color: var(--color-brand-neutral);
-  color: var(--color-text-primary);
+  background-color: var(--t-bg);
+  color: var(--t-text);
   font-family: 'Outfit', sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── Utility classes ───────────────────────────────────────────────────────── */
 .glass {
-  background: var(--color-surface-overlay);
+  background: rgba(255,255,255,0.04);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--t-line);
   border-radius: 24px;
 }
 
@@ -107,57 +95,46 @@ body {
   to   { opacity: 1; transform: translateY(0);   }
 }
 
-/* AI Chat Drawer — welcome badge + entrance */
+/* AI Chat — welcome badge + entrance animations */
 @keyframes pulseGlow {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 var(--color-brand-secondary-20);
+    box-shadow: 0 0 0 0 var(--t-accent2-20);
   }
   50% {
     opacity: 0.92;
-    box-shadow: 0 0 16px 2px var(--color-brand-secondary-40);
+    box-shadow: 0 0 16px 2px var(--t-accent2-40);
   }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
 
-.ai-chat-badge-pulse {
-  animation: pulseGlow 2.5s ease-in-out infinite;
-}
-
-.ai-chat-fade-in-up {
-  animation: fadeInUp 0.55s ease-out both;
-}
+.ai-chat-badge-pulse  { animation: pulseGlow 2.5s ease-in-out infinite; }
+.ai-chat-fade-in-up   { animation: fadeInUp 0.55s ease-out both; }
 
 .ai-chat-gradient-text {
-  background: linear-gradient(135deg, var(--color-brand-primary) 0%, #ffb347 100%);
+  background: linear-gradient(135deg, var(--t-accent) 0%, #ffb347 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 14px var(--color-brand-primary-40));
+  filter: drop-shadow(0 0 14px var(--t-accent-40));
 }
 
-/* Brand button — inherits CSS var so it follows restaurant theme */
+/* Brand button — follows restaurant theme */
 .btn-brand {
-  background-color: var(--color-brand-primary);
+  background-color: var(--t-accent);
   color: #fff;
 }
-.btn-brand:hover   { opacity: 0.92; }
-.btn-brand:active  { transform: scale(0.97); }
+.btn-brand:hover  { opacity: 0.92; }
+.btn-brand:active { transform: scale(0.97); }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.20); border-radius: 99px; }
 
 /* Hide scrollbar but keep scroll — used on horizontal chip rows */
 .no-scrollbar {

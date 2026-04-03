@@ -63,7 +63,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
     const active = isActive && !aiChatOpen;
     return [
       'flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-brand-neutral)]',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--t-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--t-bg)]',
       'transition-opacity active:opacity-80 no-underline',
     ].join(' ');
   };
@@ -74,11 +74,11 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
     ].join(' ');
 
   const iconStyle = (active) => ({
-    color: active ? 'var(--color-brand-primary)' : 'var(--color-nav-muted)',
+    color: active ? 'var(--t-accent)' : 'var(--t-nav-muted)',
   });
 
   const labelStyle = (active) => ({
-    color: active ? 'var(--color-brand-primary)' : 'var(--color-nav-muted)',
+    color: active ? 'var(--t-accent)' : 'var(--t-nav-muted)',
   });
 
   return (
@@ -86,8 +86,8 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
       <div
         className="w-full max-w-md pointer-events-auto overflow-hidden"
         style={{
-          borderTop: '2.5px solid var(--color-brand-primary)',
-          backgroundColor: 'var(--color-brand-neutral)',
+          borderTop: '2.5px solid var(--t-accent)',
+          backgroundColor: 'var(--t-bg)',
         }}
       >
         <div className="flex items-stretch px-1 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
@@ -102,7 +102,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
               return (
                 <div
                   className={innerClass(active)}
-                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                  style={{ background: active ? 'var(--t-nav-active)' : 'transparent' }}
                 >
                   <IconHome className="w-5 h-5 shrink-0" style={iconStyle(active)} />
                   <span
@@ -126,7 +126,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
               return (
                 <div
                   className={innerClass(active)}
-                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                  style={{ background: active ? 'var(--t-nav-active)' : 'transparent' }}
                 >
                   <IconMenu className="w-5 h-5 shrink-0" style={iconStyle(active)} />
                   <span
@@ -143,11 +143,11 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
           <button
             type="button"
             onClick={onChatClick}
-            className="flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] transition-opacity active:opacity-80"
+            className="flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--t-accent)] transition-opacity active:opacity-80"
           >
             <div
               className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1"
-              style={{ background: aiChatOpen ? 'var(--color-nav-tile-active)' : 'transparent' }}
+              style={{ background: aiChatOpen ? 'var(--t-nav-active)' : 'transparent' }}
             >
               <IconAI className="w-5 h-5 shrink-0" style={iconStyle(aiChatOpen)} />
               <span
@@ -169,7 +169,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
               return (
                 <div
                   className={innerClass(active)}
-                  style={{ background: active ? 'var(--color-nav-tile-active)' : 'transparent' }}
+                  style={{ background: active ? 'var(--t-nav-active)' : 'transparent' }}
                 >
                   <IconOrders className="w-5 h-5 shrink-0" style={iconStyle(active)} />
                   <span

@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { DEFAULT_BRAND } from '../utils/constants';
+import { DEFAULT_THEME_NUMBER } from '../utils/constants';
 
 /**
  * Persisted store for restaurant + table data populated on QR session start.
  * Components can read branding, settings, and table info from here.
+ *
+ * The `themeNumber` field (1–4) drives the entire color system via useTheme.
+ * Full theme definitions are in src/theme/tokens.js.
  */
 export const restaurantStore = create(
   devtools(
@@ -15,10 +18,7 @@ export const restaurantStore = create(
         name: '',
         slug: '',
         tagline: '',
-        primaryColor:          DEFAULT_BRAND.primaryColor,
-        secondaryColor:        DEFAULT_BRAND.secondaryColor,
-        tertiaryColor:         DEFAULT_BRAND.tertiaryColor,
-        neutralColor:          DEFAULT_BRAND.neutralColor,
+        themeNumber:           DEFAULT_THEME_NUMBER,
         currency:              'INR',
         currencySymbol:        '₹',
         acceptsOnlinePayment:  false,
@@ -38,15 +38,12 @@ export const restaurantStore = create(
             id:                   restaurant.id,
             name:                 restaurant.name,
             slug:                 restaurant.slug,
-            tagline:              restaurant.branding?.tagline         ?? '',
-            primaryColor:         restaurant.branding?.primary_color   ?? DEFAULT_BRAND.primaryColor,
-            secondaryColor:       restaurant.branding?.secondary_color ?? DEFAULT_BRAND.secondaryColor,
-            tertiaryColor:        restaurant.branding?.tertiary_color  ?? DEFAULT_BRAND.tertiaryColor,
-            neutralColor:         restaurant.branding?.neutral_color   ?? DEFAULT_BRAND.neutralColor,
-            currency:             restaurant.settings?.currency         ?? 'INR',
-            currencySymbol:       restaurant.settings?.currency_symbol  ?? '₹',
+            tagline:              restaurant.branding?.tagline              ?? '',
+            themeNumber:          Number(restaurant.branding?.theme) || DEFAULT_THEME_NUMBER,
+            currency:             restaurant.settings?.currency              ?? 'INR',
+            currencySymbol:       restaurant.settings?.currency_symbol       ?? '₹',
             acceptsOnlinePayment: restaurant.settings?.accepts_online_payment ?? false,
-            aiWelcomeMessage:     restaurant.ai_config?.welcome_message ?? '',
+            aiWelcomeMessage:     restaurant.ai_config?.welcome_message       ?? '',
           })),
 
         setTable: (table) =>
@@ -61,10 +58,7 @@ export const restaurantStore = create(
         reset: () =>
           set(() => ({
             id: null, name: '', slug: '', tagline: '',
-            primaryColor:         DEFAULT_BRAND.primaryColor,
-            secondaryColor:       DEFAULT_BRAND.secondaryColor,
-            tertiaryColor:        DEFAULT_BRAND.tertiaryColor,
-            neutralColor:         DEFAULT_BRAND.neutralColor,
+            themeNumber:          DEFAULT_THEME_NUMBER,
             currency:             'INR',
             currencySymbol:       '₹',
             acceptsOnlinePayment: false,

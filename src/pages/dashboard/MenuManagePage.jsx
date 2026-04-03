@@ -216,7 +216,7 @@ export default function MenuManagePage() {
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
             style={{ '--tw-border-opacity': 1 }}
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
             onBlur={e => e.target.style.borderColor = ''}
           />
           {searchQuery && (
@@ -253,7 +253,7 @@ export default function MenuManagePage() {
                   ? 'text-white'
                   : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
               }`}
-              style={availFilter === opt.value ? { background: 'var(--color-brand-primary, #f97316)' } : {}}
+              style={availFilter === opt.value ? { background: 'var(--t-accent)' } : {}}
             >
               {opt.label}
             </button>

@@ -1,24 +1,23 @@
 import { useEffect } from 'react';
 import { restaurantStore } from '../store/restaurantStore';
-import { buildCssTokens, applyCssTokens, BRAND_DEFAULTS } from '../theme/tokens';
+import { buildCssTokens, applyCssTokens, DEFAULT_THEME_NUMBER } from '../theme/tokens';
 
 /**
- * useTheme — applies restaurant brand colors as CSS variables on mount
- * and whenever the restaurant store changes.
+ * useTheme — resolves the active restaurant theme by number and applies it as
+ * CSS custom properties on :root.
  *
- * Mount this once at the top level of the customer-facing app (e.g. CustomerLayout).
- * The CSS variables are then available to Tailwind via the `brand-*` color tokens.
+ * Mount once at the top level of the customer-facing app (CustomerLayout).
+ * Whenever `themeNumber` changes in the store, the CSS variables are swapped
+ * instantly without a page reload.
+ *
+ * Theme numbers 1–4 map to the palettes defined in src/theme/tokens.js.
+ * Any missing / invalid value falls back to Theme 1 (Ember Dark).
  */
 export default function useTheme() {
-  const { primaryColor, secondaryColor, tertiaryColor, neutralColor } = restaurantStore();
+  const { themeNumber } = restaurantStore();
 
   useEffect(() => {
-    const tokens = buildCssTokens({
-      primary:   primaryColor   || BRAND_DEFAULTS.primary,
-      secondary: secondaryColor || BRAND_DEFAULTS.secondary,
-      tertiary:  tertiaryColor  || BRAND_DEFAULTS.tertiary,
-      neutral:   neutralColor   || BRAND_DEFAULTS.neutral,
-    });
+    const tokens = buildCssTokens(themeNumber || DEFAULT_THEME_NUMBER);
     applyCssTokens(tokens);
-  }, [primaryColor, secondaryColor, tertiaryColor, neutralColor]);
+  }, [themeNumber]);
 }

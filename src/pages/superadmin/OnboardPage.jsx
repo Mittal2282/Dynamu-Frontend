@@ -22,7 +22,7 @@ function Field({ label, name, value, onChange, type = 'text', placeholder, hint 
         onChange={e => onChange(name, e.target.value)}
         placeholder={placeholder}
         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none transition-colors"
-        onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+        onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
         onBlur={e => e.target.style.borderColor = ''}
       />
       {hint && <p className="text-xs text-slate-600 mt-1">{hint}</p>}
@@ -82,7 +82,7 @@ function Step1({ form, onChange, onNext, loading, error }) {
           onClick={onNext}
           disabled={loading}
           className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
-          style={{ background: 'var(--color-brand-primary, #f97316)' }}
+          style={{ background: 'var(--t-accent)' }}
         >
           {loading ? (
             <>
@@ -218,7 +218,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
         <button
           onClick={() => setShowSample(s => !s)}
           className="text-xs font-medium transition-colors flex items-center gap-1"
-          style={{ color: 'var(--color-brand-primary, #f97316)' }}
+          style={{ color: 'var(--t-accent)' }}
         >
           {showSample ? '▲ Hide' : '▼ Show'} expected column format
         </button>
@@ -286,7 +286,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
                   <tr key={i} className="hover:bg-white/[0.02]">
                     <td className="px-4 py-2.5 text-slate-400">{r.category}</td>
                     <td className="px-4 py-2.5 text-slate-200 font-medium">{r.name}</td>
-                    <td className="px-4 py-2.5 font-semibold" style={{ color: 'var(--color-brand-primary, #f97316)' }}>{r.price}</td>
+                    <td className="px-4 py-2.5 font-semibold" style={{ color: 'var(--t-accent)' }}>{r.price}</td>
                     <td className="px-4 py-2.5 text-slate-300">{r.meal_tag || '-'}</td>
                     <td className="px-4 py-2.5 text-slate-300">{r.vegNonVeg || '-'}</td>
                   </tr>
@@ -308,7 +308,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
           onClick={handleImport}
           disabled={loading || parsing || !csvText}
           className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
-          style={{ background: 'var(--color-brand-primary, #f97316)' }}
+          style={{ background: 'var(--t-accent)' }}
         >
           {loading ? (
             <>
@@ -359,7 +359,7 @@ function Step3({ restaurantId }) {
         <button
           onClick={downloadWithAuth}
           className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-150 active:scale-95"
-          style={{ background: 'var(--color-brand-primary, #f97316)' }}
+          style={{ background: 'var(--t-accent)' }}
         >
           📄 Download QR Codes PDF
         </button>
@@ -448,7 +448,7 @@ export default function OnboardPage() {
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={
                   i === step
-                    ? { background: 'var(--color-brand-primary, #f97316)', color: '#fff' }
+                    ? { background: 'var(--t-accent)', color: '#fff' }
                     : i < step
                       ? { background: '#22c55e', color: '#fff' }
                       : { background: 'rgba(255,255,255,0.08)', color: '#64748b' }

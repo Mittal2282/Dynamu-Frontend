@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
  *
  * @param {{ isOpen: boolean, onClose: () => void, children: ReactNode, maxHeight?: string }} props
  */
-export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh' }) {
+export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', height }) {
   const sheetRef   = useRef(null);
   const handleRef  = useRef(null);
   const startY     = useRef(null);
@@ -91,9 +91,10 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh' }
           className="w-full max-w-md flex flex-col shadow-2xl"
           style={{
             maxHeight,
-            background: 'var(--color-brand-neutral)',
+            height: height || 'auto',
+            background: 'var(--t-bg)',
             borderRadius: '24px 24px 0 0',
-            borderTop: '2.5px solid var(--color-brand-primary)',
+            borderTop: '2.5px solid var(--t-accent)',
             transition: dragging ? 'none' : 'transform 0.3s ease-out',
           }}
         >
@@ -107,7 +108,7 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh' }
           >
             <div
               className="w-10 h-1 rounded-full"
-              style={{ background: 'var(--color-brand-primary)', opacity: 0.5 }}
+              style={{ background: 'var(--t-accent)', opacity: 0.5 }}
             />
           </div>
 

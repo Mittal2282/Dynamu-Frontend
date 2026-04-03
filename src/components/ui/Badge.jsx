@@ -35,7 +35,7 @@ export function CountBadge({ count, className = '', showZero = false }) {
         'flex items-center justify-center text-white',
         className,
       ].join(' ')}
-      style={{ backgroundColor: 'var(--color-brand-primary)' }}
+      style={{ backgroundColor: 'var(--t-accent)' }}
     >
       {count > 99 ? '99+' : count}
     </span>

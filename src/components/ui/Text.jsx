@@ -17,12 +17,12 @@ const WEIGHT_CLASSES = {
 };
 
 const COLOR_CLASSES = {
-  primary:   'text-[var(--color-text-primary)]',
-  secondary: 'text-[var(--color-text-secondary)]',
-  muted:     'text-[var(--color-text-muted)]',
-  brand:     'text-[var(--color-brand-primary)]',
-  success:   'text-[var(--color-success)]',
-  error:     'text-[var(--color-error)]',
+  primary:   'text-[var(--t-text)]',
+  secondary: 'text-[var(--t-dim)]',
+  muted:     'text-[var(--t-dim)]',
+  brand:     'text-[var(--t-accent)]',
+  success:   'text-[var(--t-success)]',
+  error:     'text-[var(--t-error)]',
   white:     'text-white',
   inherit:   'text-inherit',
 };

@@ -81,7 +81,7 @@ export default function RestaurantOrdersPage() {
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
             onBlur={e => e.target.style.borderColor = ''}
           >
             <option value="">All Statuses</option>
@@ -99,7 +99,7 @@ export default function RestaurantOrdersPage() {
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
             onBlur={e => e.target.style.borderColor = ''}
           />
         </div>
@@ -112,7 +112,7 @@ export default function RestaurantOrdersPage() {
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
             onBlur={e => e.target.style.borderColor = ''}
           />
         </div>
@@ -175,7 +175,7 @@ export default function RestaurantOrdersPage() {
                         {order.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || '—'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right font-semibold" style={{ color: 'var(--color-brand-primary, #f97316)' }}>
+                    <td className="px-5 py-4 text-right font-semibold" style={{ color: 'var(--t-accent)' }}>
                       ₹{Math.round(order.total_amount || 0)}
                     </td>
                     <td className="px-4 py-4 text-center">

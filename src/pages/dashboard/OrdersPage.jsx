@@ -111,7 +111,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
 
       {/* Action row */}
       <div className="flex items-center justify-between gap-2 pt-0.5">
-        <span className="font-bold text-sm" style={{ color: 'var(--color-brand-primary, #f97316)' }}>
+        <span className="font-bold text-sm" style={{ color: 'var(--t-accent)' }}>
           ₹{Math.round(order.total_amount || 0)}
         </span>
         {cfg.next && !showPrepInput && (
@@ -119,7 +119,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
             onClick={handleConfirmClick}
             disabled={updating === order._id}
             className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all duration-150 disabled:opacity-40 active:scale-95"
-            style={{ background: 'var(--color-brand-primary, #f97316)' }}
+            style={{ background: 'var(--t-accent)' }}
           >
             {updating === order._id ? (
               <span className="flex items-center gap-1.5">
@@ -149,7 +149,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
               onClick={handleConfirmWithPrep}
               disabled={updating === order._id}
               className="ml-auto text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 active:scale-95"
-              style={{ background: 'var(--color-brand-primary, #f97316)' }}
+              style={{ background: 'var(--t-accent)' }}
             >
               Confirm
             </button>
@@ -333,7 +333,7 @@ export default function OrdersPage() {
             {activeCount > 0 && (
               <span
                 className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'var(--color-brand-primary-20, rgba(249,115,22,0.2))', color: 'var(--color-brand-primary, #f97316)' }}
+                style={{ background: 'var(--t-accent-20))', color: 'var(--t-accent)' }}
               >
                 {activeCount} active
               </span>
@@ -362,7 +362,7 @@ export default function OrdersPage() {
                 ? 'text-white border-transparent'
                 : 'text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-slate-200'
             }`}
-            style={selectedTable === null ? { background: 'var(--color-brand-primary, #f97316)', borderColor: 'transparent' } : {}}
+            style={selectedTable === null ? { background: 'var(--t-accent)', borderColor: 'transparent' } : {}}
           >
             All Tables
           </button>
@@ -375,7 +375,7 @@ export default function OrdersPage() {
                   ? 'text-white border-transparent'
                   : 'text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-slate-200'
               }`}
-              style={selectedTable == num ? { background: 'var(--color-brand-primary, #f97316)', borderColor: 'transparent' } : {}}
+              style={selectedTable == num ? { background: 'var(--t-accent)', borderColor: 'transparent' } : {}}
             >
               Table {num}
             </button>

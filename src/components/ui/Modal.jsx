@@ -45,8 +45,8 @@ export default function Modal({
         aria-modal="true"
         className={`relative w-full ${maxWidth} rounded-2xl shadow-2xl flex flex-col`}
         style={{
-          background: 'var(--color-brand-neutral)',
-          borderTop: '2.5px solid var(--color-brand-primary)',
+          background: 'var(--t-bg)',
+          borderTop: '2.5px solid var(--t-accent)',
         }}
         onClick={(e) => e.stopPropagation()}
       >

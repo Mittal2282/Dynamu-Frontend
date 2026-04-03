@@ -48,6 +48,7 @@ export default function CustomerLayout() {
   const [trendingItems, setTrendingItems] = useState([]);
   const [chefsSpecials, setChefsSpecials] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
 
   // Base path for this QR session
   const basePath = `/${qrCodeId}/${tableNumber}`;
@@ -70,10 +71,13 @@ export default function CustomerLayout() {
       // Connect socket — listeners attached in the effect below
       connectSocket(sessionData.session_token);
 
-      // Fetch special sections in parallel
-      getTrendingItems().then(setTrendingItems).catch(() => {});
-      getChefsSpecials().then(setChefsSpecials).catch(() => {});
-      getFeaturedItems().then(setFeaturedItems).catch(() => {});
+      // Fetch special sections in parallel, track loading state
+      setSectionsLoading(true);
+      Promise.allSettled([
+        getTrendingItems().then(setTrendingItems),
+        getChefsSpecials().then(setChefsSpecials),
+        getFeaturedItems().then(setFeaturedItems),
+      ]).finally(() => setSectionsLoading(false));
 
       // Restore server-side cart
       try {
@@ -241,13 +245,13 @@ export default function CustomerLayout() {
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion, basePath }} />
+        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion, basePath, sectionsLoading, onOpenAI: () => { setAiChatOpen(v => !v); setDrawerOpen(false); } }} />
       </div>
 
       {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}
       {count > 0 && !isOrders && (
         <div className="fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
-          <div className="w-full max-w-md bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-brand-primary-40">
+          <div className="w-full max-w-md bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
             <div>
               <Text size="sm" weight="bold">{count} {count === 1 ? 'item' : 'items'} added</Text>
               <p className="text-orange-100 text-xs mt-0.5">

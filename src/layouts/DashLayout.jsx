@@ -45,12 +45,12 @@ export default function DashLayout() {
         {/* Brand / restaurant identity */}
         <div
           className="px-5 py-5 border-b border-white/10 shrink-0"
-          style={{ borderTop: '2.5px solid var(--color-brand-primary, #f97316)' }}
+          style={{ borderTop: '2.5px solid var(--t-accent)' }}
         >
           <div className="flex items-center gap-3">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 select-none"
-              style={{ background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)' }}
+              style={{ background: 'linear-gradient(135deg, var(--t-accent), #fb923c)' }}
             >
               {restaurantName?.charAt(0)?.toUpperCase() || 'D'}
             </div>
@@ -93,7 +93,7 @@ export default function DashLayout() {
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
               style={{
-                background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)',
+                background: 'linear-gradient(135deg, var(--t-accent), #fb923c)',
                 boxShadow: '0 0 0 2px rgba(249,115,22,0.25)',
               }}
             >
@@ -143,7 +143,7 @@ export default function DashLayout() {
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
               style={{
-                background: 'linear-gradient(135deg, var(--color-brand-primary, #f97316), #fb923c)',
+                background: 'linear-gradient(135deg, var(--t-accent), #fb923c)',
                 boxShadow: '0 0 0 1.5px rgba(249,115,22,0.3)',
               }}
             >

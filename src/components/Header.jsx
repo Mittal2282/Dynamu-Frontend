@@ -1,8 +1,7 @@
-import React from 'react';
-import { restaurantStore } from '../store/restaurantStore';
-import { cartStore } from '../store/cartStore';
 import { CountBadge } from '../components/ui/Badge';
 import Text from '../components/ui/Text';
+import { useCartCount } from '../store/cartStore';
+import { restaurantStore } from '../store/restaurantStore';
 
 function IconCutlery({ className, style }) {
   return (
@@ -31,21 +30,21 @@ function IconCartBag({ className, style }) {
  */
 export default function Header({ onCartClick, variant = 'legacy' }) {
   const { name, tagline } = restaurantStore();
-  const { count } = cartStore();
+  const count = useCartCount();
 
   if (variant === 'customer') {
     const title = name || 'Restaurant';
     return (
       <header
         className="px-5 py-3.5 sticky top-0 z-20 border-b border-white/[0.08]"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--color-brand-neutral) 96%, black)' }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--t-bg) 96%, black)' }}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <IconCutlery className="w-7 h-7 shrink-0" style={{ color: 'var(--color-brand-primary)' }} />
+            <IconCutlery className="w-7 h-7 shrink-0" style={{ color: 'var(--t-accent)' }} />
             <h1
               className="text-[15px] font-bold uppercase tracking-[0.12em] leading-tight truncate"
-              style={{ color: 'var(--color-brand-primary)' }}
+              style={{ color: 'var(--t-accent)' }}
             >
               {title}
             </h1>
@@ -55,12 +54,12 @@ export default function Header({ onCartClick, variant = 'legacy' }) {
             onClick={onCartClick}
             className="relative w-11 h-11 rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition-transform"
             style={{
-              background: 'color-mix(in srgb, var(--color-brand-neutral) 70%, white 8%)',
-              border: '1px solid color-mix(in srgb, white 12%, var(--color-brand-neutral))',
+              background: 'color-mix(in srgb, var(--t-bg) 70%, white 8%)',
+              border: '1px solid color-mix(in srgb, white 12%, var(--t-bg))',
             }}
             aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
           >
-            <IconCartBag className="w-5 h-5" style={{ color: 'var(--color-brand-primary)' }} />
+            <IconCartBag className="w-5 h-5" style={{ color: 'var(--t-accent)' }} />
             <CountBadge count={count} showZero />
           </button>
         </div>

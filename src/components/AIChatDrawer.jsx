@@ -181,7 +181,7 @@ function RichChatText({ text, className }) {
     <span className={className}>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="font-bold text-[var(--color-brand-primary)]">
+          <span key={i} className="font-bold text-[var(--t-accent)]">
             {part}
           </span>
         ) : (
@@ -198,9 +198,9 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
       <div
         className="self-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95 mb-6 ai-chat-badge-pulse"
         style={{
-          background: 'var(--color-brand-secondary-20)',
-          border: '1px solid var(--color-brand-secondary-40)',
-          color: 'var(--color-brand-secondary)',
+          background: 'var(--t-accent2-20)',
+          border: '1px solid var(--t-accent2-40)',
+          color: 'var(--t-accent2)',
         }}
       >
         ✨ INTELLIGENCE ACTIVE
@@ -254,7 +254,7 @@ function ChatHeader({ onClose }) {
   return (
     <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
       <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-[var(--color-brand-primary)] shrink-0">
+        <span className="text-[var(--t-accent)] shrink-0">
           <BookIcon />
         </span>
         <Text as="h2" size="md" weight="bold" color="white" className="truncate uppercase tracking-wide">
@@ -393,7 +393,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
   const inputPlaceholder = hasUserMessage ? 'Ask follow-up…' : 'Ask for suggestions…';
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} maxHeight="85vh">
+    <Drawer isOpen={isOpen} onClose={onClose} height="85vh">
       <ChatHeader onClose={onClose} />
 
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 min-h-0">
@@ -411,14 +411,14 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                     <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
                       <span
                         className="w-1.5 h-1.5 rounded-sm shrink-0"
-                        style={{ background: 'var(--color-brand-secondary)', boxShadow: '0 0 6px var(--color-brand-secondary-40)' }}
+                        style={{ background: 'var(--t-accent2)', boxShadow: '0 0 6px var(--t-accent2-40)' }}
                       />
                       <Text
                         as="span"
                         size="xs"
                         weight="bold"
                         className="uppercase tracking-widest"
-                        style={{ color: 'var(--color-brand-secondary)' }}
+                        style={{ color: 'var(--t-accent2)' }}
                       >
                         INTELLIGENCE AGENT
                       </Text>
@@ -432,7 +432,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                         ? 'bg-brand text-white rounded-tr-sm'
                         : 'bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4',
                     ].join(' ')}
-                    style={!isUser ? { borderLeftColor: 'var(--color-brand-secondary)' } : undefined}
+                    style={!isUser ? { borderLeftColor: 'var(--t-accent2)' } : undefined}
                   >
                     {isUser ? (
                       m.text
@@ -467,21 +467,21 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                 <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
                   <span
                     className="w-1.5 h-1.5 rounded-sm shrink-0"
-                    style={{ background: 'var(--color-brand-secondary)', boxShadow: '0 0 6px var(--color-brand-secondary-40)' }}
+                    style={{ background: 'var(--t-accent2)', boxShadow: '0 0 6px var(--t-accent2-40)' }}
                   />
                   <Text
                     as="span"
                     size="xs"
                     weight="bold"
                     className="uppercase tracking-widest"
-                    style={{ color: 'var(--color-brand-secondary)' }}
+                    style={{ color: 'var(--t-accent2)' }}
                   >
                     INTELLIGENCE AGENT
                   </Text>
                 </div>
                 <div
                   className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-sm border border-white/10 border-l-4"
-                  style={{ borderLeftColor: 'var(--color-brand-secondary)' }}
+                  style={{ borderLeftColor: 'var(--t-accent2)' }}
                 >
                   <div className="flex gap-1 items-center">
                     {[0, 150, 300].map(delay => (
@@ -511,7 +511,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             }}
             placeholder={inputPlaceholder}
             disabled={loading}
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-brand-primary)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--t-accent)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
           />
           {SpeechRecognitionAvailable && (
             <button
@@ -533,7 +533,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             onClick={() => send()}
             disabled={loading}
             className="w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
-            style={{ background: 'var(--color-brand-primary)' }}
+            style={{ background: 'var(--t-accent)' }}
             aria-label="Send"
           >
             {loading ? (

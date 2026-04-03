@@ -155,7 +155,7 @@ export default function CustomerOrdersPage() {
         <span className="text-5xl" aria-hidden>🍽️</span>
         <div className="space-y-2">
           <p className="text-lg font-bold text-white tracking-wide uppercase">No orders yet</p>
-          <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--color-nav-muted)' }}>
+          <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--t-nav-muted)' }}>
             Browse the menu and send your first order to the kitchen.
           </p>
         </div>
@@ -163,11 +163,11 @@ export default function CustomerOrdersPage() {
           type="button"
           onClick={() => navigate(`${basePath}/menu`)}
           className="mt-1 px-8 py-3.5 rounded-xl font-bold uppercase text-sm tracking-wider text-white transition-opacity active:opacity-90"
-          style={{ backgroundColor: 'var(--color-brand-primary)' }}
+          style={{ backgroundColor: 'var(--t-accent)' }}
         >
           Open menu
         </button>
-        <p className="text-xs pt-2" style={{ color: 'var(--color-nav-muted)' }}>
+        <p className="text-xs pt-2" style={{ color: 'var(--t-nav-muted)' }}>
           Status updates automatically every 15s
         </p>
       </div>
@@ -188,7 +188,7 @@ export default function CustomerOrdersPage() {
     return (
       <article
         className="relative rounded-2xl overflow-hidden border border-white/[0.06]"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--color-brand-neutral) 88%, white 4%)' }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--t-bg) 88%, white 4%)' }}
       >
         <div
           className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.stripeSolid}`}
@@ -197,7 +197,7 @@ export default function CustomerOrdersPage() {
 
         <div className="pl-5 pr-4 py-5 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] leading-relaxed max-w-[70%]" style={{ color: 'var(--color-nav-muted)' }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] leading-relaxed max-w-[70%]" style={{ color: 'var(--t-nav-muted)' }}>
               <span className={statusTone}>{metaKicker}</span>
               {' · '}
               #{order.order_number}
@@ -239,7 +239,7 @@ export default function CustomerOrdersPage() {
                     </div>
                   </div>
                   {note ? (
-                    <p className="text-[12px] mt-2 leading-relaxed italic" style={{ color: 'var(--color-nav-muted)' }}>
+                    <p className="text-[12px] mt-2 leading-relaxed italic" style={{ color: 'var(--t-nav-muted)' }}>
                       {note}
                     </p>
                   ) : null}
@@ -284,7 +284,7 @@ export default function CustomerOrdersPage() {
         <h1 className="text-3xl font-black uppercase tracking-tight leading-[1.1]">
           <span className="text-white">Current</span>
           <br />
-          <span style={{ color: 'var(--color-brand-primary)' }}>Orders</span>
+          <span style={{ color: 'var(--t-accent)' }}>Orders</span>
         </h1>
       </div>
 
@@ -299,7 +299,7 @@ export default function CustomerOrdersPage() {
         ))}
       </div>
 
-      <p className="text-center text-[11px] pt-2" style={{ color: 'var(--color-nav-muted)' }}>
+      <p className="text-center text-[11px] pt-2" style={{ color: 'var(--t-nav-muted)' }}>
         Status updates automatically every 15s
       </p>
 
@@ -310,19 +310,19 @@ export default function CustomerOrdersPage() {
         <div
           className="w-full max-w-md rounded-2xl border border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{
-            backgroundColor: 'color-mix(in srgb, var(--color-brand-neutral) 92%, black)',
-            borderTop: '2px solid var(--color-brand-primary)',
-            boxShadow: '0 0 24px var(--color-brand-secondary-20)',
+            backgroundColor: 'color-mix(in srgb, var(--t-bg) 92%, black)',
+            borderTop: '2px solid var(--t-accent)',
+            boxShadow: '0 0 24px var(--t-accent2-20)',
           }}
         >
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--color-nav-muted)' }}>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'var(--t-nav-muted)' }}>
               Current session total
             </p>
-            <p className="text-2xl font-black tabular-nums mt-1" style={{ color: 'var(--color-brand-primary)' }}>
+            <p className="text-2xl font-black tabular-nums mt-1" style={{ color: 'var(--t-accent)' }}>
               {formatCurrency(grandTotal, currencySymbol)}
             </p>
-            <p className="text-[10px] mt-1" style={{ color: 'var(--color-nav-muted)' }}>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--t-nav-muted)' }}>
               + Service tax included
             </p>
           </div>
@@ -335,7 +335,7 @@ export default function CustomerOrdersPage() {
               style={{
                 backgroundColor: 'transparent',
                 color: 'white',
-                border: '2px solid color-mix(in srgb, white 35%, var(--color-brand-neutral))',
+                border: '2px solid color-mix(in srgb, white 35%, var(--t-bg))',
               }}
             >
               + Order more
@@ -346,8 +346,8 @@ export default function CustomerOrdersPage() {
               onClick={handleRequestBill}
               className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90 disabled:opacity-60"
               style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                color: 'var(--color-brand-neutral)',
+                backgroundColor: 'var(--t-accent)',
+                color: 'var(--t-bg)',
               }}
             >
               <IconReceipt className="w-4 h-4" />

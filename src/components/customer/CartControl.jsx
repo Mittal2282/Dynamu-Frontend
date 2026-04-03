@@ -17,14 +17,14 @@ export default function CartControl({ item }) {
     <div className="flex items-center gap-2">
       <button
         onClick={() => remove(item)}
-        className="w-7 h-7 rounded-full bg-[var(--color-brand-primary)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
+        className="w-7 h-7 rounded-full bg-[var(--t-accent)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
       >
         −
       </button>
       <Text as="span" size="sm" weight="bold" className="w-4 text-center">{q}</Text>
       <button
         onClick={() => add(item)}
-        className="w-7 h-7 rounded-full bg-[var(--color-brand-primary)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
+        className="w-7 h-7 rounded-full bg-[var(--t-accent)] text-white font-bold flex items-center justify-center active:scale-95 transition-transform"
       >
         +
       </button>

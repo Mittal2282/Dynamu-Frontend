@@ -32,7 +32,7 @@ function StatCard({ label, value, iconKey, sub }) {
       {/* Subtle ambient glow */}
       <div
         className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.06] group-hover:opacity-[0.1] transition-opacity"
-        style={{ background: 'var(--color-brand-primary, #f97316)' }}
+        style={{ background: 'var(--t-accent)' }}
       />
       {/* Icon */}
       <div
@@ -99,7 +99,7 @@ export default function StatsPage() {
                   ? 'text-white shadow-sm'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
-              style={range === r.value ? { background: 'var(--color-brand-primary, #f97316)' } : {}}
+              style={range === r.value ? { background: 'var(--t-accent)' } : {}}
             >
               {r.label}
             </button>
@@ -194,7 +194,7 @@ export default function StatsPage() {
                           {order.items?.map(i => i.name).join(', ')}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold text-sm" style={{ color: 'var(--color-brand-primary, #f97316)' }}>
+                      <td className="px-5 py-3 text-right font-semibold text-sm" style={{ color: 'var(--t-accent)' }}>
                         ₹{Math.round(order.total_amount || 0)}
                       </td>
                       <td className="px-4 py-3 text-center">

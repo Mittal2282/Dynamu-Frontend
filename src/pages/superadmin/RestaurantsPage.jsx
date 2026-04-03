@@ -16,7 +16,7 @@ function StatCard({ label, value, iconKey }) {
     <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 overflow-hidden relative group hover:border-white/15 transition-colors duration-200">
       <div
         className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.06] group-hover:opacity-[0.1] transition-opacity"
-        style={{ background: 'var(--color-brand-primary, #f97316)' }}
+        style={{ background: 'var(--t-accent)' }}
       />
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-4"
@@ -95,7 +95,7 @@ export default function RestaurantsPage() {
         <button
           onClick={() => navigate('/superadmin/onboard')}
           className="inline-flex items-center gap-2 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 text-sm shrink-0 active:scale-95"
-          style={{ background: 'var(--color-brand-primary, #f97316)' }}
+          style={{ background: 'var(--t-accent)' }}
         >
           ➕ Onboard Restaurant
         </button>
@@ -118,7 +118,7 @@ export default function RestaurantsPage() {
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by name or slug…"
           className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
-          onFocus={e => e.target.style.borderColor = 'var(--color-brand-primary, #f97316)'}
+          onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
           onBlur={e => e.target.style.borderColor = ''}
         />
         {search && (
