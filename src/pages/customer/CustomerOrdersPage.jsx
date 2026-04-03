@@ -11,6 +11,7 @@ import { authStore } from '../../store/authStore';
 import { cartStore } from '../../store/cartStore';
 import { restaurantStore } from '../../store/restaurantStore';
 import { formatCurrency } from '../../utils/formatters';
+import LazyImage from '../../components/ui/LazyImage';
 import {
   getOrderStatusConfig,
   CUSTOMER_STATUS_PHASE,
@@ -211,15 +212,31 @@ export default function CustomerOrdersPage() {
           <ul className="space-y-4">
             {order.items?.map((item, i) => {
               const note = item.instruction ?? item.note ?? item.notes ?? '';
+              const imageUrl = item.image_url ?? item.menu_item?.image_url;
               return (
                 <li key={i} className="border-b border-white/[0.06] last:border-0 last:pb-0 pb-4">
-                  <div className="flex justify-between gap-4 items-start">
-                    <p className="text-[14px] font-bold uppercase tracking-wide text-white leading-snug flex-1">
-                      {item.name}
-                    </p>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
-                      QTY: {String(item.quantity ?? 1).padStart(2, '0')}
-                    </span>
+                  <div className="flex gap-3 items-start">
+                    <LazyImage
+                      src={imageUrl}
+                      alt={item.name}
+                      containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
+                      placeholder={
+                        <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+                          <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+                            No image available
+                          </span>
+                        </div>
+                      }
+                    />
+
+                    <div className="flex justify-between gap-4 items-start flex-1">
+                      <p className="text-[14px] font-bold uppercase tracking-wide text-white leading-snug flex-1">
+                        {item.name}
+                      </p>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
+                        QTY: {String(item.quantity ?? 1).padStart(2, '0')}
+                      </span>
+                    </div>
                   </div>
                   {note ? (
                     <p className="text-[12px] mt-2 leading-relaxed italic" style={{ color: 'var(--color-nav-muted)' }}>

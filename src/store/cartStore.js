@@ -72,5 +72,10 @@ export const useCartCount = () => {
 };
 export const useCartTotal = () => {
   const cartMap = cartStore((state) => state.cart);
-  return Object.values(cartMap).reduce((sum, item) => sum + (item.price * item.qty), 0);
+  return Object.values(cartMap).reduce((sum, item) => {
+    const effectivePrice = item.discount_percentage > 0
+      ? item.price * (1 - item.discount_percentage / 100)
+      : item.price;
+    return sum + effectivePrice * item.qty;
+  }, 0);
 };

@@ -7,6 +7,20 @@ import {
   getOrderStatusConfig,
 } from '../../constants/orderStatusConfig';
 
+/* ─── Live countdown hook ─────────────────────────────────────────────────── */
+function useCountdown(order) {
+  const [remaining, setRemaining] = useState(null);
+  useEffect(() => {
+    if (!order.estimated_prep_time || !order.confirmed_at) return;
+    const deadline = new Date(order.confirmed_at).getTime() + order.estimated_prep_time * 60_000;
+    const tick = () => setRemaining(Math.ceil((deadline - Date.now()) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [order.estimated_prep_time, order.confirmed_at]);
+  return remaining;
+}
+
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
   if (diff < 60) return `${Math.floor(diff)}s`;
@@ -23,6 +37,7 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
   const cfg = getOrderStatusConfig(order.status);
   const [showPrepInput, setShowPrepInput] = useState(false);
   const [prepTime, setPrepTime] = useState('');
+  const remaining = useCountdown(order);
 
   const handleConfirmClick = () => {
     if (cfg.next === 'confirmed') setShowPrepInput(true);
@@ -74,11 +89,24 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
         </p>
       )}
 
-      {/* Prep time */}
-      {order.estimated_prep_time && (
-        <p className="text-xs text-blue-400 flex items-center gap-1">
-          <span>⏱</span> Est. {order.estimated_prep_time} min
-        </p>
+      {/* Prep time / live countdown */}
+      {order.estimated_prep_time && ['confirmed', 'preparing'].includes(order.status) && (
+        remaining === null ? (
+          <p className="text-xs text-blue-400 flex items-center gap-1">
+            <span>⏱</span> Est. {order.estimated_prep_time} min
+          </p>
+        ) : remaining > 0 ? (
+          <p className={`text-xs font-mono font-semibold flex items-center gap-1 ${
+            remaining < 120 ? 'text-red-400' : remaining < 300 ? 'text-orange-400' : 'text-green-400'
+          }`}>
+            <span>⏱</span>
+            {String(Math.floor(remaining / 60)).padStart(2, '0')}:{String(remaining % 60).padStart(2, '0')}
+          </p>
+        ) : (
+          <p className="text-xs font-semibold text-red-400 animate-pulse flex items-center gap-1">
+            ⚠ OVERDUE
+          </p>
+        )
       )}
 
       {/* Action row */}
@@ -216,6 +244,7 @@ export default function OrdersPage() {
   const [closingTable, setClosingTable] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [newIds, setNewIds] = useState(new Set());
+  const [selectedTable, setSelectedTable] = useState(null); // null = all tables
   const prevIdsRef = useRef(new Set());
 
   const fetchOrders = useCallback(async (quiet = false) => {
@@ -267,8 +296,18 @@ export default function OrdersPage() {
     }
   };
 
+  // Unique sorted table numbers for the filter chips
+  const tableNumbers = [...new Set(
+    orders.map(o => o.table?.table_number ?? o.table_number).filter(n => n != null)
+  )].sort((a, b) => Number(a) - Number(b));
+
+  // Apply table filter
+  const visibleOrders = selectedTable != null
+    ? orders.filter(o => (o.table?.table_number ?? o.table_number) == selectedTable)
+    : orders;
+
   const addonsBySession = {};
-  orders.forEach(o => {
+  visibleOrders.forEach(o => {
     if (!o.is_addon) return;
     const key = String(o.session?._id ?? o.session ?? '');
     if (!key) return;
@@ -276,7 +315,7 @@ export default function OrdersPage() {
     addonsBySession[key].push(o);
   });
 
-  const byStatus = (status) => orders.filter(o => o.status === status && !o.is_addon);
+  const byStatus = (status) => visibleOrders.filter(o => o.status === status && !o.is_addon);
   const activeCount = orders.filter(o => !['served', 'completed', 'cancelled'].includes(o.status)).length;
 
   return (
@@ -312,6 +351,37 @@ export default function OrdersPage() {
           <span>↻</span> Refresh
         </button>
       </div>
+
+      {/* ── Table filter chips ──────────────────────────────────────────────── */}
+      {tableNumbers.length > 1 && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setSelectedTable(null)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 ${
+              selectedTable === null
+                ? 'text-white border-transparent'
+                : 'text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-slate-200'
+            }`}
+            style={selectedTable === null ? { background: 'var(--color-brand-primary, #f97316)', borderColor: 'transparent' } : {}}
+          >
+            All Tables
+          </button>
+          {tableNumbers.map(num => (
+            <button
+              key={num}
+              onClick={() => setSelectedTable(selectedTable == num ? null : num)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 ${
+                selectedTable == num
+                  ? 'text-white border-transparent'
+                  : 'text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-slate-200'
+              }`}
+              style={selectedTable == num ? { background: 'var(--color-brand-primary, #f97316)', borderColor: 'transparent' } : {}}
+            >
+              Table {num}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Kanban ─────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">

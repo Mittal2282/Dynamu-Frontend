@@ -4,6 +4,7 @@ import CartControl from '../../components/customer/CartControl';
 import { VegBadge } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import Text from '../../components/ui/Text';
+import LazyImage from '../../components/ui/LazyImage';
 import { useCartCount } from '../../store/cartStore';
 import { restaurantStore } from '../../store/restaurantStore';
 import { formatCurrency } from '../../utils/formatters';
@@ -206,6 +207,18 @@ function MenuItemCard({ item, currencySymbol }) {
   return (
     <div className="bg-slate-800/80 rounded-xl p-4 flex gap-3 items-start border border-white/5">
       <VegBadge isVeg={item.is_veg} className="mt-1" />
+      <LazyImage
+        src={item.image_url}
+        alt={item.name}
+        containerClassName="w-16 h-16 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0"
+        placeholder={
+          <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+            <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+              No image available
+            </span>
+          </div>
+        }
+      />
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0">
@@ -214,9 +227,23 @@ function MenuItemCard({ item, currencySymbol }) {
               <Text size="xs" color="muted" className="mt-0.5">{item.category}</Text>
             )}
           </div>
-          <Text as="span" size="sm" weight="bold" color="brand" className="shrink-0">
-            {formatCurrency(item.price_label ?? item.price, currencySymbol)}
-          </Text>
+          {item.discount_percentage > 0 ? (
+            <div className="flex items-center gap-1.5 flex-wrap justify-end shrink-0">
+              <span className="line-through text-slate-500 text-xs">
+                {formatCurrency(item.price, currencySymbol)}
+              </span>
+              <span className="font-bold text-brand text-sm">
+                {formatCurrency(item.price * (1 - item.discount_percentage / 100), currencySymbol)}
+              </span>
+              <span className="text-[10px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">
+                {item.discount_percentage}% OFF
+              </span>
+            </div>
+          ) : (
+            <Text as="span" size="sm" weight="bold" color="brand" className="shrink-0">
+              {formatCurrency(item.price_label ?? item.price, currencySymbol)}
+            </Text>
+          )}
         </div>
         {item.description && (
           <Text size="xs" color="muted" className="mt-1 line-clamp-2">{item.description}</Text>

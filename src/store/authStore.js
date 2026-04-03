@@ -9,6 +9,10 @@ export const authStore = create(
         sessionToken: null,
         setSessionToken: (sessionToken) => set(() => ({ sessionToken })),
 
+        // Customer display name (entered at gate)
+        guestName: null,
+        setGuestName: (guestName) => set(() => ({ guestName })),
+
         // Admin tokens
         adminAccessToken: null,
         setAdminAccessToken: (adminAccessToken) => set(() => ({ adminAccessToken })),
@@ -32,6 +36,7 @@ export const authStore = create(
         resetAuth: () =>
           set(() => ({
             sessionToken: null,
+            guestName: null,
             adminAccessToken: null,
             adminRefreshToken: null,
             adminRole: null,

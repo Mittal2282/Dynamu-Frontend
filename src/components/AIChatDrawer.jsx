@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import Drawer from '../components/ui/Drawer';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
+import LazyImage from '../components/ui/LazyImage';
 import { getChatHistory, getWelcomeMessage, sendChatMessage } from '../services/chatService';
 import { cartStore } from '../store/cartStore';
 import { chatStore } from '../store/chatStore';
@@ -13,6 +14,8 @@ import { formatCurrency } from '../utils/formatters';
 
 const WELCOME_FALLBACK =
   "I can help you find dishes based on your mood, budget, or dietary needs. What are you craving today?";
+
+const SpeechRecognitionAvailable = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
 const INFRA_FOOTER = 'SECURE AI INFRASTRUCTURE v2.4.0';
 
@@ -91,6 +94,19 @@ function RecommendationRow({ item }) {
     <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
       <div className="flex items-start gap-3">
         <VegBadge isVeg={item.is_veg} className="mt-0.5 shrink-0" />
+
+        <LazyImage
+          src={item.image_url}
+          alt={item.name}
+          containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
+          placeholder={
+            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+              <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+                No image available
+              </span>
+            </div>
+          }
+        />
 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
@@ -264,8 +280,10 @@ function ChatHeader({ onClose }) {
 export default function AIChatDrawer({ isOpen, onClose }) {
   const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } = chatStore();
   const [welcomeText, setWelcomeText] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const inputRef = useRef(null);
   const endRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const hasUserMessage = messages.some(m => m.role === 'user');
   const showWelcomeLayout = messages.length === 0 && !loading;
@@ -309,10 +327,42 @@ export default function AIChatDrawer({ isOpen, onClose }) {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 350);
   }, [isOpen]);
 
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend   = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.onresult = (e) => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+      if (inputRef.current) inputRef.current.value = transcript;
+      if (e.results[e.results.length - 1].isFinal) {
+        send(transcript);
+      }
+    };
+    recognition.start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+  }, []);
+
   const send = useCallback(
     async (overrideText) => {
       const text = (overrideText ?? inputRef.current?.value ?? '').trim();
       if (!text) return;
+      if (text.length > 500) {
+        addMessage({ role: 'ai', text: 'Your message is a bit long — try a shorter question! 😊', items: [], timestamp: Date.now() });
+        return;
+      }
       if (!overrideText && inputRef.current) inputRef.current.value = '';
 
       addMessage({ role: 'user', text, items: [], timestamp: Date.now() });
@@ -463,6 +513,21 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             disabled={loading}
             className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-brand-primary)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
           />
+          {SpeechRecognitionAvailable && (
+            <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              disabled={loading}
+              className={`w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
+                isListening
+                  ? 'bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse'
+                  : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white'
+              }`}
+              title={isListening ? 'Stop listening' : 'Speak your order'}
+            >
+              🎙️
+            </button>
+          )}
           <button
             type="button"
             onClick={() => send()}

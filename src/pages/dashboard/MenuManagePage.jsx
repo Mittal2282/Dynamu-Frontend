@@ -43,6 +43,51 @@ function EditableCell({ value, onSave, type = 'text' }) {
   );
 }
 
+function DiscountCell({ value, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const parsed = parseFloat(draft);
+    if (!isNaN(parsed) && parsed !== value) onSave(parsed);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1 justify-center">
+        <input
+          ref={inputRef}
+          type="number"
+          min="0"
+          max="100"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
+          className="bg-slate-700 border border-orange-500 rounded px-2 py-0.5 text-sm text-white w-14 focus:outline-none"
+        />
+        <span className="text-slate-400 text-xs">%</span>
+      </div>
+    );
+  }
+
+  return (
+    <span
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className={`cursor-pointer text-xs font-semibold transition-colors ${value > 0 ? 'text-amber-400 hover:text-amber-300' : 'text-slate-600 hover:text-amber-400'}`}
+      title="Click to edit discount"
+    >
+      {value > 0 ? `${value}%` : '—'}
+    </span>
+  );
+}
+
 export default function MenuManagePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -249,6 +294,7 @@ export default function MenuManagePage() {
                   <th className="text-center px-4 py-3 w-28">Available</th>
                   <th className="text-center px-4 py-3 w-28">Chef's Special</th>
                   <th className="text-center px-4 py-3 w-24">Featured</th>
+                  <th className="text-center px-4 py-3 w-24">Discount</th>
                 </tr>
               </thead>
               <tbody>
@@ -318,6 +364,12 @@ export default function MenuManagePage() {
                           }`}
                         />
                       </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <DiscountCell
+                        value={item.discount_percentage ?? 0}
+                        onSave={val => handleUpdate(item._id, 'discount_percentage', Math.min(100, Math.max(0, val)))}
+                      />
                     </td>
                   </tr>
                 ))}

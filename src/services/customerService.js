@@ -12,11 +12,46 @@ import { ENDPOINTS } from '../utils/endpoints';
  * @param {string|number} tableNumber
  * @returns {Promise<{ session_token, restaurant, table, menu }>}
  */
-export async function startSession(qrCodeId, tableNumber) {
+export async function startSession(qrCodeId, tableNumber, name = '', forceNew = false) {
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_START,
-    payload:  { qr_code_id: qrCodeId },
+    payload:  { qr_code_id: qrCodeId, name, force_new: forceNew },
+  });
+  return data.data;
+}
+
+export async function checkSession(qrCodeId, existingToken = null) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.SESSION_CHECK,
+    payload:  { qr_code_id: qrCodeId, session_token: existingToken },
+  });
+  return data.data;
+}
+
+export async function requestJoinSession(qrCodeId, joinerName) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.SESSION_REQUEST_JOIN,
+    payload:  { qr_code_id: qrCodeId, joiner_name: joinerName },
+  });
+  return data.data;
+}
+
+export async function getJoinStatus(requestId) {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.SESSION_JOIN_STATUS(requestId),
+  });
+  return data.data;
+}
+
+export async function respondToJoin(requestId, approved) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.SESSION_RESPOND_JOIN,
+    payload:  { request_id: requestId, approved },
   });
   return data.data;
 }
