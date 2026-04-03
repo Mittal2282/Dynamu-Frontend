@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { createRestaurant, createTables, importMenu } from '../../services/adminService';
+import { createRestaurant, importMenu } from '../../services/adminService';
 import { authStore } from '../../store/authStore';
 
 const STEPS = ['Restaurant Details', 'Import Menu', 'Done'];
@@ -415,11 +415,10 @@ export default function OnboardPage() {
         owner_name:     form.owner_name,
         owner_email:    form.owner_email,
         owner_password: form.owner_password,
+        table_count:    parseInt(form.table_count) || 0,
+        start_number:   parseInt(form.start_number) || 1,
       });
-      const rid = data.restaurant._id;
-      setRestaurantId(rid);
-      const count = parseInt(form.table_count);
-      if (count > 0) await createTables(rid, { count, start_number: parseInt(form.start_number) || 1 });
+      setRestaurantId(data.restaurant._id);
       setStep(1);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create restaurant.');
