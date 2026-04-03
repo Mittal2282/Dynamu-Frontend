@@ -1,6 +1,7 @@
 import { useOutletContext } from 'react-router-dom';
 import CartControl from '../../components/customer/CartControl';
 import Text from '../../components/ui/Text';
+import LazyImage from '../../components/ui/LazyImage';
 import { restaurantStore } from '../../store/restaurantStore';
 import { formatCurrency } from '../../utils/formatters';
 import { useCartCount } from '../../store/cartStore';
@@ -16,6 +17,18 @@ function MenuCardStrip({ title, items, currencySymbol }) {
             key={item._id}
             className="w-36 shrink-0 bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col gap-2"
           >
+            <LazyImage
+              src={item.image_url}
+              alt={item.name}
+              containerClassName="w-full h-20 rounded-xl overflow-hidden border border-white/10 bg-white/5"
+              placeholder={
+                <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+                  <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+                    No image available
+                  </span>
+                </div>
+              }
+            />
             <div className="flex items-center gap-1.5">
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -26,9 +39,25 @@ function MenuCardStrip({ title, items, currencySymbol }) {
             <Text as="p" size="sm" weight="semibold" color="white" className="line-clamp-2 leading-snug flex-1">
               {item.name}
             </Text>
-            <Text as="p" size="sm" weight="bold" color="brand">
-              {formatCurrency(item.price, currencySymbol)}
-            </Text>
+            {item.discount_percentage > 0 ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="line-through text-slate-500 text-[10px]">
+                  {formatCurrency(item.price, currencySymbol)}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span className="font-bold text-brand text-sm">
+                    {formatCurrency(item.price * (1 - item.discount_percentage / 100), currencySymbol)}
+                  </span>
+                  <span className="text-[9px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1 py-0.5 rounded-full">
+                    {item.discount_percentage}%
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <Text as="p" size="sm" weight="bold" color="brand">
+                {formatCurrency(item.price, currencySymbol)}
+              </Text>
+            )}
             <div className="flex justify-center">
               <CartControl item={item} />
             </div>

@@ -83,12 +83,14 @@ export default function CustomerLayout() {
           const cartMap = {};
           apiItems.forEach(({ menu_item, quantity }) => {
             cartMap[menu_item._id] = {
-              _id:         menu_item._id,
-              name:        menu_item.name,
-              price:       menu_item.price,
-              is_veg:      menu_item.is_veg,
-              description: menu_item.description,
-              qty:         quantity,
+              _id:                menu_item._id,
+              name:               menu_item.name,
+              price:              menu_item.price,
+              discount_percentage: menu_item.discount_percentage || 0,
+              is_veg:             menu_item.is_veg,
+              description:        menu_item.description,
+              image_url:         menu_item.image_url,
+              qty:                quantity,
             };
           });
           setCart(cartMap);
@@ -120,12 +122,14 @@ export default function CustomerLayout() {
       (serverCart.items || []).forEach(({ menu_item, quantity }) => {
         if (menu_item?._id) {
           cartMap[menu_item._id] = {
-            _id:         menu_item._id,
-            name:        menu_item.name,
-            price:       menu_item.price,
-            is_veg:      menu_item.is_veg,
-            description: menu_item.description,
-            qty:         quantity,
+            _id:                menu_item._id,
+            name:               menu_item.name,
+            price:              menu_item.price,
+            discount_percentage: menu_item.discount_percentage || 0,
+            is_veg:             menu_item.is_veg,
+            description:        menu_item.description,
+            image_url:         menu_item.image_url,
+            qty:                quantity,
           };
         }
       });

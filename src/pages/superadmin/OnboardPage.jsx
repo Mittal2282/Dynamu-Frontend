@@ -6,11 +6,9 @@ import { authStore } from '../../store/authStore';
 
 const STEPS = ['Restaurant Details', 'Import Menu', 'Done'];
 
-const CSV_SAMPLE = `Category,Item Name,Price,Is Veg,Spice Level,Description
-Starters,Paneer Tikka,299,true,2,Marinated cottage cheese grilled in tandoor
-Starters,Chicken Wings,349,false,3,Crispy fried wings with hot sauce
-Main Course,Dal Makhani,249,true,1,Slow-cooked black lentils in butter
-Main Course,Chicken Biryani,399,false,2,Aromatic basmati rice with spiced chicken`;
+const CSV_SAMPLE = `Category,Item Name,Price (₹),Details,Taste Profile,Taste Level (1-5),Key Ingredients,Allergens / Choosy Items,GST Slab (%),Avg Prep Time (min),Meal Tag,Avg Rating (Future),Veg / Non-Veg,Image Reference URL
+Starters,Paneer Tikka,299,Marinated cottage cheese grilled in tandoor,Savory,2,"Paneer, Tandoori masala",Dairy,5,10,Popular,4.5,Veg,https://en.wikipedia.org/wiki/Paneer
+Starters,Chicken Wings,349,Crispy fried wings with hot sauce,Spicy,3,"Chicken, Hot sauce","None/NA",18,12,Spicy,,Non-Veg,https://en.wikipedia.org/wiki/Chicken_wing`;
 
 /* ─── Shared input field ─────────────────────────────────────────────────── */
 function Field({ label, name, value, onChange, type = 'text', placeholder, hint }) {
@@ -109,12 +107,56 @@ function Step2({ restaurantId, onNext, onSkip }) {
   const [error, setError]           = useState('');
   const [showSample, setShowSample] = useState(false);
 
+  const parseCSVLine = (line) => {
+    // RFC4180-ish parsing so quoted commas don't break column indexing.
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  };
+
   const buildPreview = (text) => {
-    const lines = text.trim().split('\n').slice(1).filter(l => l.trim());
-    return lines.slice(0, 5).map(line => {
-      const parts = line.split(',');
-      return { category: parts[0]?.trim(), name: parts[1]?.trim(), price: parts[2]?.trim() };
-    }).filter(r => r.name);
+    const lines = text
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(Boolean)
+      .slice(1); // skip header
+
+    return lines
+      .slice(0, 5)
+      .map(line => {
+        const parts = parseCSVLine(line);
+        const category = parts[0]?.trim();
+        const name = parts[1]?.trim();
+        const price = parts[2]?.trim();
+        const meal_tag = parts[10]?.trim();
+        const vegRaw = parts[12]?.trim();
+
+        let vegNonVeg = '';
+        if (!vegRaw) vegNonVeg = 'Veg (default)';
+        else vegNonVeg = vegRaw.toLowerCase() === 'veg' ? 'Veg' : 'Non-Veg';
+
+        return { category, name, price, meal_tag, vegNonVeg };
+      })
+      .filter(r => r.name);
   };
 
   const handleFileChange = async (e) => {
@@ -235,6 +277,8 @@ function Step2({ restaurantId, onNext, onSkip }) {
                   <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Category</th>
                   <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Name</th>
                   <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Price</th>
+                  <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Meal Tag</th>
+                  <th className="text-left px-4 py-2.5 text-slate-500 uppercase tracking-wider font-semibold">Veg/Non-Veg</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -243,6 +287,8 @@ function Step2({ restaurantId, onNext, onSkip }) {
                     <td className="px-4 py-2.5 text-slate-400">{r.category}</td>
                     <td className="px-4 py-2.5 text-slate-200 font-medium">{r.name}</td>
                     <td className="px-4 py-2.5 font-semibold" style={{ color: 'var(--color-brand-primary, #f97316)' }}>{r.price}</td>
+                    <td className="px-4 py-2.5 text-slate-300">{r.meal_tag || '-'}</td>
+                    <td className="px-4 py-2.5 text-slate-300">{r.vegNonVeg || '-'}</td>
                   </tr>
                 ))}
               </tbody>

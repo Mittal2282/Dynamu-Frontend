@@ -3,6 +3,7 @@ import { cartStore } from '../store/cartStore';
 import { restaurantStore } from '../store/restaurantStore';
 import { formatCurrency } from '../utils/formatters';
 import { VegBadge } from './ui/Badge';
+import LazyImage from './ui/LazyImage';
 import Button from './ui/Button';
 import Drawer from './ui/Drawer';
 import Modal from './ui/Modal';
@@ -55,14 +56,41 @@ function CartItem({ item, onAdd, onRemove, onAddInstruction, currencySymbol }) {
       <div className="flex items-start gap-3 p-3 -mx-3 hover:bg-white/5 rounded-2xl transition-colors group">
         <VegBadge isVeg={item.is_veg} className="mt-1 shrink-0" />
 
+        <LazyImage
+          src={item.image_url}
+          alt={item.name}
+          containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
+          placeholder={
+            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+              <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+                No image available
+              </span>
+            </div>
+          }
+        />
+
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">{item.name}</Text>
           {item.description && (
             <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">{item.description}</Text>
           )}
-          <Text as="p" size="sm" weight="bold" color="brand" className="mt-1">
-            {formatCurrency(item.price, currencySymbol)}
-          </Text>
+          {item.discount_percentage > 0 ? (
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <span className="line-through text-slate-500 text-xs">
+                {formatCurrency(item.price, currencySymbol)}
+              </span>
+              <Text as="span" size="sm" weight="bold" color="brand">
+                {formatCurrency(item.price * (1 - item.discount_percentage / 100), currencySymbol)}
+              </Text>
+              <span className="text-[10px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">
+                {item.discount_percentage}% OFF
+              </span>
+            </div>
+          ) : (
+            <Text as="p" size="sm" weight="bold" color="brand" className="mt-1">
+              {formatCurrency(item.price, currencySymbol)}
+            </Text>
+          )}
 
           {/* Add Instruction Button */}
           <div className="mt-2.5">
@@ -111,9 +139,17 @@ function SuggestionRow({ item, onAdd }) {
         className="flex items-center gap-3 p-3 -mx-3 rounded-2xl group cursor-pointer hover:bg-white/5 transition-colors"
         onClick={() => onAdd(item)}
       >
-        <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ background: 'var(--color-brand-secondary)' }}
+        <LazyImage
+          src={item.image_url}
+          alt={item.name}
+          containerClassName="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
+          placeholder={
+            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+              <span className="text-[9px] font-semibold text-slate-400 px-1 text-center">
+                No image available
+              </span>
+            </div>
+          }
         />
         <Text as="p" size="sm" weight="medium" color="white" className="flex-1 opacity-80 group-hover:opacity-100 transition-opacity">{item.name}</Text>
         <button
@@ -188,7 +224,12 @@ export default function CartDrawer({
     setInstructionModalOpen(false);
   };
 
-  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const subtotal = items.reduce((s, i) => {
+    const effectivePrice = i.discount_percentage > 0
+      ? i.price * (1 - i.discount_percentage / 100)
+      : i.price;
+    return s + effectivePrice * i.qty;
+  }, 0);
   const tax      = subtotal * TAX_RATE;
   const total    = subtotal + SERVICE_CHARGE + tax;
 
