@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import MenuItemCard from "../../components/customer/MenuItemCard";
-import { restaurantStore } from "../../store/restaurantStore";
 import { useCartCount } from "../../store/cartStore";
+import { authStore } from "../../store/authStore";
+import { restaurantStore } from "../../store/restaurantStore";
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────
 
@@ -51,7 +52,7 @@ function SectionHeader({ icon, title, badge, right }) {
 
 // ── Hero section ──────────────────────────────────────────────────────────────
 
-function HeroSection({ name, tagline, tableNumber }) {
+function HeroSection({ tagline, customerName }) {
   return (
     <div className="relative overflow-hidden px-4 md:px-6 lg:px-8 pt-6 pb-8 md:pb-10">
       {/* Background glow */}
@@ -68,39 +69,20 @@ function HeroSection({ name, tagline, tableNumber }) {
         }}
       />
 
-      {/* Session badge */}
-      <div className="relative flex items-center gap-2 mb-4">
-        <span
-          className="w-2 h-2 rounded-full animate-pulse shrink-0"
-          style={{ background: "var(--t-accent2)" }}
-        />
-        <span
-          className="text-xs font-bold uppercase tracking-widest"
-          style={{ color: "var(--t-accent2)" }}
-        >
-          Session Active · Table {tableNumber}
-        </span>
-      </div>
-
       {/* Welcome text */}
       <div className="relative">
-        <p
-          className="text-sm md:text-base lg:text-lg font-light mb-1"
-          style={{ color: "var(--t-dim)" }}
-        >
-          Welcome to
-        </p>
         <h1
           className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-none tracking-tight"
           style={{
-            background: "linear-gradient(135deg, var(--t-accent) 0%, #ffb347 60%, var(--t-accent) 100%)",
+            background:
+              "linear-gradient(135deg, var(--t-accent) 0%, #ffb347 60%, var(--t-accent) 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             WebkitTextFillColor: "transparent",
             filter: "drop-shadow(0 0 40px var(--t-accent-40))",
           }}
         >
-          {name || "Dynamu"}
+          {customerName ? `Welcome, ${customerName}` : "Welcome"}
         </h1>
         {tagline && (
           <p
@@ -124,29 +106,57 @@ function ExploreMenuCard({ onClick }) {
       onClick={onClick}
       className="w-full text-left rounded-2xl p-5 md:p-6 cursor-pointer active:scale-[0.98] transition-transform relative overflow-hidden group"
       style={{
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--t-accent) 18%, var(--t-surface)) 0%, var(--t-surface) 100%)",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--t-accent) 18%, var(--t-surface)) 0%, var(--t-surface) 100%)",
         border: "1px solid color-mix(in srgb, var(--t-accent) 25%, var(--t-line))",
       }}
     >
-      {/* Decorative plate */}
-      <div
-        className="absolute right-0 bottom-0 translate-x-4 translate-y-4 text-[80px] md:text-[100px] opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2"
-      >
-        🍽️
+      {/* Decorative background plate */}
+      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-[0.06] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
+        <svg
+          width="120"
+          height="120"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--t-accent)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2v20" />
+          <path d="M2 12h20" />
+        </svg>
       </div>
 
       <div className="relative flex items-center gap-4">
         <div
-          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 text-xl md:text-2xl"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0"
           style={{
             background: "color-mix(in srgb, var(--t-accent) 20%, transparent)",
             border: "1px solid color-mix(in srgb, var(--t-accent) 30%, transparent)",
           }}
         >
-          📖
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--t-accent)" }}
+          >
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm md:text-base font-black uppercase tracking-wide" style={{ color: "#ffffff" }}>
+          <p
+            className="text-sm md:text-base font-black uppercase tracking-wide"
+            style={{ color: "#ffffff" }}
+          >
             Explore Menu
           </p>
           <p
@@ -174,37 +184,63 @@ function AskAICard({ onClick }) {
       onClick={onClick}
       className="w-full text-left rounded-2xl p-5 md:p-6 cursor-pointer active:scale-[0.98] transition-transform relative overflow-hidden group"
       style={{
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--t-accent2) 12%, var(--t-surface)) 0%, var(--t-surface) 100%)",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--t-accent2) 12%, var(--t-surface)) 0%, var(--t-surface) 100%)",
         border: "1px solid color-mix(in srgb, var(--t-accent2) 20%, var(--t-line))",
       }}
     >
-      {/* Animated sparkles */}
-      <span
-        className="absolute right-5 top-4 text-xl opacity-20 pointer-events-none select-none animate-pulse"
-        style={{ color: "var(--t-accent2)", animationDuration: "2.5s" }}
-      >
-        ✦
-      </span>
-      <span
-        className="absolute right-12 bottom-5 text-sm opacity-15 pointer-events-none select-none animate-pulse"
-        style={{ color: "var(--t-accent2)", animationDuration: "3.5s" }}
-      >
-        ✦
-      </span>
+      {/* Animated background sparkles */}
+      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
+        <svg
+          width="100"
+          height="100"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--t-accent2)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="animate-pulse"
+          style={{ animationDuration: "4s" }}
+        >
+          <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.021 0l-.707-.707M6.343 6.343l-.707-.707" />
+          <path d="m12 8 1 3h3l-2.5 2 1 3-2.5-2-2.5 2 1-3L6 11h3z" />
+        </svg>
+      </div>
 
       <div className="relative flex items-center gap-4">
         <div
-          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 text-xl md:text-2xl"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0"
           style={{
             background: "color-mix(in srgb, var(--t-accent2) 15%, transparent)",
             border: "1px solid color-mix(in srgb, var(--t-accent2) 25%, transparent)",
           }}
         >
-          🤖
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--t-accent2)" }}
+          >
+            <path d="M12 8V4H8" />
+            <rect width="16" height="12" x="4" y="8" rx="2" />
+            <path d="M2 14h2" />
+            <path d="M20 14h2" />
+            <path d="M15 13v2" />
+            <path d="M9 13v2" />
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-sm md:text-base font-black uppercase tracking-wide text-white" style={{ color: "#ffffff" }}>
+            <p
+              className="text-sm md:text-base font-black uppercase tracking-wide text-white"
+              style={{ color: "#ffffff" }}
+            >
               AI Assistant
             </p>
             <span
@@ -240,11 +276,20 @@ function AskAICard({ onClick }) {
 
 const MEAL_CONFIG = {
   breakfast: { icon: "🌅", label: "Breakfast", greeting: "Good Morning" },
-  lunch:     { icon: "☀️", label: "Lunch",     greeting: "Lunchtime"   },
-  dinner:    { icon: "🌙", label: "Dinner",    greeting: "Good Evening" },
+  lunch: { icon: "☀️", label: "Lunch", greeting: "Lunchtime" },
+  dinner: { icon: "🌙", label: "Dinner", greeting: "Good Evening" },
 };
 
 const INITIAL_VISIBLE = 6;
+
+function getGridClasses(itemCount) {
+  // If there are 2 or fewer items, don't use horizontal scroll on mobile
+  if (itemCount <= 2) {
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
+  }
+  // Standard 2-row horizontal stack on mobile
+  return "grid grid-rows-2 grid-flow-col auto-cols-[calc(100%_-_48px)] md:auto-cols-min overflow-x-auto no-scrollbar gap-x-4 gap-y-3 -mx-0 px-4 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-none md:grid-flow-row snap-x snap-mandatory items-start md:items-stretch";
+}
 
 function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
   const config = MEAL_CONFIG[mealTime] || MEAL_CONFIG.dinner;
@@ -252,9 +297,10 @@ function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
 
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
         <SectionHeader icon={config.icon} title={`${config.greeting} · ${config.label}`} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -264,33 +310,42 @@ function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
   }
 
   if (!items || items.length === 0) return null;
-
-  const visible = showAll ? items : items.slice(0, INITIAL_VISIBLE);
   const hasMore = items.length > INITIAL_VISIBLE;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader
         icon={config.icon}
         title={`${config.greeting} · ${config.label}`}
         badge="Now Serving"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {visible.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
-        ))}
+      <div className={getGridClasses(items.length)}>
+        {/* All items visible on mobile scroll; desktop respects showAll toggle */}
+        {items.map((item, idx) => {
+          const isHiddenOnDesktop = idx >= INITIAL_VISIBLE && !showAll;
+          return (
+            <div
+              key={item._id}
+              className={`w-full md:w-auto snap-start h-full ${isHiddenOnDesktop ? "md:hidden" : ""}`}
+            >
+              <MenuItemCard item={item} currencySymbol={currencySymbol} />
+            </div>
+          );
+        })}
       </div>
 
       {hasMore && (
-        <button
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-          className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold border transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
-          style={{ borderColor: "var(--t-line)", color: "var(--t-dim)" }}
-        >
-          {showAll ? "Show Less ↑" : `See All ${items.length} Items ↓`}
-        </button>
+        <div className="hidden md:block">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold border transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
+            style={{ borderColor: "var(--t-line)", color: "var(--t-dim)" }}
+          >
+            {showAll ? "Show Less ↑" : `See All ${items.length} Items ↓`}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -304,11 +359,18 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
 
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
-        <SectionHeader title="Today's Specials" right={
-          <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>{dateLabel}</span>
-        } />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
+        <SectionHeader
+          title="Today's Specials"
+          right={
+            <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>
+              {dateLabel}
+            </span>
+          }
+        />
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </div>
@@ -319,7 +381,7 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader
         title="Today's Specials"
         right={
@@ -328,9 +390,11 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
           </span>
         }
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className={getGridClasses(items.length)}>
         {items.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
+          <div key={item._id} className="w-full md:w-auto snap-start h-full">
+            <MenuItemCard item={item} currencySymbol={currencySymbol} />
+          </div>
         ))}
       </div>
     </div>
@@ -342,9 +406,10 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
 function ItemsSection({ title, items, loading, currencySymbol }) {
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
         <SectionHeader title={title} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -356,11 +421,13 @@ function ItemsSection({ title, items, loading, currencySymbol }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader title={title} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className={getGridClasses(items.length)}>
         {items.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
+          <div key={item._id} className="w-full md:w-auto snap-start h-full">
+            <MenuItemCard item={item} currencySymbol={currencySymbol} />
+          </div>
         ))}
       </div>
     </div>
@@ -380,7 +447,8 @@ export default function CustomerHomePage() {
     basePath,
     onOpenAI,
   } = useOutletContext();
-  const { name, tagline, tableNumber, currencySymbol } = restaurantStore();
+  const { tagline, currencySymbol } = restaurantStore();
+  const { guestName } = authStore();
   const count = useCartCount();
   const navigate = useNavigate();
 
@@ -389,8 +457,8 @@ export default function CustomerHomePage() {
       className={`flex-1 ${count > 0 ? "pb-40 md:pb-16 lg:pb-12" : "pb-24 md:pb-16 lg:pb-12"}`}
       style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
     >
-      {/* Hero with session badge */}
-      <HeroSection name={name} tagline={tagline} tableNumber={tableNumber} />
+      {/* Hero */}
+      <HeroSection tagline={tagline} customerName={guestName} />
 
       {/* Action cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 px-4 md:px-6 lg:px-8 mb-2">

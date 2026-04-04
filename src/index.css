@@ -160,3 +160,43 @@ body {
   scrollbar-width: none;
 }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ─── Dual-thumb price range slider ─────────────────────────────────────────── */
+.price-range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  pointer-events: none;
+  outline: none;
+}
+.price-range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: all;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--t-accent);
+  border: 2px solid var(--t-bg);
+  box-shadow: 0 0 6px var(--t-accent-40);
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.price-range-thumb::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  box-shadow: 0 0 12px var(--t-accent-40);
+}
+.price-range-thumb::-moz-range-thumb {
+  pointer-events: all;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--t-accent);
+  border: 2px solid var(--t-bg);
+  box-shadow: 0 0 6px var(--t-accent-40);
+  cursor: grab;
+}

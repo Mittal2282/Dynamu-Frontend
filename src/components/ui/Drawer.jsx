@@ -68,6 +68,22 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', 
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  /* ── Back button / Android back gesture closes the drawer ───────────────── */
+  useEffect(() => {
+    if (isOpen) {
+      history.pushState({ drawerOpen: true }, '');
+    }
+
+    const handlePop = () => {
+      if (isOpen) onClose();
+    };
+
+    window.addEventListener('popstate', handlePop);
+    return () => {
+      window.removeEventListener('popstate', handlePop);
+    };
+  }, [isOpen, onClose]);
+
   return (
     <>
       {/* Backdrop */}

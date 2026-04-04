@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { VegBadge } from "../components/ui/Badge";
 import Drawer from "../components/ui/Drawer";
-import LazyImage from "../components/ui/LazyImage";
 import { Spinner } from "../components/ui/Spinner";
 import Text from "../components/ui/Text";
 import { getChatHistory, getWelcomeMessage, sendChatMessage } from "../services/chatService";
 import { chatStore } from "../store/chatStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { QUICK_CHAT_CHIPS } from "../utils/constants";
-import { formatCurrency } from "../utils/formatters";
-import CartControl from "./customer/CartControl";
+import MenuItemCard from "./customer/MenuItemCard";
 
 const WELCOME_FALLBACK =
   "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?";
@@ -33,85 +30,25 @@ function formatMessageTime(ts) {
   });
 }
 
-/* ─── Spice level dots ──────────────────────────────────────────────────────── */
-function SpiceIndicator({ level }) {
-  if (!level || level === 0) return null;
+function BotIcon({ className }) {
   return (
-    <span className="flex items-center gap-0.5">
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className={`w-1.5 h-1.5 rounded-full ${i < level ? "bg-red-400" : "bg-white/10"}`}
-        />
-      ))}
-    </span>
-  );
-}
-
-/* ─── Full-width recommendation row (CartItem-style, no instructions) ─────── */
-function RecommendationRow({ item }) {
-  const { currencySymbol } = restaurantStore();
-
-  return (
-    <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-      <div className="flex items-start gap-3">
-        <VegBadge isVeg={item.is_veg} className="mt-0.5 shrink-0" />
-
-        <LazyImage
-          src={item.image_url}
-          alt={item.name}
-          containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
-          placeholder={
-            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-              <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
-                No image available
-              </span>
-            </div>
-          }
-        />
-
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
-            {item.name}
-          </Text>
-          {item.description && (
-            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
-              {item.description}
-            </Text>
-          )}
-          <div className="flex items-center gap-2 mt-1">
-            <Text as="p" size="sm" weight="bold" color="brand">
-              {formatCurrency(item.price, currencySymbol)}
-            </Text>
-            <SpiceIndicator level={item.spice_level} />
-          </div>
-        </div>
-
-        <CartControl item={item} />
-      </div>
-    </div>
-  );
-}
-
-function BookIcon({ className }) {
-  return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.5 2H20V20H6.5C5.83696 20 5.20107 19.7366 4.73223 19.2678C4.26339 18.7989 4 18.163 4 17.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M8 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg
+      className={className}
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
     </svg>
   );
 }
@@ -202,10 +139,10 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
 
 function ChatHeader({ onClose }) {
   return (
-    <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-[var(--t-accent)] shrink-0">
-          <BookIcon />
+    <div className="px-4 py-3.5 flex items-center justify-between border-b border-white/10 shrink-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-[var(--t-accent2)] shrink-0">
+          <BotIcon />
         </span>
         <Text
           as="h2"
@@ -214,7 +151,7 @@ function ChatHeader({ onClose }) {
           color="white"
           className="truncate uppercase tracking-wide"
         >
-          AI Menu Assistant
+          AI Assistant
         </Text>
       </div>
       <button
@@ -234,6 +171,7 @@ function ChatHeader({ onClose }) {
  * Props: isOpen, onClose
  */
 export default function AIChatDrawer({ isOpen, onClose }) {
+  const { currencySymbol } = restaurantStore();
   const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } =
     chatStore();
   const [welcomeText, setWelcomeText] = useState("");
@@ -421,9 +359,13 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                   )}
 
                   {!isUser && m.items?.length > 0 && (
-                    <div className="mt-3 w-full max-w-full space-y-2.5 pl-0">
+                    <div className="mt-3 w-full max-w-full space-y-3 pl-0">
                       {m.items.map((item) => (
-                        <RecommendationRow key={item._id ?? item.id} item={item} />
+                        <MenuItemCard
+                          key={item._id ?? item.id}
+                          item={item}
+                          currencySymbol={currencySymbol}
+                        />
                       ))}
                     </div>
                   )}
