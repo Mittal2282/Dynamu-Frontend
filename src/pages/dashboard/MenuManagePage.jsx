@@ -1,9 +1,19 @@
-import { useEffect, useState, useRef } from 'react';
-import { getDashMenu, updateDashMenuItem, toggleDashMenuItem, toggleChefsSpecial, toggleFeatured } from '../../services/adminService';
+import { useEffect, useState, useRef } from "react";
+import {
+  getDashMenu,
+  updateDashMenuItem,
+  toggleDashMenuItem,
+  toggleChefsSpecial,
+  toggleFeatured,
+  getDashCategories,
+} from "../../services/adminService";
+import ProductFormModal from "../../components/dashboard/ProductFormModal";
+import BulkUploadModal from "../../components/dashboard/BulkUploadModal";
+import AddCategoryModal from "../../components/dashboard/AddCategoryModal";
 
-const VEG_INDICATOR = { true: '🟢', false: '🔴' };
+const VEG_INDICATOR = { true: "🟢", false: "🔴" };
 
-function EditableCell({ value, onSave, type = 'text' }) {
+function EditableCell({ value, onSave, type = "text" }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
@@ -14,7 +24,7 @@ function EditableCell({ value, onSave, type = 'text' }) {
 
   const commit = () => {
     setEditing(false);
-    const parsed = type === 'number' ? parseFloat(draft) : draft.trim();
+    const parsed = type === "number" ? parseFloat(draft) : draft.trim();
     if (parsed !== value) onSave(parsed);
   };
 
@@ -24,9 +34,15 @@ function EditableCell({ value, onSave, type = 'text' }) {
         ref={inputRef}
         type={type}
         value={draft}
-        onChange={e => setDraft(e.target.value)}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") {
+            setDraft(value);
+            setEditing(false);
+          }
+        }}
         className="bg-slate-700 border border-orange-500 rounded px-2 py-0.5 text-sm text-white w-full focus:outline-none"
       />
     );
@@ -34,11 +50,14 @@ function EditableCell({ value, onSave, type = 'text' }) {
 
   return (
     <span
-      onClick={() => { setDraft(value); setEditing(true); }}
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
       className="cursor-pointer hover:text-orange-400 transition-colors"
       title="Click to edit"
     >
-      {type === 'number' ? `₹${value}` : value}
+      {type === "number" ? `₹${value}` : value}
     </span>
   );
 }
@@ -67,9 +86,15 @@ function DiscountCell({ value, onSave }) {
           min="0"
           max="100"
           value={draft}
-          onChange={e => setDraft(e.target.value)}
+          onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
-          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") {
+              setDraft(value);
+              setEditing(false);
+            }
+          }}
           className="bg-slate-700 border border-orange-500 rounded px-2 py-0.5 text-sm text-white w-14 focus:outline-none"
         />
         <span className="text-slate-400 text-xs">%</span>
@@ -79,11 +104,14 @@ function DiscountCell({ value, onSave }) {
 
   return (
     <span
-      onClick={() => { setDraft(value); setEditing(true); }}
-      className={`cursor-pointer text-xs font-semibold transition-colors ${value > 0 ? 'text-amber-400 hover:text-amber-300' : 'text-slate-600 hover:text-amber-400'}`}
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
+      className={`cursor-pointer text-xs font-semibold transition-colors ${value > 0 ? "text-amber-400 hover:text-amber-300" : "text-slate-600 hover:text-amber-400"}`}
       title="Click to edit discount"
     >
-      {value > 0 ? `${value}%` : '—'}
+      {value > 0 ? `${value}%` : "—"}
     </span>
   );
 }
@@ -91,28 +119,55 @@ function DiscountCell({ value, onSave }) {
 export default function MenuManagePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(null);
 
   // Search & filter
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [availFilter, setAvailFilter]   = useState('all'); // 'all' | 'available' | 'unavailable'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [availFilter, setAvailFilter] = useState("all"); // 'all' | 'available' | 'unavailable'
+
+  // Categories
+  const [categories, setCategories] = useState([]);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+
+  // Add Product dropdown
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef(null);
+
+  // Product form modal (add / edit)
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+
+  // Bulk upload modal
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
   useEffect(() => {
     getDashMenu()
       .then(setItems)
-      .catch(() => setError('Failed to load menu.'))
+      .catch(() => setError("Failed to load menu."))
       .finally(() => setLoading(false));
+    getDashCategories()
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
+
+  // Close "Add Product" dropdown on outside click
+  useEffect(() => {
+    const h = (e) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(e.target)) setAddMenuOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, []);
 
   const handleUpdate = async (id, field, val) => {
     setSaving(id);
     try {
       const updated = await updateDashMenuItem(id, { [field]: val });
-      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
     } catch {
-      alert('Failed to save change.');
+      alert("Failed to save change.");
     } finally {
       setSaving(null);
     }
@@ -122,9 +177,9 @@ export default function MenuManagePage() {
     setSaving(id);
     try {
       const updated = await toggleDashMenuItem(id);
-      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
     } catch {
-      alert('Failed to toggle availability.');
+      alert("Failed to toggle availability.");
     } finally {
       setSaving(null);
     }
@@ -134,48 +189,67 @@ export default function MenuManagePage() {
     setSaving(id);
     try {
       const updated = await toggleChefsSpecial(id);
-      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
     } catch {
-      alert('Failed to toggle Chef\'s Special.');
+      alert("Failed to toggle Chef's Special.");
     } finally {
       setSaving(null);
     }
+  };
+
+  const handleProductSaved = (savedItem) => {
+    setItems((prev) =>
+      editingItem
+        ? prev.map((it) => (it._id === savedItem._id ? savedItem : it))
+        : [...prev, savedItem],
+    );
+    setProductModalOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleBulkImport = () => {
+    getDashMenu().then(setItems);
+    setBulkModalOpen(false);
   };
 
   const handleToggleFeatured = async (id) => {
     setSaving(id);
     try {
       const updated = await toggleFeatured(id);
-      setItems(prev => prev.map(it => it._id === id ? { ...it, ...updated } : it));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
     } catch {
-      alert('Failed to toggle Featured.');
+      alert("Failed to toggle Featured.");
     } finally {
       setSaving(null);
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-48 gap-3">
-      <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
-      <span className="text-slate-500 text-sm">Loading menu…</span>
-    </div>
-  );
-  if (error) return (
-    <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">{error}</div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center justify-center h-48 gap-3">
+        <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+        <span className="text-slate-500 text-sm">Loading menu…</span>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
+        {error}
+      </div>
+    );
 
-  const allCategories = [...new Set(items.map(i => i.category || 'Other'))].sort();
+  const allCategories = [...new Set(items.map((i) => i.category || "Other"))].sort();
 
   // Apply search + filters
-  const visibleItems = items.filter(item => {
-    if (categoryFilter && (item.category || 'Other') !== categoryFilter) return false;
-    if (availFilter === 'available' && !item.is_available) return false;
-    if (availFilter === 'unavailable' && item.is_available) return false;
+  const visibleItems = items.filter((item) => {
+    if (categoryFilter && (item.category || "Other") !== categoryFilter) return false;
+    if (availFilter === "available" && !item.is_available) return false;
+    if (availFilter === "unavailable" && item.is_available) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      const inName = (item.name || '').toLowerCase().includes(q);
-      const inCat  = (item.category || '').toLowerCase().includes(q);
-      const inDesc = (item.description || '').toLowerCase().includes(q);
+      const inName = (item.name || "").toLowerCase().includes(q);
+      const inCat = (item.category || "").toLowerCase().includes(q);
+      const inDesc = (item.description || "").toLowerCase().includes(q);
       if (!inName && !inCat && !inDesc) return false;
     }
     return true;
@@ -183,44 +257,125 @@ export default function MenuManagePage() {
 
   // Group filtered items by category
   const grouped = visibleItems.reduce((acc, item) => {
-    const cat = item.category || 'Other';
+    const cat = item.category || "Other";
     (acc[cat] = acc[cat] || []).push(item);
     return acc;
   }, {});
 
-  const isFiltering = searchQuery.trim() !== '' || categoryFilter !== '' || availFilter !== 'all';
+  const isFiltering = searchQuery.trim() !== "" || categoryFilter !== "" || availFilter !== "all";
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1
-          className="text-2xl font-bold"
-          style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-        >
-          Menu Management
-        </h1>
-        <p className="text-slate-500 text-sm mt-0.5">
-          Click on a name or price to edit inline. Toggle the switch to show/hide items from customers.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1
+            className="text-2xl font-bold"
+            style={{
+              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            Menu Management
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Click on a name or price to edit inline. Toggle the switch to show/hide items from
+            customers.
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Add Category */}
+          <button
+            onClick={() => setCategoryModalOpen(true)}
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
+              />
+            </svg>
+            Add Category
+          </button>
+
+          {/* Add Product dropdown */}
+          <div className="relative" ref={addMenuRef}>
+            <button
+              onClick={() => setAddMenuOpen((o) => !o)}
+              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
+              style={{ background: "var(--t-accent)" }}
+            >
+              + Add Product
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-150 ${addMenuOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {addMenuOpen && (
+              <div className="absolute right-0 mt-1.5 w-52 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+                <button
+                  onClick={() => {
+                    setEditingItem(null);
+                    setProductModalOpen(true);
+                    setAddMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
+                >
+                  <span className="text-base">➕</span> Add Single Product
+                </button>
+                <button
+                  onClick={() => {
+                    setBulkModalOpen(true);
+                    setAddMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
+                >
+                  <span className="text-base">📂</span> Add Multiple Products
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* end action buttons wrapper */}
       </div>
 
       {/* Search + filters */}
       <div className="flex flex-wrap gap-3 items-center">
         {/* Search */}
         <div className="relative flex-1 min-w-48">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+            🔍
+          </span>
           <input
             type="text"
             placeholder="Search items…"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
-            style={{ '--tw-border-opacity': 1 }}
-            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
-            onBlur={e => e.target.style.borderColor = ''}
+            style={{ "--tw-border-opacity": 1 }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+            onBlur={(e) => (e.target.style.borderColor = "")}
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
+            >
               ✕
             </button>
           )}
@@ -229,31 +384,33 @@ export default function MenuManagePage() {
         {/* Category filter */}
         <select
           value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
+          onChange={(e) => setCategoryFilter(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
         >
           <option value="">All categories</option>
-          {allCategories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
+          {allCategories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
 
         {/* Availability filter */}
         <div className="flex rounded-xl border border-white/10 overflow-hidden text-xs font-semibold bg-white/5">
           {[
-            { value: 'all',         label: 'All' },
-            { value: 'available',   label: 'Available' },
-            { value: 'unavailable', label: 'Hidden' },
-          ].map(opt => (
+            { value: "all", label: "All" },
+            { value: "available", label: "Available" },
+            { value: "unavailable", label: "Hidden" },
+          ].map((opt) => (
             <button
               key={opt.value}
               onClick={() => setAvailFilter(opt.value)}
               className={`px-3 py-2 transition-all duration-150 ${
                 availFilter === opt.value
-                  ? 'text-white'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  ? "text-white"
+                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
               }`}
-              style={availFilter === opt.value ? { background: 'var(--t-accent)' } : {}}
+              style={availFilter === opt.value ? { background: "var(--t-accent)" } : {}}
             >
               {opt.label}
             </button>
@@ -263,7 +420,11 @@ export default function MenuManagePage() {
         {/* Clear filters */}
         {isFiltering && (
           <button
-            onClick={() => { setSearchQuery(''); setCategoryFilter(''); setAvailFilter('all'); }}
+            onClick={() => {
+              setSearchQuery("");
+              setCategoryFilter("");
+              setAvailFilter("all");
+            }}
             className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
             Clear
@@ -281,7 +442,9 @@ export default function MenuManagePage() {
       {Object.entries(grouped).map(([category, catItems]) => (
         <div key={category}>
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{category}</h2>
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+              {category}
+            </h2>
             <span className="text-[11px] text-slate-600">{catItems.length} items</span>
           </div>
           <div className="bg-slate-900 rounded-2xl border border-white/10 overflow-hidden">
@@ -295,26 +458,29 @@ export default function MenuManagePage() {
                   <th className="text-center px-4 py-3 w-28">Chef's Special</th>
                   <th className="text-center px-4 py-3 w-24">Featured</th>
                   <th className="text-center px-4 py-3 w-24">Discount</th>
+                  <th className="px-4 py-3 w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {catItems.map((item, idx) => (
                   <tr
                     key={item._id}
-                    className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} ${saving === item._id ? 'opacity-60' : ''} ${!item.is_available ? 'opacity-50' : ''}`}
+                    className={`${idx < catItems.length - 1 ? "border-b border-white/5" : ""} ${saving === item._id ? "opacity-60" : ""} ${!item.is_available ? "opacity-50" : ""}`}
                   >
-                    <td className="px-4 py-3 text-center text-xs">{VEG_INDICATOR[item.is_veg] ?? '⚪'}</td>
+                    <td className="px-4 py-3 text-center text-xs">
+                      {VEG_INDICATOR[item.is_veg] ?? "⚪"}
+                    </td>
                     <td className="px-4 py-3 text-white">
                       <EditableCell
                         value={item.name}
-                        onSave={val => handleUpdate(item._id, 'name', val)}
+                        onSave={(val) => handleUpdate(item._id, "name", val)}
                       />
                     </td>
                     <td className="px-4 py-3 text-white">
                       <EditableCell
                         value={item.price}
                         type="number"
-                        onSave={val => handleUpdate(item._id, 'price', val)}
+                        onSave={(val) => handleUpdate(item._id, "price", val)}
                       />
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -322,13 +488,15 @@ export default function MenuManagePage() {
                         onClick={() => handleToggle(item._id)}
                         disabled={saving === item._id}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                          item.is_available ? 'bg-green-500' : 'bg-slate-600'
+                          item.is_available ? "bg-green-500" : "bg-slate-600"
                         }`}
-                        title={item.is_available ? 'Available — click to hide' : 'Hidden — click to show'}
+                        title={
+                          item.is_available ? "Available — click to hide" : "Hidden — click to show"
+                        }
                       >
                         <span
                           className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
-                            item.is_available ? 'translate-x-4' : 'translate-x-0'
+                            item.is_available ? "translate-x-4" : "translate-x-0"
                           }`}
                         />
                       </button>
@@ -338,13 +506,17 @@ export default function MenuManagePage() {
                         onClick={() => handleToggleChefsSpecial(item._id)}
                         disabled={saving === item._id}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                          item.is_chefs_special ? 'bg-amber-500' : 'bg-slate-600'
+                          item.is_chefs_special ? "bg-amber-500" : "bg-slate-600"
                         }`}
-                        title={item.is_chefs_special ? "Chef's Special — click to remove" : "Mark as Chef's Special"}
+                        title={
+                          item.is_chefs_special
+                            ? "Chef's Special — click to remove"
+                            : "Mark as Chef's Special"
+                        }
                       >
                         <span
                           className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
-                            item.is_chefs_special ? 'translate-x-4' : 'translate-x-0'
+                            item.is_chefs_special ? "translate-x-4" : "translate-x-0"
                           }`}
                         />
                       </button>
@@ -354,13 +526,15 @@ export default function MenuManagePage() {
                         onClick={() => handleToggleFeatured(item._id)}
                         disabled={saving === item._id}
                         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                          item.is_featured ? 'bg-blue-500' : 'bg-slate-600'
+                          item.is_featured ? "bg-blue-500" : "bg-slate-600"
                         }`}
-                        title={item.is_featured ? 'Featured — click to unfeature' : 'Mark as Featured'}
+                        title={
+                          item.is_featured ? "Featured — click to unfeature" : "Mark as Featured"
+                        }
                       >
                         <span
                           className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${
-                            item.is_featured ? 'translate-x-4' : 'translate-x-0'
+                            item.is_featured ? "translate-x-4" : "translate-x-0"
                           }`}
                         />
                       </button>
@@ -368,8 +542,40 @@ export default function MenuManagePage() {
                     <td className="px-4 py-3 text-center">
                       <DiscountCell
                         value={item.discount_percentage ?? 0}
-                        onSave={val => handleUpdate(item._id, 'discount_percentage', Math.min(100, Math.max(0, val)))}
+                        onSave={(val) =>
+                          handleUpdate(
+                            item._id,
+                            "discount_percentage",
+                            Math.min(100, Math.max(0, val)),
+                          )
+                        }
                       />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => {
+                          setEditingItem(item);
+                          setProductModalOpen(true);
+                        }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors mx-auto"
+                        title="Edit item"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          width="24"
+                          height="24"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                          />
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -381,11 +587,17 @@ export default function MenuManagePage() {
 
       {visibleItems.length === 0 && (
         <div className="bg-slate-900 border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <span className="text-4xl">{isFiltering ? '🔍' : '📋'}</span>
-          <p className="text-slate-500 text-sm">{isFiltering ? 'No items match your search.' : 'No menu items found.'}</p>
+          <span className="text-4xl">{isFiltering ? "🔍" : "📋"}</span>
+          <p className="text-slate-500 text-sm">
+            {isFiltering ? "No items match your search." : "No menu items found."}
+          </p>
           {isFiltering && (
             <button
-              onClick={() => { setSearchQuery(''); setCategoryFilter(''); setAvailFilter('all'); }}
+              onClick={() => {
+                setSearchQuery("");
+                setCategoryFilter("");
+                setAvailFilter("all");
+              }}
               className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
             >
               Clear all filters
@@ -393,6 +605,30 @@ export default function MenuManagePage() {
           )}
         </div>
       )}
+
+      <ProductFormModal
+        isOpen={productModalOpen}
+        onClose={() => {
+          setProductModalOpen(false);
+          setEditingItem(null);
+        }}
+        onSave={handleProductSaved}
+        item={editingItem}
+        existingCategories={categories}
+      />
+
+      <BulkUploadModal
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        onImport={handleBulkImport}
+        categories={categories}
+      />
+
+      <AddCategoryModal
+        isOpen={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onCreated={(name) => setCategories((prev) => [...prev, name])}
+      />
     </div>
   );
 }

@@ -43,7 +43,7 @@ export default function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${maxWidth} rounded-2xl shadow-2xl flex flex-col`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] rounded-2xl shadow-2xl flex flex-col`}
         style={{
           background: 'var(--t-bg)',
           borderTop: '2.5px solid var(--t-accent)',

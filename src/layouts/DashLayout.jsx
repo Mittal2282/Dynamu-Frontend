@@ -29,7 +29,7 @@ export default function DashLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex" style={{ fontFamily: "'Outfit', sans-serif" }}>
+    <div className="h-screen overflow-hidden bg-slate-950 text-white flex" style={{ fontFamily: "'Outfit', sans-serif" }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

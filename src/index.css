@@ -95,6 +95,8 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+button { cursor: pointer; }
+
 /* ─── Utility classes ───────────────────────────────────────────────────────── */
 .glass {
   background: rgba(255,255,255,0.04);

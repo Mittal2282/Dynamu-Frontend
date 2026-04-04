@@ -1,5 +1,6 @@
 import { apiCaller } from '../api/apiCaller';
 import { ENDPOINTS } from '../utils/endpoints';
+import { sleep } from '../utils/helpers';
 
 /**
  * Admin API services (all requests use the admin axios instance).
@@ -225,4 +226,56 @@ export async function getRestaurantOrders(restaurantId) {
     useAdmin: true,
   });
   return data.data ?? [];
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all menu categories for this restaurant (mock).
+ * @returns {Promise<string[]>}
+ */
+export async function getDashCategories() {
+  await sleep(300);
+  return [];
+}
+
+/**
+ * Create a new category (mock).
+ * @param {string} name
+ * @returns {Promise<string>}
+ */
+export async function createDashCategory(name) {
+  await sleep(400);
+  return name;
+}
+
+// ─── Menu Items ───────────────────────────────────────────────────────────────
+
+/**
+ * Create a new menu item (mock).
+ * @param {object} payload
+ */
+export async function createDashMenuItem(payload) {
+  await sleep(600);
+  return {
+    ...payload,
+    _id: `mock_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    order_count: 0,
+    __v: 0,
+    combo_items: payload.combo_items ?? [],
+    pairs_well_with: payload.pairs_well_with ?? [],
+  };
+}
+
+/**
+ * Bulk import menu items from CSV text (mock).
+ * @param {string} csvText
+ * @returns {Promise<{ imported: number, errors: string[] }>}
+ */
+export async function bulkImportMenuItems(csvText) {
+  await sleep(1200);
+  const rows = csvText.trim().split('\n').filter(Boolean).length - 1;
+  return { imported: Math.max(0, rows), errors: [] };
 }
