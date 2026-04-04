@@ -84,7 +84,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
       <div
-        className="w-full max-w-md pointer-events-auto overflow-hidden"
+        className="w-full pointer-events-auto overflow-hidden"
         style={{
           borderTop: '2.5px solid var(--t-accent)',
           backgroundColor: 'var(--t-bg)',

@@ -297,12 +297,21 @@ export default function CustomerLayout() {
 
   return (
     <div
-      className="max-w-md mx-auto min-h-screen bg-slate-950 text-white flex flex-col"
+      className="w-full md:max-w-3xl lg:max-w-full mx-auto min-h-screen bg-slate-950 text-white flex flex-col"
       style={{
         backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
       }}
     >
-      <Header variant="customer" onCartClick={() => setDrawerOpen(true)} />
+      <Header
+        variant="customer"
+        onCartClick={() => setDrawerOpen(true)}
+        basePath={basePath}
+        aiChatOpen={aiChatOpen}
+        onAIClick={() => {
+          setAiChatOpen((v) => !v);
+          setDrawerOpen(false);
+        }}
+      />
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -317,6 +326,8 @@ export default function CustomerLayout() {
             orderVersion,
             basePath,
             sectionsLoading,
+            onPlaceOrder: handlePlaceOrder,
+            orderingCart: ordering,
             onOpenAI: () => {
               setAiChatOpen((v) => !v);
               setDrawerOpen(false);
@@ -325,10 +336,10 @@ export default function CustomerLayout() {
         />
       </div>
 
-      {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}
+      {/* ── Cart bottom bar — mobile only ────────────────────────────────── */}
       {count > 0 && !isOrders && (
-        <div className="fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
-          <div className="w-full max-w-md bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
+        <div className="md:hidden fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
+          <div className="w-full bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
             <div>
               <Text size="sm" weight="bold">
                 {count} {count === 1 ? "item" : "items"} added
@@ -352,10 +363,30 @@ export default function CustomerLayout() {
         </div>
       )}
 
+      {/* ── Desktop floating AI FAB — bottom-right ───────────────────────── */}
+      <div className="hidden md:flex fixed bottom-6 right-6 z-30">
+        <button
+          type="button"
+          onClick={() => {
+            setAiChatOpen((v) => !v);
+            setDrawerOpen(false);
+          }}
+          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-2xl text-2xl"
+          style={{
+            background: aiChatOpen ? "var(--t-accent)" : "var(--t-surface)",
+            border: "1.5px solid var(--t-accent2-40)",
+            boxShadow: "0 8px 24px var(--t-accent2-40)",
+          }}
+          title={aiChatOpen ? "Close AI Assistant" : "Open AI Assistant"}
+        >
+          {aiChatOpen ? "✕" : "🤖"}
+        </button>
+      </div>
+
       {/* ── Pending join requests panel ──────────────────────────────────── */}
       {pendingJoinRequests.length > 0 && (
-        <div className="fixed bottom-[85px] left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
-          <div className="w-full max-w-md bg-slate-800 border border-white/10 rounded-2xl shadow-xl overflow-hidden pointer-events-auto">
+        <div className="fixed bottom-[85px] md:bottom-5 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+          <div className="w-full md:max-w-3xl lg:max-w-full bg-slate-800 border border-white/10 rounded-2xl shadow-xl overflow-hidden pointer-events-auto">
             <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2">
               <span className="text-base">🔔</span>
               <Text size="sm" weight="semibold">
@@ -411,19 +442,21 @@ export default function CustomerLayout() {
         </div>
       )}
 
-      {/* ── Bottom navigator ──────────────────────────────────────────────── */}
-      <BottomNavigator
-        basePath={basePath}
-        aiChatOpen={aiChatOpen}
-        onChatClick={() => {
-          setAiChatOpen((v) => !v);
-          setDrawerOpen(false);
-        }}
-        onNavigate={() => {
-          setAiChatOpen(false);
-          setDrawerOpen(false);
-        }}
-      />
+      {/* ── Bottom navigator — mobile only ────────────────────────────────── */}
+      <div className="md:hidden">
+        <BottomNavigator
+          basePath={basePath}
+          aiChatOpen={aiChatOpen}
+          onChatClick={() => {
+            setAiChatOpen((v) => !v);
+            setDrawerOpen(false);
+          }}
+          onNavigate={() => {
+            setAiChatOpen(false);
+            setDrawerOpen(false);
+          }}
+        />
+      </div>
 
       {/* ── Drawers ───────────────────────────────────────────────────────── */}
       <CartDrawer

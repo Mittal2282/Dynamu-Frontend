@@ -30,7 +30,7 @@ export default function ChatInput() {
   }, [addMessage, setLoading]);
 
   return (
-    <div className="p-4 bg-slate-950 border-t border-white/10 absolute bottom-[80px] left-0 right-0 max-w-md mx-auto z-40">
+    <div className="p-4 bg-slate-950 border-t border-white/10 absolute bottom-[80px] left-0 right-0 md:max-w-3xl lg:max-w-full mx-auto z-40">
       {/* Quick chips */}
       <div className="flex gap-2 overflow-x-auto mb-3 pb-1 no-scrollbar">
         {QUICK_CHAT_CHIPS.map(chip => (

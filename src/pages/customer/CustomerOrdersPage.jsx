@@ -211,20 +211,20 @@ export default function CustomerOrdersPage() {
   if (orders.length === 0) {
     return (
       <div
-        className="px-5 py-10 flex flex-col items-center text-center gap-5 pb-36"
+        className="min-h-[60vh] px-5 md:px-8 py-16 flex flex-col items-center text-center gap-6"
         style={{
           backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
         }}
       >
-        <span className="text-5xl" aria-hidden>
+        <span className="text-6xl md:text-7xl" aria-hidden>
           🍽️
         </span>
-        <div className="space-y-2">
-          <p className="text-lg font-bold text-white tracking-wide uppercase">
+        <div className="space-y-3 max-w-sm">
+          <p className="text-xl md:text-2xl font-bold text-white tracking-wide uppercase" style={{ color: "#ffffff" }}>
             No orders yet
           </p>
           <p
-            className="text-sm leading-relaxed max-w-xs"
+            className="text-sm md:text-base leading-relaxed"
             style={{ color: "var(--t-nav-muted)" }}
           >
             Browse the menu and send your first order to the kitchen.
@@ -233,12 +233,12 @@ export default function CustomerOrdersPage() {
         <button
           type="button"
           onClick={() => navigate(`${basePath}/menu`)}
-          className="mt-1 px-8 py-3.5 rounded-xl font-bold uppercase text-sm tracking-wider text-white transition-opacity active:opacity-90"
+          className="mt-2 px-10 py-4 rounded-xl font-bold uppercase text-sm md:text-base tracking-wider text-white transition-opacity active:opacity-90"
           style={{ backgroundColor: "var(--t-accent)" }}
         >
           Open menu
         </button>
-        <p className="text-xs pt-2" style={{ color: "var(--t-nav-muted)" }}>
+        <p className="text-xs md:text-sm pt-2" style={{ color: "var(--t-nav-muted)" }}>
           Status updates automatically every 15s
         </p>
       </div>
@@ -310,7 +310,7 @@ export default function CustomerOrdersPage() {
                     />
 
                     <div className="flex justify-between gap-4 items-start flex-1">
-                      <p className="text-[14px] font-bold uppercase tracking-wide text-white leading-snug flex-1">
+                      <p className="text-[14px] md:text-base font-bold uppercase tracking-wide text-white leading-snug flex-1" style={{ color: "#ffffff" }}>
                         {item.name}
                       </p>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
@@ -354,106 +354,135 @@ export default function CustomerOrdersPage() {
     );
   }
 
+  /* ── Shared bill panel content ───────────────────────────────────────── */
+  const billPanelContent = (
+    <>
+      <div>
+        <p
+          className="text-xs font-semibold uppercase tracking-[0.14em]"
+          style={{ color: "var(--t-nav-muted)" }}
+        >
+          Current session total
+        </p>
+        <p
+          className="text-2xl md:text-3xl font-black tabular-nums mt-1"
+          style={{ color: "var(--t-accent)" }}
+        >
+          {formatCurrency(grandTotal, currencySymbol)}
+        </p>
+        <p
+          className="text-xs mt-1"
+          style={{ color: "var(--t-nav-muted)" }}
+        >
+          + Service tax included
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(`${basePath}/menu`)}
+          className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
+          style={{
+            backgroundColor: "transparent",
+            color: "white",
+            border: "2px solid color-mix(in srgb, white 35%, var(--t-bg))",
+          }}
+        >
+          + Order more
+        </button>
+        <button
+          type="button"
+          disabled={endingSession}
+          onClick={handleRequestBill}
+          className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90 disabled:opacity-60"
+          style={{
+            backgroundColor: "var(--t-accent)",
+            color: "var(--t-bg)",
+          }}
+        >
+          <IconReceipt className="w-4 h-4" />
+          {endingSession ? "Please wait…" : "Request final bill"}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div
-      className="px-5 pt-6 pb-[22rem] space-y-8"
+      className="px-5 md:px-6 lg:px-8 pt-6 pb-[22rem] md:pb-[16rem] lg:pb-10"
       style={{
         backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
       }}
     >
-      <div className="flex flex-col gap-4">
-        <div className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] text-green-400 bg-green-500/15 border border-green-500/30">
-          <IconLive className="w-3.5 h-3.5" />
-          Live status
+      {/* ── Desktop two-column layout ──────────────────────────────────────── */}
+      <div className="lg:flex lg:gap-10 lg:items-start">
+
+        {/* Left: header + order cards */}
+        <div className="flex-1 space-y-8">
+          <div className="flex flex-col gap-4">
+            <div className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-[0.15em] text-green-400 bg-green-500/15 border border-green-500/30">
+              <IconLive className="w-3.5 h-3.5" />
+              Live status
+            </div>
+
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-[1.1]">
+              <span className="text-white">Current</span>
+              <br />
+              <span style={{ color: "var(--t-accent)" }}>Orders</span>
+            </h1>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {original ? <OrderBatch order={original} batchIndex={1} /> : null}
+            {addons.map((addon, idx) => (
+              <OrderBatch
+                key={addon._id}
+                order={addon}
+                batchIndex={original ? idx + 2 : idx + 1}
+              />
+            ))}
+          </div>
+
+          <p
+            className="text-center text-xs pt-2"
+            style={{ color: "var(--t-nav-muted)" }}
+          >
+            Status updates automatically every 15s
+          </p>
         </div>
 
-        <h1 className="text-3xl font-black uppercase tracking-tight leading-[1.1]">
-          <span className="text-white">Current</span>
-          <br />
-          <span style={{ color: "var(--t-accent)" }}>Orders</span>
-        </h1>
+        {/* Right: sticky bill card — desktop only */}
+        <div className="hidden lg:block w-80 xl:w-96 shrink-0">
+          <div
+            className="sticky top-20 rounded-2xl border border-white/[0.08] shadow-2xl p-6 space-y-5"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--t-bg) 92%, black)",
+              borderTop: "2px solid var(--t-accent)",
+              boxShadow: "0 0 24px var(--t-accent2-20)",
+            }}
+          >
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--t-accent)" }}>
+              Bill Summary
+            </p>
+            {billPanelContent}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {original ? <OrderBatch order={original} batchIndex={1} /> : null}
-        {addons.map((addon, idx) => (
-          <OrderBatch
-            key={addon._id}
-            order={addon}
-            batchIndex={original ? idx + 2 : idx + 1}
-          />
-        ))}
-      </div>
-
-      <p
-        className="text-center text-[11px] pt-2"
-        style={{ color: "var(--t-nav-muted)" }}
-      >
-        Status updates automatically every 15s
-      </p>
-
+      {/* ── Mobile/tablet: fixed bottom bill panel ─────────────────────────── */}
       <div
-        className="fixed left-0 right-0 z-40 flex justify-center px-5 pointer-events-none"
-        style={{
-          bottom: "max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 5rem))",
-        }}
+        className="lg:hidden fixed left-0 right-0 z-40 flex justify-center px-5 pointer-events-none bottom-[88px] md:bottom-5"
       >
         <div
-          className="w-full max-w-md rounded-2xl border border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
+          className="w-full md:max-w-3xl rounded-2xl border border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{
             backgroundColor: "color-mix(in srgb, var(--t-bg) 92%, black)",
             borderTop: "2px solid var(--t-accent)",
             boxShadow: "0 0 24px var(--t-accent2-20)",
           }}
         >
-          <div>
-            <p
-              className="text-[10px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: "var(--t-nav-muted)" }}
-            >
-              Current session total
-            </p>
-            <p
-              className="text-2xl font-black tabular-nums mt-1"
-              style={{ color: "var(--t-accent)" }}
-            >
-              {formatCurrency(grandTotal, currencySymbol)}
-            </p>
-            <p
-              className="text-[10px] mt-1"
-              style={{ color: "var(--t-nav-muted)" }}
-            >
-              + Service tax included
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => navigate(`${basePath}/menu`)}
-              className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
-              style={{
-                backgroundColor: "transparent",
-                color: "white",
-                border: "2px solid color-mix(in srgb, white 35%, var(--t-bg))",
-              }}
-            >
-              + Order more
-            </button>
-            <button
-              type="button"
-              disabled={endingSession}
-              onClick={handleRequestBill}
-              className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90 disabled:opacity-60"
-              style={{
-                backgroundColor: "var(--t-accent)",
-                color: "var(--t-bg)",
-              }}
-            >
-              <IconReceipt className="w-4 h-4" />
-              {endingSession ? "Please wait…" : "Request final bill"}
-            </button>
-          </div>
+          {billPanelContent}
         </div>
       </div>
     </div>

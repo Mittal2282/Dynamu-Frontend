@@ -7,10 +7,12 @@ import { useEffect, useRef, useState } from 'react';
  *  - Dynamic brand-coloured top border (via CSS var)
  *  - Drag-handle + touch/mouse swipe-down-to-close gesture
  *  - Rounded top corners, dark surface, backdrop blur overlay
+ *  - mobileOnly: when true, the drawer is hidden on md+ screens (use a desktop
+ *    alternative alongside it)
  *
- * @param {{ isOpen: boolean, onClose: () => void, children: ReactNode, maxHeight?: string }} props
+ * @param {{ isOpen: boolean, onClose: () => void, children: ReactNode, maxHeight?: string, mobileOnly?: boolean }} props
  */
-export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', height }) {
+export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', height, mobileOnly = false }) {
   const sheetRef   = useRef(null);
   const handleRef  = useRef(null);
   const startY     = useRef(null);
@@ -74,6 +76,7 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', 
         className={[
           'fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity duration-300',
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+          mobileOnly ? 'md:hidden' : '',
         ].join(' ')}
         onClick={onClose}
       />
@@ -84,11 +87,12 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', 
           'fixed bottom-0 left-0 right-0 z-50 flex justify-center',
           'transition-transform duration-300 ease-out',
           isOpen ? 'translate-y-0' : 'translate-y-full',
+          mobileOnly ? 'md:hidden' : '',
         ].join(' ')}
       >
         <div
           ref={sheetRef}
-          className="w-full max-w-md flex flex-col shadow-2xl"
+          className="w-full md:max-w-3xl lg:max-w-full flex flex-col shadow-2xl"
           style={{
             maxHeight,
             height: height || 'auto',

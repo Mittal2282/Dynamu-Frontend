@@ -392,10 +392,9 @@ export default function AIChatDrawer({ isOpen, onClose }) {
 
   const inputPlaceholder = hasUserMessage ? 'Ask follow-up…' : 'Ask for suggestions…';
 
-  return (
-    <Drawer isOpen={isOpen} onClose={onClose} height="85vh">
-      <ChatHeader onClose={onClose} />
-
+  /* ── Shared chat body ─────────────────────────────────────────────────── */
+  const chatBody = (
+    <>
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 min-h-0">
         {showWelcomeLayout ? (
           <WelcomeScreen welcomeParagraph={welcomeText} onSuggest={send} />
@@ -562,6 +561,38 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           {INFRA_FOOTER}
         </Text>
       </div>
-    </Drawer>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Mobile: full-height bottom-sheet drawer ────────────────────────── */}
+      <Drawer isOpen={isOpen} onClose={onClose} height="85vh" mobileOnly>
+        <ChatHeader onClose={onClose} />
+        {chatBody}
+      </Drawer>
+
+      {/* ── Desktop: floating panel anchored to bottom-right ──────────────── */}
+      <div
+        className={[
+          'hidden md:flex fixed bottom-6 right-6 z-50 flex-col overflow-hidden shadow-2xl',
+          'transition-all duration-300 origin-bottom-right',
+          isOpen
+            ? 'opacity-100 scale-100 pointer-events-auto'
+            : 'opacity-0 scale-90 pointer-events-none',
+        ].join(' ')}
+        style={{
+          width: '420px',
+          height: '560px',
+          background: 'var(--t-bg)',
+          borderRadius: '20px',
+          border: '1.5px solid var(--t-accent)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--t-accent-20)',
+        }}
+      >
+        <ChatHeader onClose={onClose} />
+        {chatBody}
+      </div>
+    </>
   );
 }
