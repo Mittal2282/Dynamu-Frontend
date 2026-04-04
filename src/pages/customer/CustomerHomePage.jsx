@@ -249,6 +249,113 @@ function PriceDisplay({ price, discountPercentage, currencySymbol }) {
   );
 }
 
+// ── Time-based menu section ───────────────────────────────────────────────────
+
+const MEAL_CONFIG = {
+  breakfast: { icon: '🌅', label: 'Breakfast', greeting: 'Good Morning' },
+  lunch:     { icon: '☀️', label: 'Lunch',     greeting: 'Lunchtime'    },
+  dinner:    { icon: '🌙', label: 'Dinner',    greeting: 'Good Evening' },
+};
+
+function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
+  const config = MEAL_CONFIG[mealTime] || MEAL_CONFIG.dinner;
+
+  if (loading) {
+    return (
+      <div className="pt-5 pb-1">
+        <div className="px-4 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 rounded bg-white/10 animate-pulse" />
+            <div className="h-3 rounded bg-white/10 animate-pulse w-28" />
+            <div className="h-3 rounded bg-white/10 animate-pulse w-16 ml-auto" />
+          </div>
+        </div>
+        <div className="flex gap-3 px-4 overflow-x-auto pb-2 no-scrollbar">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div className="pt-5 pb-1">
+      <div className="px-4 mb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-base leading-none">{config.icon}</span>
+            <p
+              className="text-[11px] font-bold uppercase tracking-widest"
+              style={{ color: 'var(--t-dim)' }}
+            >
+              {config.greeting} · {config.label}
+            </p>
+          </div>
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+            style={{
+              color:            'var(--t-accent)',
+              borderColor:      'var(--t-accent-40)',
+              background:       'var(--t-accent-20)',
+            }}
+          >
+            Now Serving
+          </span>
+        </div>
+      </div>
+
+      <div className="flex gap-3 px-4 overflow-x-auto pb-2 no-scrollbar">
+        {items.map((item) => (
+          <div
+            key={item._id}
+            className="w-36 shrink-0 border border-white/10 rounded-2xl p-3 flex flex-col gap-2"
+            style={{ background: 'var(--t-surface)' }}
+          >
+            <LazyImage
+              src={item.image_url}
+              alt={item.name}
+              containerClassName="w-full h-20 rounded-xl overflow-hidden border border-white/10 bg-white/5"
+              placeholder={
+                <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
+                  <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
+                    No image
+                  </span>
+                </div>
+              }
+            />
+            <div className="flex items-center gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: item.is_veg ? '#22c55e' : '#ef4444' }}
+              />
+              <span
+                className="text-[10px] truncate"
+                style={{ color: 'var(--t-dim)' }}
+              >
+                {item.category}
+              </span>
+            </div>
+            <p className="text-sm font-semibold text-white line-clamp-2 leading-snug flex-1">
+              {item.name}
+            </p>
+            <PriceDisplay
+              price={item.price}
+              discountPercentage={item.discount_percentage}
+              currencySymbol={currencySymbol}
+            />
+            <div className="flex justify-center">
+              <CartControl item={item} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Today's Specials (vertical list, cart-item style) ────────────────────────
 
 function TodaysSpecials({ items, loading, currencySymbol }) {
@@ -414,6 +521,8 @@ export default function CustomerHomePage() {
     featuredItems,
     chefsSpecials,
     trendingItems,
+    timeBasedItems,
+    mealTime,
     sectionsLoading,
     basePath,
     onOpenAI,
@@ -441,6 +550,14 @@ export default function CustomerHomePage() {
         <ExploreMenuCard onClick={() => navigate(`${basePath}/menu`)} />
         <AskAICard onClick={onOpenAI} />
       </div>
+
+      {/* Time-based menu (breakfast / lunch / dinner) */}
+      <TimeBasedSection
+        items={timeBasedItems}
+        mealTime={mealTime}
+        loading={sectionsLoading}
+        currencySymbol={currencySymbol}
+      />
 
       {/* Today's Specials (featured items, cart-item style) */}
       <TodaysSpecials
