@@ -36,7 +36,7 @@ export default function Header({ onCartClick, variant = 'legacy' }) {
     const title = name || 'Restaurant';
     return (
       <header
-        className="px-5 py-3.5 sticky top-0 z-20 border-b border-white/[0.08]"
+        className="px-5 py-3.5 sticky top-0 z-30 border-b border-white/[0.08]"
         style={{ backgroundColor: 'color-mix(in srgb, var(--t-bg) 96%, black)' }}
       >
         <div className="flex items-center justify-between gap-3">
