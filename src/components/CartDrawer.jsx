@@ -28,31 +28,21 @@ function CartItem({ item, onAddInstruction, currencySymbol }) {
           alt={item.name}
           containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
           placeholder={
-            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-              <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
-                No image available
-              </span>
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: "var(--t-float)" }}
+            >
+              <span className="text-xl">{item.is_veg ? "🥗" : "🍗"}</span>
             </div>
           }
         />
 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <Text
-            as="p"
-            size="sm"
-            weight="semibold"
-            color="white"
-            className="leading-snug"
-          >
+          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
             {item.name}
           </Text>
           {item.description && (
-            <Text
-              as="p"
-              size="xs"
-              color="white"
-              className="opacity-40 mt-0.5 line-clamp-1"
-            >
+            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
               {item.description}
             </Text>
           )}
@@ -62,10 +52,7 @@ function CartItem({ item, onAddInstruction, currencySymbol }) {
                 {formatCurrency(item.price, currencySymbol)}
               </span>
               <Text as="span" size="sm" weight="bold" color="brand">
-                {formatCurrency(
-                  item.price * (1 - item.discount_percentage / 100),
-                  currencySymbol,
-                )}
+                {formatCurrency(item.price * (1 - item.discount_percentage / 100), currencySymbol)}
               </Text>
               <span className="text-[10px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">
                 {item.discount_percentage}% OFF
@@ -145,7 +132,7 @@ function CartItem({ item, onAddInstruction, currencySymbol }) {
           </div>
         </div>
 
-        <CartControl item={item} />
+        <CartControl item={item} showDelete={true} />
       </div>
     </div>
   );
@@ -164,10 +151,11 @@ function SuggestionRow({ item, onAdd }) {
           alt={item.name}
           containerClassName="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
           placeholder={
-            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-              <span className="text-[9px] font-semibold text-slate-400 px-1 text-center">
-                No image available
-              </span>
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: "var(--t-float)" }}
+            >
+              <span className="text-base">{item.is_veg ? "🥗" : "🍗"}</span>
             </div>
           }
         />
@@ -195,12 +183,7 @@ function SuggestionRow({ item, onAdd }) {
 function BillRow({ label, value, muted }) {
   return (
     <div className="flex items-center justify-between py-2 px-3 -mx-3 hover:bg-white/5 rounded-xl transition-colors cursor-default">
-      <Text
-        as="span"
-        size="sm"
-        color="white"
-        className={muted ? "opacity-50" : "opacity-70"}
-      >
+      <Text as="span" size="sm" color="white" className={muted ? "opacity-50" : "opacity-70"}>
         {label}
       </Text>
       <Text
@@ -222,7 +205,6 @@ export default function CartDrawer({
   onClose,
   items = [],
   onAdd,
-  onRemove,
   onPlaceOrder,
   count = 0,
   loading = false,
@@ -235,9 +217,7 @@ export default function CartDrawer({
   const { qrCodeId, tableNumber } = useParams();
   const basePath =
     baseFromOutlet ||
-    (qrCodeId != null && tableNumber != null
-      ? `/${qrCodeId}/${tableNumber}`
-      : "/");
+    (qrCodeId != null && tableNumber != null ? `/${qrCodeId}/${tableNumber}` : "/");
 
   // AI suggestions — stale-while-revalidate, no loader
   const [suggestions, setSuggestions] = useState([]);
@@ -278,43 +258,26 @@ export default function CartDrawer({
 
   const handleSaveInstruction = () => {
     if (activeItem) {
-      cartStore
-        .getState()
-        .setInstruction(
-          activeItem._id ?? activeItem.id,
-          instructionText.trim(),
-        );
+      cartStore.getState().setInstruction(activeItem._id ?? activeItem.id, instructionText.trim());
     }
     setInstructionModalOpen(false);
   };
 
   const subtotal = items.reduce((s, i) => {
     const effectivePrice =
-      i.discount_percentage > 0
-        ? i.price * (1 - i.discount_percentage / 100)
-        : i.price;
+      i.discount_percentage > 0 ? i.price * (1 - i.discount_percentage / 100) : i.price;
     return s + effectivePrice * i.qty;
   }, 0);
   const tax = subtotal * TAX_RATE;
   const total = subtotal + SERVICE_CHARGE + tax;
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      height={items.length > 0 ? "85vh" : undefined}
-    >
+    <Drawer isOpen={isOpen} onClose={onClose} height={items.length > 0 ? "85vh" : undefined}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="px-5 pt-2 pb-4 border-b border-white/10 shrink-0">
         <div className="flex items-start justify-between">
           <div>
-            <Text
-              as="h2"
-              size="xl"
-              weight="bold"
-              color="white"
-              className="tracking-wide uppercase"
-            >
+            <Text as="h2" size="xl" weight="bold" color="white" className="tracking-wide uppercase">
               My Cart
             </Text>
             <Text
@@ -400,11 +363,7 @@ export default function CartDrawer({
 
             {/* Bill breakdown */}
             <div className="px-5">
-              <BillRow
-                label="Subtotal"
-                value={formatCurrency(subtotal, currencySymbol, 2)}
-                muted
-              />
+              <BillRow label="Subtotal" value={formatCurrency(subtotal, currencySymbol, 2)} muted />
               <BillRow
                 label="Service Charge"
                 value={formatCurrency(SERVICE_CHARGE, currencySymbol, 2)}
@@ -469,9 +428,8 @@ export default function CartDrawer({
       >
         <div className="flex flex-col gap-4">
           <Text as="p" size="sm" color="white" className="opacity-70">
-            Any requests for the kitchen regarding{" "}
-            <strong>{activeItem?.name}</strong>? We will try our best to
-            accommodate them.
+            Any requests for the kitchen regarding <strong>{activeItem?.name}</strong>? We will try
+            our best to accommodate them.
           </Text>
           <textarea
             className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[var(--t-accent)] transition-colors placeholder:text-white/30 resize-none"
@@ -481,12 +439,7 @@ export default function CartDrawer({
             value={instructionText}
             onChange={(e) => setInstructionText(e.target.value)}
           />
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={handleSaveInstruction}
-            className="mt-2"
-          >
+          <Button variant="primary" fullWidth onClick={handleSaveInstruction} className="mt-2">
             Save Instruction
           </Button>
         </div>

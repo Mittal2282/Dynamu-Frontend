@@ -50,10 +50,10 @@ export default function MenuItemCard({ item, currencySymbol }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99]"
+      className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99] h-full flex flex-col"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
-      <div className="p-3 flex gap-3">
+      <div className="p-3 flex gap-3 flex-1">
         {/* ── Image ──────────────────────────────────────────────────────── */}
         <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
           <LazyImage
@@ -78,7 +78,7 @@ export default function MenuItemCard({ item, currencySymbol }) {
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <h3 className="font-bold text-sm md:text-base leading-snug" style={{ color: "#ffffff" }}>
+          <h3 className="font-bold text-sm md:text-base leading-snug line-clamp-2" style={{ color: "#ffffff" }}>
             {item.name}
           </h3>
 

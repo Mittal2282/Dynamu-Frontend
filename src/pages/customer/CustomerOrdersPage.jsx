@@ -3,15 +3,8 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import LazyImage from "../../components/ui/LazyImage";
 import { Spinner } from "../../components/ui/Spinner";
-import {
-  CUSTOMER_STATUS_PHASE,
-  getOrderStatusConfig,
-} from "../../constants/orderStatusConfig";
-import {
-  endCustomerSession,
-  getCustomerOrders,
-  requestBill,
-} from "../../services/customerService";
+import { CUSTOMER_STATUS_PHASE, getOrderStatusConfig } from "../../constants/orderStatusConfig";
+import { endCustomerSession, getCustomerOrders, requestBill } from "../../services/customerService";
 import { disconnectSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
 import { cartStore } from "../../store/cartStore";
@@ -131,9 +124,7 @@ export default function CustomerOrdersPage() {
   const { qrCodeId, tableNumber } = useParams();
   const basePath =
     baseFromOutlet ||
-    (qrCodeId != null && tableNumber != null
-      ? `/${qrCodeId}/${tableNumber}`
-      : "/");
+    (qrCodeId != null && tableNumber != null ? `/${qrCodeId}/${tableNumber}` : "/");
   const navigate = useNavigate();
   const { currencySymbol } = restaurantStore();
   const [orders, setOrders] = useState([]);
@@ -241,10 +232,7 @@ export default function CustomerOrdersPage() {
         >
           Open menu
         </Button>
-        <p
-          className="text-xs md:text-sm pt-2"
-          style={{ color: "var(--t-nav-muted)" }}
-        >
+        <p className="text-xs md:text-sm pt-2" style={{ color: "var(--t-nav-muted)" }}>
           Status updates automatically every 15s
         </p>
       </div>
@@ -254,7 +242,7 @@ export default function CustomerOrdersPage() {
   function OrderBatch({ order, batchIndex }) {
     const cfg = getOrderStatusConfig(order.status);
     const phase = CUSTOMER_STATUS_PHASE[order.status] ?? cfg.label;
-    const metaKicker = `${String(batchIndex).padStart(2, "0")} / ${phase.toUpperCase()}`;
+    const metaKicker = `${batchIndex} / ${phase.toUpperCase()}`;
 
     const showEst =
       order.estimated_prep_time &&
@@ -269,10 +257,7 @@ export default function CustomerOrdersPage() {
           backgroundColor: "color-mix(in srgb, var(--t-bg) 88%, white 4%)",
         }}
       >
-        <div
-          className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.stripeSolid}`}
-          aria-hidden
-        />
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.stripeSolid}`} aria-hidden />
 
         <div className="pl-5 pr-4 py-5 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -297,33 +282,46 @@ export default function CustomerOrdersPage() {
               const note = item.instruction ?? item.note ?? item.notes ?? "";
               const imageUrl = item.image_url ?? item.menu_item?.image_url;
               return (
-                <li
-                  key={i}
-                  className="border-b border-white/[0.06] last:border-0 last:pb-0 pb-4"
-                >
+                <li key={i} className="border-b border-white/[0.06] last:border-0 last:pb-0 pb-4">
                   <div className="flex gap-3 items-start">
                     <LazyImage
                       src={imageUrl}
                       alt={item.name}
                       containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
                       placeholder={
-                        <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-                          <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
-                            No image available
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ background: "var(--t-float)" }}
+                        >
+                          <span className="text-xl">
+                            {(item.is_veg ?? item.menu_item?.is_veg) ? "🥗" : "🍗"}
                           </span>
                         </div>
                       }
                     />
 
                     <div className="flex justify-between gap-4 items-start flex-1">
-                      <p
-                        className="text-[14px] md:text-base font-bold uppercase tracking-wide text-white leading-snug flex-1"
-                        style={{ color: "#ffffff" }}
-                      >
-                        {item.name}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-[14px] md:text-base font-bold uppercase tracking-wide leading-snug"
+                          style={{ color: "#ffffff" }}
+                        >
+                          {item.name}
+                        </p>
+                        {item.price != null && (
+                          <p
+                            className="text-[11px] mt-0.5 tabular-nums"
+                            style={{ color: "var(--t-nav-muted)" }}
+                          >
+                            {item.quantity ?? 1} × {formatCurrency(item.price, currencySymbol)} ={" "}
+                            <span className="font-bold" style={{ color: "var(--t-accent)" }}>
+                              {formatCurrency((item.quantity ?? 1) * item.price, currencySymbol)}
+                            </span>
+                          </p>
+                        )}
+                      </div>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
-                        QTY: {String(item.quantity ?? 1).padStart(2, "0")}
+                        QTY: {item.quantity ?? 1}
                       </span>
                     </div>
                   </div>
@@ -384,11 +382,11 @@ export default function CustomerOrdersPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-row gap-3">
         <Button
           variant="secondary"
           onClick={() => navigate(`${basePath}/menu`)}
-          className="w-full py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
+          className="flex-1 py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
           style={{
             backgroundColor: "transparent",
             color: "white",
@@ -400,7 +398,7 @@ export default function CustomerOrdersPage() {
         <Button
           loading={endingSession}
           onClick={handleRequestBill}
-          className="w-full py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90"
+          className="flex-1 py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90"
           style={{
             backgroundColor: "var(--t-accent)",
             color: "var(--t-bg)",
@@ -424,34 +422,26 @@ export default function CustomerOrdersPage() {
       <div className="lg:flex lg:gap-10 lg:items-start">
         {/* Left: header + order cards */}
         <div className="flex-1 space-y-8">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-row items-center justify-between gap-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-[1.1]">
+              <span className="text-white">Current </span>
+              <span style={{ color: "var(--t-accent)" }}>Orders</span>
+            </h1>
+
             <div className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-full text-xs font-bold uppercase tracking-[0.15em] text-green-400 bg-green-500/15 border border-green-500/30">
               <IconLive className="w-3.5 h-3.5" />
               Live status
             </div>
-
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-[1.1]">
-              <span className="text-white">Current</span>
-              <br />
-              <span style={{ color: "var(--t-accent)" }}>Orders</span>
-            </h1>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {original ? <OrderBatch order={original} batchIndex={1} /> : null}
             {addons.map((addon, idx) => (
-              <OrderBatch
-                key={addon._id}
-                order={addon}
-                batchIndex={original ? idx + 2 : idx + 1}
-              />
+              <OrderBatch key={addon._id} order={addon} batchIndex={original ? idx + 2 : idx + 1} />
             ))}
           </div>
 
-          <p
-            className="text-center text-xs pt-2"
-            style={{ color: "var(--t-nav-muted)" }}
-          >
+          <p className="text-center text-xs pt-2" style={{ color: "var(--t-nav-muted)" }}>
             Status updates automatically every 15s
           </p>
         </div>
@@ -478,9 +468,9 @@ export default function CustomerOrdersPage() {
       </div>
 
       {/* ── Mobile/tablet: fixed bottom bill panel ─────────────────────────── */}
-      <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center px-5 pointer-events-none bottom-[88px] md:bottom-5">
+      <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none bottom-[72px] md-bottom-5 mb-3">
         <div
-          className="w-full md:max-w-3xl rounded-2xl border border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
+          className="w-full md:max-w-3xl rounded-2xl border-t border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{
             backgroundColor: "color-mix(in srgb, var(--t-bg) 92%, black)",
             borderTop: "2px solid var(--t-accent)",

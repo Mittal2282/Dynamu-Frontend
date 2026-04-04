@@ -62,10 +62,8 @@ function RecommendationRow({ item }) {
           alt={item.name}
           containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
           placeholder={
-            <div className="w-full h-full bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center">
-              <span className="text-[10px] font-semibold text-slate-400 px-1 text-center">
-                No image available
-              </span>
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--t-float)" }}>
+              <span className="text-xl">{item.is_veg ? "🥗" : "🍗"}</span>
             </div>
           }
         />

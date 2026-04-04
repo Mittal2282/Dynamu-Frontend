@@ -19,21 +19,11 @@ import {
   respondToJoin,
   syncCart,
 } from "../services/customerService";
-import {
-  connectSocket,
-  disconnectSocket,
-  getSocket,
-} from "../services/socketService";
+import { connectSocket, disconnectSocket, getSocket } from "../services/socketService";
 import { authStore } from "../store/authStore";
-import {
-  cartStore,
-  useCartCount,
-  useCartItems,
-  useCartTotal,
-} from "../store/cartStore";
+import { cartStore, useCartCount, useCartItems, useCartTotal } from "../store/cartStore";
 import { chatStore } from "../store/chatStore";
 import { restaurantStore } from "../store/restaurantStore";
-import { formatCurrency } from "../utils/formatters";
 
 export default function CustomerLayout() {
   const { qrCodeId, tableNumber } = useParams();
@@ -46,12 +36,7 @@ export default function CustomerLayout() {
   const items = useCartItems();
   const count = useCartCount();
   const total = useCartTotal();
-  const {
-    name,
-    currencySymbol,
-    tableNumber: storedTable,
-    menu,
-  } = restaurantStore();
+  const { name, tableNumber: storedTable, menu } = restaurantStore();
 
   const [gateComplete, setGateComplete] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -129,8 +114,7 @@ export default function CustomerLayout() {
       setGateComplete(true);
     } catch (err) {
       setError(
-        err?.response?.data?.message ||
-          "Could not load the menu. Please scan the QR again.",
+        err?.response?.data?.message || "Could not load the menu. Please scan the QR again.",
       );
       setGateComplete(true); // show error screen
     } finally {
@@ -176,11 +160,8 @@ export default function CustomerLayout() {
 
     const onChatMessage = (payload) => {
       // Skip on the device that sent it — messages already added optimistically
-      if (payload.origin_socket_id && payload.origin_socket_id === socket.id)
-        return;
-      chatStore
-        .getState()
-        .addMessage({ role: "user", text: payload.user_text, items: [] });
+      if (payload.origin_socket_id && payload.origin_socket_id === socket.id) return;
+      chatStore.getState().addMessage({ role: "user", text: payload.user_text, items: [] });
       chatStore.getState().addMessage({
         role: "ai",
         text: payload.ai_text,
@@ -214,16 +195,9 @@ export default function CustomerLayout() {
   }, [loading]);
 
   // ── Sync cart to backend ───────────────────────────────────────────────────
-  const itemsStr = JSON.stringify(
-    items.map((i) => ({ _id: i._id, qty: i.qty })),
-  );
+  const itemsStr = JSON.stringify(items.map((i) => ({ _id: i._id, qty: i.qty })));
   useEffect(() => {
-    if (
-      !authStore.getState().sessionToken ||
-      loading ||
-      isRemoteCartUpdate.current
-    )
-      return;
+    if (!authStore.getState().sessionToken || loading || isRemoteCartUpdate.current) return;
     syncCart(items).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsStr, loading]);
@@ -239,10 +213,7 @@ export default function CustomerLayout() {
       setDrawerOpen(false);
       navigate(`${basePath}/orders`);
     } catch (err) {
-      alert(
-        err?.response?.data?.message ||
-          "Failed to place order. Please try again.",
-      );
+      alert(err?.response?.data?.message || "Failed to place order. Please try again.");
     } finally {
       setOrdering(false);
     }
@@ -277,8 +248,7 @@ export default function CustomerLayout() {
           Session Ended
         </Text>
         <Text size="sm" color="muted">
-          A new session has been started at this table. Please scan the QR code
-          again to continue.
+          A new session has been started at this table. Please scan the QR code again to continue.
         </Text>
       </div>
     );
@@ -291,9 +261,7 @@ export default function CustomerLayout() {
       </div>
     );
 
-  const drawerSubtitle = name
-    ? `${name} · Table ${storedTable ?? tableNumber}`
-    : "";
+  const drawerSubtitle = name ? `${name} · Table ${storedTable ?? tableNumber}` : "";
 
   return (
     <div
@@ -341,15 +309,9 @@ export default function CustomerLayout() {
         <div className="md:hidden fixed bottom-[95px] left-0 right-0 z-30 flex justify-center px-4">
           <div className="w-full bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
             <div>
-              <Text size="sm" weight="bold">
+              <Text size="md" weight="bold">
                 {count} {count === 1 ? "item" : "items"} added
               </Text>
-              <p className="text-orange-100 text-xs mt-0.5">
-                Total{" "}
-                <span className="font-bold text-white">
-                  {formatCurrency(total, currencySymbol)}
-                </span>
-              </p>
             </div>
             <Button
               size="sm"
@@ -400,17 +362,12 @@ export default function CustomerLayout() {
                   className="px-4 py-3 flex items-center justify-between gap-3"
                 >
                   <Text size="sm" color="muted" className="flex-1 truncate">
-                    <span className="text-white font-medium">
-                      {req.joiner_name}
-                    </span>{" "}
-                    wants to join
+                    <span className="text-white font-medium">{req.joiner_name}</span> wants to join
                   </Text>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={async () => {
-                        await respondToJoin(req.request_id, true).catch(
-                          () => {},
-                        );
+                        await respondToJoin(req.request_id, true).catch(() => {});
                         setPendingJoinRequests((prev) =>
                           prev.filter((r) => r.request_id !== req.request_id),
                         );
@@ -422,9 +379,7 @@ export default function CustomerLayout() {
                     </button>
                     <button
                       onClick={async () => {
-                        await respondToJoin(req.request_id, false).catch(
-                          () => {},
-                        );
+                        await respondToJoin(req.request_id, false).catch(() => {});
                         setPendingJoinRequests((prev) =>
                           prev.filter((r) => r.request_id !== req.request_id),
                         );

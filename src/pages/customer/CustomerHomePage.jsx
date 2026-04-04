@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import MenuItemCard from "../../components/customer/MenuItemCard";
-import { restaurantStore } from "../../store/restaurantStore";
 import { useCartCount } from "../../store/cartStore";
+import { restaurantStore } from "../../store/restaurantStore";
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,8 @@ function HeroSection({ name, tagline, tableNumber }) {
         <h1
           className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-none tracking-tight"
           style={{
-            background: "linear-gradient(135deg, var(--t-accent) 0%, #ffb347 60%, var(--t-accent) 100%)",
+            background:
+              "linear-gradient(135deg, var(--t-accent) 0%, #ffb347 60%, var(--t-accent) 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -124,14 +125,13 @@ function ExploreMenuCard({ onClick }) {
       onClick={onClick}
       className="w-full text-left rounded-2xl p-5 md:p-6 cursor-pointer active:scale-[0.98] transition-transform relative overflow-hidden group"
       style={{
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--t-accent) 18%, var(--t-surface)) 0%, var(--t-surface) 100%)",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--t-accent) 18%, var(--t-surface)) 0%, var(--t-surface) 100%)",
         border: "1px solid color-mix(in srgb, var(--t-accent) 25%, var(--t-line))",
       }}
     >
       {/* Decorative plate */}
-      <div
-        className="absolute right-0 bottom-0 translate-x-4 translate-y-4 text-[80px] md:text-[100px] opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2"
-      >
+      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 text-[80px] md:text-[100px] opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
         🍽️
       </div>
 
@@ -146,7 +146,10 @@ function ExploreMenuCard({ onClick }) {
           📖
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm md:text-base font-black uppercase tracking-wide" style={{ color: "#ffffff" }}>
+          <p
+            className="text-sm md:text-base font-black uppercase tracking-wide"
+            style={{ color: "#ffffff" }}
+          >
             Explore Menu
           </p>
           <p
@@ -174,7 +177,8 @@ function AskAICard({ onClick }) {
       onClick={onClick}
       className="w-full text-left rounded-2xl p-5 md:p-6 cursor-pointer active:scale-[0.98] transition-transform relative overflow-hidden group"
       style={{
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--t-accent2) 12%, var(--t-surface)) 0%, var(--t-surface) 100%)",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--t-accent2) 12%, var(--t-surface)) 0%, var(--t-surface) 100%)",
         border: "1px solid color-mix(in srgb, var(--t-accent2) 20%, var(--t-line))",
       }}
     >
@@ -204,7 +208,10 @@ function AskAICard({ onClick }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-sm md:text-base font-black uppercase tracking-wide text-white" style={{ color: "#ffffff" }}>
+            <p
+              className="text-sm md:text-base font-black uppercase tracking-wide text-white"
+              style={{ color: "#ffffff" }}
+            >
               AI Assistant
             </p>
             <span
@@ -240,11 +247,20 @@ function AskAICard({ onClick }) {
 
 const MEAL_CONFIG = {
   breakfast: { icon: "🌅", label: "Breakfast", greeting: "Good Morning" },
-  lunch:     { icon: "☀️", label: "Lunch",     greeting: "Lunchtime"   },
-  dinner:    { icon: "🌙", label: "Dinner",    greeting: "Good Evening" },
+  lunch: { icon: "☀️", label: "Lunch", greeting: "Lunchtime" },
+  dinner: { icon: "🌙", label: "Dinner", greeting: "Good Evening" },
 };
 
 const INITIAL_VISIBLE = 6;
+
+function getGridClasses(itemCount) {
+  // If there are 2 or fewer items, don't use horizontal scroll on mobile
+  if (itemCount <= 2) {
+    return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
+  }
+  // Standard 2-row horizontal stack on mobile
+  return "grid grid-rows-2 grid-flow-col auto-cols-[calc(100%_-_48px)] md:auto-cols-min overflow-x-auto no-scrollbar gap-x-4 gap-y-3 -mx-0 px-4 md:mx-0 md:px-0 md:grid-cols-2 lg:grid-cols-3 md:grid-rows-none md:grid-flow-row snap-x snap-mandatory items-start md:items-stretch";
+}
 
 function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
   const config = MEAL_CONFIG[mealTime] || MEAL_CONFIG.dinner;
@@ -252,9 +268,10 @@ function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
 
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
         <SectionHeader icon={config.icon} title={`${config.greeting} · ${config.label}`} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -264,33 +281,42 @@ function TimeBasedSection({ items, mealTime, loading, currencySymbol }) {
   }
 
   if (!items || items.length === 0) return null;
-
-  const visible = showAll ? items : items.slice(0, INITIAL_VISIBLE);
   const hasMore = items.length > INITIAL_VISIBLE;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader
         icon={config.icon}
         title={`${config.greeting} · ${config.label}`}
         badge="Now Serving"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {visible.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
-        ))}
+      <div className={getGridClasses(items.length)}>
+        {/* All items visible on mobile scroll; desktop respects showAll toggle */}
+        {items.map((item, idx) => {
+          const isHiddenOnDesktop = idx >= INITIAL_VISIBLE && !showAll;
+          return (
+            <div
+              key={item._id}
+              className={`w-full md:w-auto snap-start h-full ${isHiddenOnDesktop ? "md:hidden" : ""}`}
+            >
+              <MenuItemCard item={item} currencySymbol={currencySymbol} />
+            </div>
+          );
+        })}
       </div>
 
       {hasMore && (
-        <button
-          type="button"
-          onClick={() => setShowAll((v) => !v)}
-          className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold border transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
-          style={{ borderColor: "var(--t-line)", color: "var(--t-dim)" }}
-        >
-          {showAll ? "Show Less ↑" : `See All ${items.length} Items ↓`}
-        </button>
+        <div className="hidden md:block">
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="w-full mt-4 py-2.5 rounded-xl text-sm font-semibold border transition-all hover:bg-white/5 active:scale-[0.99] cursor-pointer"
+            style={{ borderColor: "var(--t-line)", color: "var(--t-dim)" }}
+          >
+            {showAll ? "Show Less ↑" : `See All ${items.length} Items ↓`}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -304,11 +330,18 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
 
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
-        <SectionHeader title="Today's Specials" right={
-          <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>{dateLabel}</span>
-        } />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
+        <SectionHeader
+          title="Today's Specials"
+          right={
+            <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>
+              {dateLabel}
+            </span>
+          }
+        />
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </div>
@@ -319,7 +352,7 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader
         title="Today's Specials"
         right={
@@ -328,9 +361,11 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
           </span>
         }
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className={getGridClasses(items.length)}>
         {items.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
+          <div key={item._id} className="w-full md:w-auto snap-start h-full">
+            <MenuItemCard item={item} currencySymbol={currencySymbol} />
+          </div>
         ))}
       </div>
     </div>
@@ -342,9 +377,10 @@ function TodaysSpecials({ items, loading, currencySymbol }) {
 function ItemsSection({ title, items, loading, currencySymbol }) {
   if (loading) {
     return (
-      <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+      <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
         <SectionHeader title={title} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={getGridClasses(4)}>
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -356,11 +392,13 @@ function ItemsSection({ title, items, loading, currencySymbol }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="pt-6 pb-1 px-4 md:px-6 lg:px-8">
+    <div className="pt-6 pb-4 px-4 md:px-6 lg:px-8">
       <SectionHeader title={title} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className={getGridClasses(items.length)}>
         {items.map((item) => (
-          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
+          <div key={item._id} className="w-full md:w-auto snap-start h-full">
+            <MenuItemCard item={item} currencySymbol={currencySymbol} />
+          </div>
         ))}
       </div>
     </div>
