@@ -26,7 +26,10 @@ export function LevelDots({ level = 0, max = 5, color, icon }) {
 }
 
 // ── Menu item card (horizontal layout — image left, details right) ─────────────
-export default function MenuItemCard({ item, currencySymbol }) {
+// size="sm" renders a compact variant (smaller image, tighter padding) for use in
+// constrained spaces like the cart drawer's "You Might Also Like" section.
+export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
+  const isSmall = size === "sm";
   const hasDiscount = item.discount_percentage > 0;
   const discountedPrice = hasDiscount
     ? Math.round(item.price * (1 - item.discount_percentage / 100))
@@ -53,13 +56,13 @@ export default function MenuItemCard({ item, currencySymbol }) {
       className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99] h-full flex flex-col"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
-      <div className="p-3 flex gap-3 flex-1">
+      <div className={`${isSmall ? "p-2.5" : "p-3"} flex gap-3 flex-1`}>
         {/* ── Image ──────────────────────────────────────────────────────── */}
         <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
           <LazyImage
             src={item.image_url}
             alt={item.name}
-            containerClassName="w-[88px] h-[88px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden"
+            containerClassName={isSmall ? "w-[64px] h-[64px] rounded-xl overflow-hidden" : "w-[88px] h-[88px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden"}
             imgClassName="w-full h-full object-cover"
             placeholder={
               <div

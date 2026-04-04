@@ -26,7 +26,7 @@ export function VegBadge({ isVeg, size = 'md', className='' }) {
  * @param {{ count: number, className?: string }} props
  */
 export function CountBadge({ count, className = '', showZero = false }) {
-  if (!showZero && !count) return null;
+  if (!showZero && count === 0) return null;
   return (
     <span
       className={[

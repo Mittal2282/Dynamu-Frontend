@@ -1,10 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import LazyImage from "../../components/ui/LazyImage";
 import { VegBadge } from "../../components/ui/Badge";
-import Modal from "../../components/ui/Modal";
-import Button from "../../components/ui/Button";
-import Text from "../../components/ui/Text";
 import CartControl from "../../components/customer/CartControl";
 import {
   cartStore,
@@ -18,30 +15,48 @@ const SERVICE_CHARGE = 10;
 const TAX_RATE = 0.05;
 
 // ── Cart item row ─────────────────────────────────────────────────────────────
-function CartItem({ item, onEditInstruction, currencySymbol }) {
+function CartItem({ item, currencySymbol }) {
   const effectivePrice =
     item.discount_percentage > 0
       ? item.price * (1 - item.discount_percentage / 100)
       : item.price;
   const lineTotal = effectivePrice * item.qty;
 
+  const [instructionOpen, setInstructionOpen] = useState(false);
+  const [draft, setDraft] = useState(item.instruction || "");
+
+  useEffect(() => {
+    setDraft(item.instruction || "");
+  }, [item.instruction]);
+
+  const handleSave = () => {
+    cartStore.getState().setInstruction(item._id ?? item.id, draft.trim());
+    setInstructionOpen(false);
+  };
+
+  const handleCancel = () => {
+    setDraft(item.instruction || "");
+    setInstructionOpen(false);
+  };
+
   return (
     <div
       className="flex items-start gap-4 p-4 rounded-2xl border transition-colors"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
-      <div className="relative shrink-0">
+      <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
         <LazyImage
           src={item.image_url}
           alt={item.name}
-          containerClassName="w-16 h-16 rounded-xl overflow-hidden border border-white/10 bg-white/5"
+          containerClassName="w-[88px] h-[88px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden"
+          imgClassName="w-full h-full object-cover"
           placeholder={
-            <div className="w-full h-full flex items-center justify-center bg-white/5">
-              <span className="text-2xl">{item.is_veg ? "🥗" : "🍗"}</span>
+            <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--t-float)" }}>
+              <span className="text-3xl">{item.is_veg ? "🥗" : "🍗"}</span>
             </div>
           }
         />
-        <div className="absolute -top-1 -left-1 p-[3px] rounded-sm bg-white/90 shadow-sm">
+        <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
           <VegBadge isVeg={item.is_veg} size="sm" />
         </div>
       </div>
@@ -74,25 +89,55 @@ function CartItem({ item, onEditInstruction, currencySymbol }) {
           )}
         </div>
 
-        {/* Instruction */}
-        {item.instruction ? (
-          <button
-            onClick={() => onEditInstruction(item)}
-            className="mt-2 flex items-center gap-1.5 text-xs cursor-pointer hover:opacity-80"
-            style={{ color: "var(--t-accent)" }}
-          >
-            <span>✏️</span>
-            <span className="italic opacity-80">"{item.instruction}"</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => onEditInstruction(item)}
-            className="mt-2 text-xs px-2.5 py-1 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-            style={{ color: "var(--t-dim)" }}
-          >
-            + Add note
-          </button>
-        )}
+        {/* Inline Instruction */}
+        <div className="mt-2">
+          {instructionOpen ? (
+            <div className="flex flex-col gap-1.5">
+              <textarea
+                autoFocus
+                rows={2}
+                maxLength={150}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder="e.g. No sugar, extra spicy, sauce on the side..."
+                className="w-full bg-black/20 border border-white/10 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[var(--t-accent)] transition-colors placeholder:text-white/30 resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer active:scale-[0.98]"
+                  style={{ background: "var(--t-accent)", color: "#fff" }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer active:scale-[0.98]"
+                  style={{ color: "var(--t-dim)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : item.instruction ? (
+            <button
+              onClick={() => setInstructionOpen(true)}
+              className="flex items-center gap-1.5 text-xs cursor-pointer hover:opacity-80"
+              style={{ color: "var(--t-accent)" }}
+            >
+              <span>✏️</span>
+              <span className="italic opacity-80">"{item.instruction}"</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setInstructionOpen(true)}
+              className="text-xs px-2.5 py-1 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+              style={{ color: "var(--t-dim)" }}
+            >
+              + Add note
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="shrink-0 flex flex-col items-end gap-2">
@@ -133,10 +178,6 @@ export default function CustomerCartPage() {
   const count = useCartCount();
   const { currencySymbol, name } = restaurantStore();
 
-  const [instructionModalOpen, setInstructionModalOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState(null);
-  const [instructionText, setInstructionText] = useState("");
-
   const subtotal = items.reduce((s, i) => {
     const p =
       i.discount_percentage > 0
@@ -146,19 +187,6 @@ export default function CustomerCartPage() {
   }, 0);
   const tax = subtotal * TAX_RATE;
   const total = subtotal + SERVICE_CHARGE + tax;
-
-  const handleEditInstruction = (item) => {
-    setActiveItem(item);
-    setInstructionText(item.instruction || "");
-    setInstructionModalOpen(true);
-  };
-
-  const handleSaveInstruction = () => {
-    if (activeItem) {
-      cartStore.getState().setInstruction(activeItem._id ?? activeItem.id, instructionText.trim());
-    }
-    setInstructionModalOpen(false);
-  };
 
   return (
     <div className="flex-1 pb-12" style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}>
@@ -233,7 +261,6 @@ export default function CustomerCartPage() {
                 <CartItem
                   key={item._id ?? item.id}
                   item={item}
-                  onEditInstruction={handleEditInstruction}
                   currencySymbol={currencySymbol}
                 />
               ))}
@@ -319,30 +346,6 @@ export default function CustomerCartPage() {
         )}
       </div>
 
-      {/* ── Instruction modal ────────────────────────────────────────────────── */}
-      <Modal
-        isOpen={instructionModalOpen}
-        onClose={() => setInstructionModalOpen(false)}
-        title="Add Special Instruction"
-      >
-        <div className="flex flex-col gap-4">
-          <Text as="p" size="sm" color="white" className="opacity-70">
-            Any requests for the kitchen regarding{" "}
-            <strong>{activeItem?.name}</strong>?
-          </Text>
-          <textarea
-            className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[var(--t-accent)] transition-colors placeholder:text-white/30 resize-none"
-            rows={3}
-            maxLength={150}
-            placeholder="e.g. No sugar, extra spicy, sauce on the side..."
-            value={instructionText}
-            onChange={(e) => setInstructionText(e.target.value)}
-          />
-          <Button variant="primary" fullWidth onClick={handleSaveInstruction} className="mt-2">
-            Save Instruction
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
 }
