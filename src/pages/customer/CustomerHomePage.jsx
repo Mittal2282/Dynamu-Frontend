@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import MenuItemCard from "../../components/customer/MenuItemCard";
 import { useCartCount } from "../../store/cartStore";
+import { authStore } from "../../store/authStore";
 import { restaurantStore } from "../../store/restaurantStore";
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ function SectionHeader({ icon, title, badge, right }) {
 
 // ── Hero section ──────────────────────────────────────────────────────────────
 
-function HeroSection({ name, tagline, tableNumber }) {
+function HeroSection({ tagline, customerName }) {
   return (
     <div className="relative overflow-hidden px-4 md:px-6 lg:px-8 pt-6 pb-8 md:pb-10">
       {/* Background glow */}
@@ -68,28 +69,8 @@ function HeroSection({ name, tagline, tableNumber }) {
         }}
       />
 
-      {/* Session badge */}
-      <div className="relative flex items-center gap-2 mb-4">
-        <span
-          className="w-2 h-2 rounded-full animate-pulse shrink-0"
-          style={{ background: "var(--t-accent2)" }}
-        />
-        <span
-          className="text-xs font-bold uppercase tracking-widest"
-          style={{ color: "var(--t-accent2)" }}
-        >
-          Session Active · Table {tableNumber}
-        </span>
-      </div>
-
       {/* Welcome text */}
       <div className="relative">
-        <p
-          className="text-sm md:text-base lg:text-lg font-light mb-1"
-          style={{ color: "var(--t-dim)" }}
-        >
-          Welcome to
-        </p>
         <h1
           className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-none tracking-tight"
           style={{
@@ -101,7 +82,7 @@ function HeroSection({ name, tagline, tableNumber }) {
             filter: "drop-shadow(0 0 40px var(--t-accent-40))",
           }}
         >
-          {name || "Dynamu"}
+          {customerName ? `Welcome, ${customerName}` : "Welcome"}
         </h1>
         {tagline && (
           <p
@@ -418,7 +399,8 @@ export default function CustomerHomePage() {
     basePath,
     onOpenAI,
   } = useOutletContext();
-  const { name, tagline, tableNumber, currencySymbol } = restaurantStore();
+  const { tagline, currencySymbol } = restaurantStore();
+  const { guestName } = authStore();
   const count = useCartCount();
   const navigate = useNavigate();
 
@@ -427,8 +409,8 @@ export default function CustomerHomePage() {
       className={`flex-1 ${count > 0 ? "pb-40 md:pb-16 lg:pb-12" : "pb-24 md:pb-16 lg:pb-12"}`}
       style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
     >
-      {/* Hero with session badge */}
-      <HeroSection name={name} tagline={tagline} tableNumber={tableNumber} />
+      {/* Hero */}
+      <HeroSection tagline={tagline} customerName={guestName} />
 
       {/* Action cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 px-4 md:px-6 lg:px-8 mb-2">

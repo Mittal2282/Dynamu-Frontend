@@ -418,7 +418,6 @@ export default function CustomerLayout() {
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         items={items}
-        onAdd={add}
         onRemove={remove}
         onPlaceOrder={handlePlaceOrder}
         total={total}

@@ -31,7 +31,7 @@ function IconCartBag({ className, style }) {
  * @param {{ onCartClick: () => void, variant?: 'legacy' | 'customer', basePath?: string, aiChatOpen?: boolean, onAIClick?: () => void }} props
  */
 export default function Header({ onCartClick, variant = 'legacy', basePath = '', aiChatOpen = false, onAIClick }) {
-  const { name, tagline, currencySymbol } = restaurantStore();
+  const { name, tagline, currencySymbol, tableNumber } = restaurantStore();
   const count = useCartCount();
   const total = useCartTotal();
 
@@ -53,7 +53,7 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
       >
         <div className="flex items-center justify-between gap-3">
           {/* Logo + name */}
-          <div className="flex items-center gap-3 min-w-0 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 shrink-0">
             <IconCutlery className="w-7 h-7 shrink-0" style={{ color: 'var(--t-accent)' }} />
             <h1
               className="text-[15px] font-bold uppercase tracking-[0.12em] leading-tight truncate"
@@ -61,6 +61,18 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
             >
               {title}
             </h1>
+            {tableNumber && (
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-widest shrink-0"
+                style={{
+                  color: 'var(--t-accent2)',
+                  borderColor: 'var(--t-accent2-40)',
+                  background: 'var(--t-accent2-10)',
+                }}
+              >
+                T·{tableNumber}
+              </span>
+            )}
           </div>
 
           {/* Inline nav — tablet/desktop only */}
@@ -105,7 +117,7 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
             aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
           >
             <IconCartBag className="w-5 h-5" style={{ color: 'var(--t-accent)' }} />
-            <CountBadge count={count} showZero />
+            <CountBadge count={count} />
           </button>
 
           {/* Desktop cart — NavLink to cart page, shows count + total when non-empty */}
