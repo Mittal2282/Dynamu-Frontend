@@ -5,6 +5,7 @@ import { VegBadge } from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
 import Button from "../../components/ui/Button";
 import Text from "../../components/ui/Text";
+import CartControl from "../../components/customer/CartControl";
 import {
   cartStore,
   useCartItems,
@@ -16,36 +17,8 @@ import { formatCurrency } from "../../utils/formatters";
 const SERVICE_CHARGE = 10;
 const TAX_RATE = 0.05;
 
-// ── Stepper ───────────────────────────────────────────────────────────────────
-function Stepper({ qty, onAdd, onRemove }) {
-  return (
-    <div
-      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-      style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-    >
-      <button
-        onClick={onRemove}
-        className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Remove one"
-      >
-        −
-      </button>
-      <span className="w-9 text-center text-sm font-bold text-white select-none" style={{ lineHeight: "2.25rem" }}>
-        {String(qty).padStart(2, "0")}
-      </span>
-      <button
-        onClick={onAdd}
-        className="w-9 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Add one"
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 // ── Cart item row ─────────────────────────────────────────────────────────────
-function CartItem({ item, onAdd, onRemove, onEditInstruction, currencySymbol }) {
+function CartItem({ item, onEditInstruction, currencySymbol }) {
   const effectivePrice =
     item.discount_percentage > 0
       ? item.price * (1 - item.discount_percentage / 100)
@@ -123,11 +96,7 @@ function CartItem({ item, onAdd, onRemove, onEditInstruction, currencySymbol }) 
       </div>
 
       <div className="shrink-0 flex flex-col items-end gap-2">
-        <Stepper
-          qty={item.qty}
-          onAdd={() => onAdd(item)}
-          onRemove={() => onRemove(item)}
-        />
+        <CartControl item={item} />
         <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>
           = {formatCurrency(lineTotal, currencySymbol)}
         </span>
@@ -162,7 +131,6 @@ export default function CustomerCartPage() {
   const { basePath, onPlaceOrder, orderingCart } = useOutletContext();
   const items = useCartItems();
   const count = useCartCount();
-  const { add, remove } = cartStore();
   const { currencySymbol, name } = restaurantStore();
 
   const [instructionModalOpen, setInstructionModalOpen] = useState(false);
@@ -265,8 +233,6 @@ export default function CustomerCartPage() {
                 <CartItem
                   key={item._id ?? item.id}
                   item={item}
-                  onAdd={add}
-                  onRemove={remove}
                   onEditInstruction={handleEditInstruction}
                   currencySymbol={currencySymbol}
                 />

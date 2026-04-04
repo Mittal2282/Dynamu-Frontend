@@ -4,6 +4,7 @@ import { getCartSuggestions } from "../services/customerService";
 import { cartStore } from "../store/cartStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { formatCurrency } from "../utils/formatters";
+import CartControl from "./customer/CartControl";
 import { VegBadge } from "./ui/Badge";
 import Button from "./ui/Button";
 import Drawer from "./ui/Drawer";
@@ -15,43 +16,8 @@ import Text from "./ui/Text";
 const SERVICE_CHARGE = 10; // fixed ₹10
 const TAX_RATE = 0.05; // 5 %
 
-/* ─── Qty stepper ──────────────────────────────────────────────────────────── */
-function Stepper({ qty, onAdd, onRemove }) {
-  return (
-    <div
-      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-      style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-    >
-      <button
-        onClick={onRemove}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Remove one"
-      >
-        −
-      </button>
-      <Text
-        as="span"
-        size="sm"
-        weight="bold"
-        color="white"
-        className="w-8 text-center select-none"
-        style={{ lineHeight: "2rem" }}
-      >
-        {String(qty).padStart(2, "0")}
-      </Text>
-      <button
-        onClick={onAdd}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Add one"
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 /* ─── Cart item row ────────────────────────────────────────────────────────── */
-function CartItem({ item, onAdd, onRemove, onAddInstruction, currencySymbol }) {
+function CartItem({ item, onAddInstruction, currencySymbol }) {
   return (
     <div className="border-b border-white/5 last:border-0 py-1 first:pt-2">
       <div className="flex items-start gap-3 p-3 -mx-3 hover:bg-white/5 rounded-2xl transition-colors group">
@@ -179,11 +145,7 @@ function CartItem({ item, onAdd, onRemove, onAddInstruction, currencySymbol }) {
           </div>
         </div>
 
-        <Stepper
-          qty={item.qty}
-          onAdd={() => onAdd(item)}
-          onRemove={() => onRemove(item)}
-        />
+        <CartControl item={item} />
       </div>
     </div>
   );
@@ -405,8 +367,6 @@ export default function CartDrawer({
                 <CartItem
                   key={item._id ?? item.id}
                   item={item}
-                  onAdd={onAdd}
-                  onRemove={onRemove}
                   onAddInstruction={handleOpenInstruction}
                   currencySymbol={currencySymbol}
                 />

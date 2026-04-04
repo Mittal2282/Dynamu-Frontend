@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VegBadge } from '../components/ui/Badge';
-import Button from '../components/ui/Button';
 import Drawer from '../components/ui/Drawer';
 import { Spinner } from '../components/ui/Spinner';
 import Text from '../components/ui/Text';
 import LazyImage from '../components/ui/LazyImage';
+import CartControl from './customer/CartControl';
 import { getChatHistory, getWelcomeMessage, sendChatMessage } from '../services/chatService';
-import { cartStore } from '../store/cartStore';
 import { chatStore } from '../store/chatStore';
 import { restaurantStore } from '../store/restaurantStore';
 import { QUICK_CHAT_CHIPS } from '../utils/constants';
@@ -46,49 +45,9 @@ function SpiceIndicator({ level }) {
   );
 }
 
-/* ─── Same stepper pattern as CartDrawer ────────────────────────────────────── */
-function Stepper({ qty, onAdd, onRemove }) {
-  return (
-    <div
-      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-      style={{ border: '1px solid rgba(255,255,255,0.12)' }}
-    >
-      <button
-        type="button"
-        onClick={onRemove}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Remove one"
-      >
-        −
-      </button>
-      <Text
-        as="span"
-        size="sm"
-        weight="bold"
-        color="white"
-        className="w-8 text-center select-none"
-        style={{ lineHeight: '2rem' }}
-      >
-        {String(qty).padStart(2, '0')}
-      </Text>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Add one"
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 /* ─── Full-width recommendation row (CartItem-style, no instructions) ─────── */
 function RecommendationRow({ item }) {
-  const { add, remove, getQty } = cartStore();
   const { currencySymbol } = restaurantStore();
-  const id = item._id ?? item.id;
-  const q = getQty(id);
 
   return (
     <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
@@ -125,18 +84,7 @@ function RecommendationRow({ item }) {
           </div>
         </div>
 
-        {q === 0 ? (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => add(item)}
-            className="shrink-0 !uppercase !tracking-wide !text-[10px] !px-3 !py-2 !rounded-xl"
-          >
-            ＋ ADD TO CART
-          </Button>
-        ) : (
-          <Stepper qty={q} onAdd={() => add(item)} onRemove={() => remove(item)} />
-        )}
+        <CartControl item={item} />
       </div>
     </div>
   );
