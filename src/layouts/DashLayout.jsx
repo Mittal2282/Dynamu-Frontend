@@ -4,9 +4,10 @@ import { getDashProfile } from '../services/adminService';
 import { authStore } from '../store/authStore';
 
 const NAV = [
-  { to: '/dashboard',       label: 'Live Orders', icon: '🍽️', end: true },
-  { to: '/dashboard/menu',  label: 'Menu',         icon: '📋' },
-  { to: '/dashboard/stats', label: 'Stats',        icon: '📊' },
+  { to: '/dashboard',        label: 'Live Orders', icon: '🍽️', end: true },
+  { to: '/dashboard/tables',  label: 'Table Status', icon: '🪑' },
+  { to: '/dashboard/menu',   label: 'Menu',         icon: '📋' },
+  { to: '/dashboard/stats',  label: 'Stats',        icon: '📊' },
 ];
 
 export default function DashLayout() {
