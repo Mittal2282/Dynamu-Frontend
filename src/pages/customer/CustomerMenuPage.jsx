@@ -452,7 +452,12 @@ export default function CustomerMenuPage() {
   }, [categories, activeCategory]);
 
   return (
-    <div className={`flex-1 flex flex-col ${count > 0 ? "pb-40" : "pb-24"}`}>
+    <div
+      className={`flex-1 flex flex-col ${count > 0 ? "pb-40" : "pb-24"}`}
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
+      }}
+    >
       {/* ── Sticky header ─────────────────────────────────────────────────── */}
       <div
         ref={headerRef}

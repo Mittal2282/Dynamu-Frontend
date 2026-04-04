@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import { getCartSuggestions } from "../services/customerService";
 import { cartStore } from "../store/cartStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { formatCurrency } from "../utils/formatters";
 import { VegBadge } from "./ui/Badge";
-import LazyImage from "./ui/LazyImage";
 import Button from "./ui/Button";
 import Drawer from "./ui/Drawer";
+import LazyImage from "./ui/LazyImage";
 import Modal from "./ui/Modal";
 import Text from "./ui/Text";
-import { getCartSuggestions } from "../services/customerService";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 const SERVICE_CHARGE = 10; // fixed ₹10
@@ -266,6 +267,15 @@ export default function CartDrawer({
   subtitle = "",
 }) {
   const { currencySymbol } = restaurantStore();
+  const navigate = useNavigate();
+  const outlet = useOutletContext();
+  const { basePath: baseFromOutlet } = outlet || {};
+  const { qrCodeId, tableNumber } = useParams();
+  const basePath =
+    baseFromOutlet ||
+    (qrCodeId != null && tableNumber != null
+      ? `/${qrCodeId}/${tableNumber}`
+      : "/");
 
   // AI suggestions — stale-while-revalidate, no loader
   const [suggestions, setSuggestions] = useState([]);
@@ -376,7 +386,10 @@ export default function CartDrawer({
             </Text>
             <Button
               variant="secondary"
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                navigate(`${basePath}/menu`);
+              }}
               className="mt-2 border-[color:var(--t-accent-40)] text-[color:var(--t-accent)] hover:bg-[color:var(--t-accent-10)] active:bg-[color:var(--t-accent-20)]"
             >
               Browse Menu

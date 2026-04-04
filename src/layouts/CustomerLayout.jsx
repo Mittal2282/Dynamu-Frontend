@@ -1,30 +1,44 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
-import AIChatDrawer from '../components/AIChatDrawer';
-import BottomNavigator from '../components/BottomNavigator';
-import CartDrawer from '../components/CartDrawer';
-import Header from '../components/Header';
-import SessionGate from '../components/customer/SessionGate';
-import Button from '../components/ui/Button';
-import { Spinner } from '../components/ui/Spinner';
-import Text from '../components/ui/Text';
-import useTheme from '../hooks/useTheme';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import AIChatDrawer from "../components/AIChatDrawer";
+import BottomNavigator from "../components/BottomNavigator";
+import CartDrawer from "../components/CartDrawer";
+import Header from "../components/Header";
+import SessionGate from "../components/customer/SessionGate";
+import Button from "../components/ui/Button";
+import { Spinner } from "../components/ui/Spinner";
+import Text from "../components/ui/Text";
+import useTheme from "../hooks/useTheme";
 import {
-  getCart, placeOrder, syncCart,
-  getTrendingItems, getChefsSpecials, getFeaturedItems, getTimeBasedMenu,
+  getCart,
+  getChefsSpecials,
+  getFeaturedItems,
+  getTimeBasedMenu,
+  getTrendingItems,
+  placeOrder,
   respondToJoin,
-} from '../services/customerService';
-import { connectSocket, disconnectSocket, getSocket } from '../services/socketService';
-import { authStore } from '../store/authStore';
-import { cartStore, useCartCount, useCartItems, useCartTotal } from '../store/cartStore';
-import { chatStore } from '../store/chatStore';
-import { restaurantStore } from '../store/restaurantStore';
-import { formatCurrency } from '../utils/formatters';
+  syncCart,
+} from "../services/customerService";
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+} from "../services/socketService";
+import { authStore } from "../store/authStore";
+import {
+  cartStore,
+  useCartCount,
+  useCartItems,
+  useCartTotal,
+} from "../store/cartStore";
+import { chatStore } from "../store/chatStore";
+import { restaurantStore } from "../store/restaurantStore";
+import { formatCurrency } from "../utils/formatters";
 
 export default function CustomerLayout() {
   const { qrCodeId, tableNumber } = useParams();
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useTheme();
 
@@ -32,14 +46,19 @@ export default function CustomerLayout() {
   const items = useCartItems();
   const count = useCartCount();
   const total = useCartTotal();
-  const { name, tagline, currencySymbol, tableNumber: storedTable, menu } = restaurantStore();
+  const {
+    name,
+    currencySymbol,
+    tableNumber: storedTable,
+    menu,
+  } = restaurantStore();
 
   const [gateComplete, setGateComplete] = useState(false);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [ordering, setOrdering]     = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const [orderVersion, setOrderVersion] = useState(0);
   const [pendingJoinRequests, setPendingJoinRequests] = useState([]);
   const [sessionReplaced, setSessionReplaced] = useState(false);
@@ -49,7 +68,7 @@ export default function CustomerLayout() {
   const [chefsSpecials, setChefsSpecials] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
   const [timeBasedItems, setTimeBasedItems] = useState([]);
-  const [mealTime, setMealTime] = useState('');
+  const [mealTime, setMealTime] = useState("");
   const [sectionsLoading, setSectionsLoading] = useState(true);
 
   // Base path for this QR session
@@ -57,15 +76,13 @@ export default function CustomerLayout() {
 
   // Determine active tab from current URL
   const path = location.pathname;
-  const isMenu   = path === `${basePath}/menu`;
   const isOrders = path === `${basePath}/orders`;
-  const isHome   = !isMenu && !isOrders;
 
   // ── Gate callback — called by SessionGate once name/session is confirmed ──
   const handleGateComplete = useCallback(async (sessionData, guestName) => {
     try {
       authStore.getState().setSessionToken(sessionData.session_token);
-      authStore.getState().setGuestName(guestName || '');
+      authStore.getState().setGuestName(guestName || "");
       restaurantStore.getState().setRestaurant(sessionData.restaurant);
       restaurantStore.getState().setTable(sessionData.table);
       restaurantStore.getState().setMenu(sessionData.menu ?? {});
@@ -93,28 +110,33 @@ export default function CustomerLayout() {
           const cartMap = {};
           apiItems.forEach(({ menu_item, quantity }) => {
             cartMap[menu_item._id] = {
-              _id:                menu_item._id,
-              name:               menu_item.name,
-              price:              menu_item.price,
+              _id: menu_item._id,
+              name: menu_item.name,
+              price: menu_item.price,
               discount_percentage: menu_item.discount_percentage || 0,
-              is_veg:             menu_item.is_veg,
-              description:        menu_item.description,
-              image_url:         menu_item.image_url,
-              qty:                quantity,
+              is_veg: menu_item.is_veg,
+              description: menu_item.description,
+              image_url: menu_item.image_url,
+              qty: quantity,
             };
           });
           setCart(cartMap);
         }
-      } catch { /* keep existing cart */ }
+      } catch {
+        /* keep existing cart */
+      }
 
       setGateComplete(true);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Could not load the menu. Please scan the QR again.');
+      setError(
+        err?.response?.data?.message ||
+          "Could not load the menu. Please scan the QR again.",
+      );
       setGateComplete(true); // show error screen
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Disconnect socket on unmount ───────────────────────────────────────────
@@ -132,63 +154,78 @@ export default function CustomerLayout() {
       (serverCart.items || []).forEach(({ menu_item, quantity }) => {
         if (menu_item?._id) {
           cartMap[menu_item._id] = {
-            _id:                menu_item._id,
-            name:               menu_item.name,
-            price:              menu_item.price,
+            _id: menu_item._id,
+            name: menu_item.name,
+            price: menu_item.price,
             discount_percentage: menu_item.discount_percentage || 0,
-            is_veg:             menu_item.is_veg,
-            description:        menu_item.description,
-            image_url:         menu_item.image_url,
-            qty:                quantity,
+            is_veg: menu_item.is_veg,
+            description: menu_item.description,
+            image_url: menu_item.image_url,
+            qty: quantity,
           };
         }
       });
       cartStore.getState().setCart(cartMap);
-      setTimeout(() => { isRemoteCartUpdate.current = false; }, 100);
+      setTimeout(() => {
+        isRemoteCartUpdate.current = false;
+      }, 100);
     };
 
-    const onOrderPlaced  = () => setOrderVersion(v => v + 1);
-    const onOrderUpdated = () => setOrderVersion(v => v + 1);
+    const onOrderPlaced = () => setOrderVersion((v) => v + 1);
+    const onOrderUpdated = () => setOrderVersion((v) => v + 1);
 
     const onChatMessage = (payload) => {
       // Skip on the device that sent it — messages already added optimistically
-      if (payload.origin_socket_id && payload.origin_socket_id === socket.id) return;
-      chatStore.getState().addMessage({ role: 'user', text: payload.user_text, items: [] });
-      chatStore.getState().addMessage({ role: 'ai',   text: payload.ai_text,   items: payload.items || [] });
+      if (payload.origin_socket_id && payload.origin_socket_id === socket.id)
+        return;
+      chatStore
+        .getState()
+        .addMessage({ role: "user", text: payload.user_text, items: [] });
+      chatStore.getState().addMessage({
+        role: "ai",
+        text: payload.ai_text,
+        items: payload.items || [],
+      });
     };
 
     const onJoinRequest = (payload) => {
-      setPendingJoinRequests(prev => [...prev, payload]);
+      setPendingJoinRequests((prev) => [...prev, payload]);
     };
 
     const onSessionReplaced = () => {
       setSessionReplaced(true);
     };
 
-    socket.on('cart:updated',    onCartUpdated);
-    socket.on('order:placed',    onOrderPlaced);
-    socket.on('order:updated',   onOrderUpdated);
-    socket.on('chat:message',    onChatMessage);
-    socket.on('join:request',    onJoinRequest);
-    socket.on('session:replaced', onSessionReplaced);
+    socket.on("cart:updated", onCartUpdated);
+    socket.on("order:placed", onOrderPlaced);
+    socket.on("order:updated", onOrderUpdated);
+    socket.on("chat:message", onChatMessage);
+    socket.on("join:request", onJoinRequest);
+    socket.on("session:replaced", onSessionReplaced);
 
     return () => {
-      socket.off('cart:updated',    onCartUpdated);
-      socket.off('order:placed',    onOrderPlaced);
-      socket.off('order:updated',   onOrderUpdated);
-      socket.off('chat:message',    onChatMessage);
-      socket.off('join:request',    onJoinRequest);
-      socket.off('session:replaced', onSessionReplaced);
+      socket.off("cart:updated", onCartUpdated);
+      socket.off("order:placed", onOrderPlaced);
+      socket.off("order:updated", onOrderUpdated);
+      socket.off("chat:message", onChatMessage);
+      socket.off("join:request", onJoinRequest);
+      socket.off("session:replaced", onSessionReplaced);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
   // ── Sync cart to backend ───────────────────────────────────────────────────
-  const itemsStr = JSON.stringify(items.map(i => ({ _id: i._id, qty: i.qty })));
+  const itemsStr = JSON.stringify(
+    items.map((i) => ({ _id: i._id, qty: i.qty })),
+  );
   useEffect(() => {
-    if (!authStore.getState().sessionToken || loading || isRemoteCartUpdate.current) return;
+    if (
+      !authStore.getState().sessionToken ||
+      loading ||
+      isRemoteCartUpdate.current
+    )
+      return;
     syncCart(items).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsStr, loading]);
 
   // ── Place order ────────────────────────────────────────────────────────────
@@ -202,56 +239,90 @@ export default function CustomerLayout() {
       setDrawerOpen(false);
       navigate(`${basePath}/orders`);
     } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to place order. Please try again.');
+      alert(
+        err?.response?.data?.message ||
+          "Failed to place order. Please try again.",
+      );
     } finally {
       setOrdering(false);
     }
   };
 
   // Show gate screen until name/session is confirmed
-  if (!gateComplete) return (
-    <SessionGate
-      qrCodeId={qrCodeId}
-      tableNumber={tableNumber}
-      onSessionReady={handleGateComplete}
-    />
-  );
+  if (!gateComplete)
+    return (
+      <SessionGate
+        qrCodeId={qrCodeId}
+        tableNumber={tableNumber}
+        onSessionReady={handleGateComplete}
+      />
+    );
 
-  if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
-      <Spinner size="xl" />
-      <Text size="sm" color="muted">Loading menu…</Text>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+        <Spinner size="xl" />
+        <Text size="sm" color="muted">
+          Loading menu…
+        </Text>
+      </div>
+    );
 
   // Full-screen overlay when this session was evicted by a new session
-  if (sessionReplaced) return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
-      <div className="text-5xl">🔄</div>
-      <Text as="h1" size="xl" weight="bold">Session Ended</Text>
-      <Text size="sm" color="muted">
-        A new session has been started at this table. Please scan the QR code again to continue.
-      </Text>
-    </div>
-  );
+  if (sessionReplaced)
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="text-5xl">🔄</div>
+        <Text as="h1" size="xl" weight="bold">
+          Session Ended
+        </Text>
+        <Text size="sm" color="muted">
+          A new session has been started at this table. Please scan the QR code
+          again to continue.
+        </Text>
+      </div>
+    );
 
-  if (error) return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 px-6 text-center">
-      <p className="text-4xl">😕</p>
-      <Text color="secondary">{error}</Text>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-4xl">😕</p>
+        <Text color="secondary">{error}</Text>
+      </div>
+    );
 
-  const drawerSubtitle = name ? `${name} · Table ${storedTable ?? tableNumber}` : '';
+  const drawerSubtitle = name
+    ? `${name} · Table ${storedTable ?? tableNumber}`
+    : "";
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-slate-950 text-white flex flex-col">
-
+    <div
+      className="max-w-md mx-auto min-h-screen bg-slate-950 text-white flex flex-col"
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
+      }}
+    >
       <Header variant="customer" onCartClick={() => setDrawerOpen(true)} />
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, timeBasedItems, mealTime, orderVersion, basePath, sectionsLoading, onOpenAI: () => { setAiChatOpen(v => !v); setDrawerOpen(false); } }} />
+        <Outlet
+          context={{
+            menu,
+            featuredItems,
+            chefsSpecials,
+            trendingItems,
+            timeBasedItems,
+            mealTime,
+            orderVersion,
+            basePath,
+            sectionsLoading,
+            onOpenAI: () => {
+              setAiChatOpen((v) => !v);
+              setDrawerOpen(false);
+            },
+          }}
+        />
       </div>
 
       {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}
@@ -259,9 +330,14 @@ export default function CustomerLayout() {
         <div className="fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
           <div className="w-full max-w-md bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
             <div>
-              <Text size="sm" weight="bold">{count} {count === 1 ? 'item' : 'items'} added</Text>
+              <Text size="sm" weight="bold">
+                {count} {count === 1 ? "item" : "items"} added
+              </Text>
               <p className="text-orange-100 text-xs mt-0.5">
-                Total <span className="font-bold text-white">{formatCurrency(total, currencySymbol)}</span>
+                Total{" "}
+                <span className="font-bold text-white">
+                  {formatCurrency(total, currencySymbol)}
+                </span>
               </p>
             </div>
             <Button
@@ -288,27 +364,45 @@ export default function CustomerLayout() {
             </div>
             <div className="divide-y divide-white/5">
               {pendingJoinRequests.map((req) => (
-                <div key={req.request_id} className="px-4 py-3 flex items-center justify-between gap-3">
+                <div
+                  key={req.request_id}
+                  className="px-4 py-3 flex items-center justify-between gap-3"
+                >
                   <Text size="sm" color="muted" className="flex-1 truncate">
-                    <span className="text-white font-medium">{req.joiner_name}</span> wants to join
+                    <span className="text-white font-medium">
+                      {req.joiner_name}
+                    </span>{" "}
+                    wants to join
                   </Text>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={async () => {
-                        await respondToJoin(req.request_id, true).catch(() => {});
-                        setPendingJoinRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                        await respondToJoin(req.request_id, true).catch(
+                          () => {},
+                        );
+                        setPendingJoinRequests((prev) =>
+                          prev.filter((r) => r.request_id !== req.request_id),
+                        );
                       }}
                       className="w-8 h-8 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 flex items-center justify-center text-base hover:bg-green-500/40 transition-colors"
                       title="Accept"
-                    >✓</button>
+                    >
+                      ✓
+                    </button>
                     <button
                       onClick={async () => {
-                        await respondToJoin(req.request_id, false).catch(() => {});
-                        setPendingJoinRequests(prev => prev.filter(r => r.request_id !== req.request_id));
+                        await respondToJoin(req.request_id, false).catch(
+                          () => {},
+                        );
+                        setPendingJoinRequests((prev) =>
+                          prev.filter((r) => r.request_id !== req.request_id),
+                        );
                       }}
                       className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center text-base hover:bg-red-500/40 transition-colors"
                       title="Reject"
-                    >✕</button>
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               ))}
@@ -321,8 +415,14 @@ export default function CustomerLayout() {
       <BottomNavigator
         basePath={basePath}
         aiChatOpen={aiChatOpen}
-        onChatClick={() => { setAiChatOpen(v => !v); setDrawerOpen(false); }}
-        onNavigate={() => { setAiChatOpen(false); setDrawerOpen(false); }}
+        onChatClick={() => {
+          setAiChatOpen((v) => !v);
+          setDrawerOpen(false);
+        }}
+        onNavigate={() => {
+          setAiChatOpen(false);
+          setDrawerOpen(false);
+        }}
       />
 
       {/* ── Drawers ───────────────────────────────────────────────────────── */}
@@ -339,10 +439,7 @@ export default function CustomerLayout() {
         subtitle={drawerSubtitle}
       />
 
-      <AIChatDrawer
-        isOpen={aiChatOpen}
-        onClose={() => setAiChatOpen(false)}
-      />
+      <AIChatDrawer isOpen={aiChatOpen} onClose={() => setAiChatOpen(false)} />
     </div>
   );
 }

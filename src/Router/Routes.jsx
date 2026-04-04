@@ -1,29 +1,33 @@
-import React from 'react';
-import { Route, Routes as RouterRoutes, Navigate, useParams } from 'react-router-dom';
+import {
+  Navigate,
+  Route,
+  Routes as RouterRoutes,
+  useParams,
+} from "react-router-dom";
 
 // Customer-facing
-import CustomerLayout from '../layouts/CustomerLayout';
-import CustomerHomePage from '../pages/customer/CustomerHomePage';
-import CustomerMenuPage from '../pages/customer/CustomerMenuPage';
-import CustomerOrdersPage from '../pages/customer/CustomerOrdersPage';
+import CustomerLayout from "../layouts/CustomerLayout";
+import CustomerHomePage from "../pages/customer/CustomerHomePage";
+import CustomerMenuPage from "../pages/customer/CustomerMenuPage";
+import CustomerOrdersPage from "../pages/customer/CustomerOrdersPage";
 
 // Auth
-import LoginPage from '../pages/auth/LoginPage';
-import ProtectedRoute from '../components/ProtectedRoute';
+import ProtectedRoute from "../components/ProtectedRoute";
+import LoginPage from "../pages/auth/LoginPage";
 
 // Admin layouts
-import SuperAdminLayout from '../layouts/SuperAdminLayout';
-import DashLayout from '../layouts/DashLayout';
+import DashLayout from "../layouts/DashLayout";
+import SuperAdminLayout from "../layouts/SuperAdminLayout";
 
 // Superadmin pages
-import RestaurantsPage from '../pages/superadmin/RestaurantsPage';
-import OnboardPage from '../pages/superadmin/OnboardPage';
-import RestaurantOrdersPage from '../pages/superadmin/RestaurantOrdersPage';
+import OnboardPage from "../pages/superadmin/OnboardPage";
+import RestaurantOrdersPage from "../pages/superadmin/RestaurantOrdersPage";
+import RestaurantsPage from "../pages/superadmin/RestaurantsPage";
 
 // Restaurant dashboard pages
-import OrdersPage from '../pages/dashboard/OrdersPage';
-import StatsPage from '../pages/dashboard/StatsPage';
-import MenuManagePage from '../pages/dashboard/MenuManagePage';
+import MenuManagePage from "../pages/dashboard/MenuManagePage";
+import OrdersPage from "../pages/dashboard/OrdersPage";
+import StatsPage from "../pages/dashboard/StatsPage";
 
 function RedirectMyOrdersToOrders() {
   const { qrCodeId, tableNumber } = useParams();
@@ -36,9 +40,9 @@ export default function Routes() {
       {/* QR scan entry point — /:qrCodeId/:tableNumber */}
       <Route path="/:qrCodeId/:tableNumber" element={<CustomerLayout />}>
         <Route index element={<CustomerHomePage />} />
-        <Route path="menu"       element={<CustomerMenuPage />} />
-        <Route path="orders"     element={<CustomerOrdersPage />} />
-        <Route path="my-orders"  element={<RedirectMyOrdersToOrders />} />
+        <Route path="menu" element={<CustomerMenuPage />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
+        <Route path="my-orders" element={<RedirectMyOrdersToOrders />} />
       </Route>
 
       {/* Auth */}
@@ -48,21 +52,26 @@ export default function Routes() {
       <Route
         path="/superadmin"
         element={
-          <ProtectedRoute allowedRoles={['super_admin']}>
+          <ProtectedRoute allowedRoles={["super_admin"]}>
             <SuperAdminLayout />
           </ProtectedRoute>
         }
       >
         <Route index element={<RestaurantsPage />} />
         <Route path="onboard" element={<OnboardPage />} />
-        <Route path="restaurants/:id/orders" element={<RestaurantOrdersPage />} />
+        <Route
+          path="restaurants/:id/orders"
+          element={<RestaurantOrdersPage />}
+        />
       </Route>
 
       {/* Restaurant owner/staff dashboard */}
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['restaurant_owner', 'restaurant_staff']}>
+          <ProtectedRoute
+            allowedRoles={["restaurant_owner", "restaurant_staff"]}
+          >
             <DashLayout />
           </ProtectedRoute>
         }
