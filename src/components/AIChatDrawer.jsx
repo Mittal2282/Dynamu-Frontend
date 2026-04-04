@@ -62,7 +62,10 @@ function RecommendationRow({ item }) {
           alt={item.name}
           containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
           placeholder={
-            <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--t-float)" }}>
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: "var(--t-float)" }}
+            >
               <span className="text-xl">{item.is_veg ? "🥗" : "🍗"}</span>
             </div>
           }
@@ -93,7 +96,17 @@ function RecommendationRow({ item }) {
 
 function BotIcon({ className }) {
   return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 8V4H8" />
       <rect width="16" height="12" x="4" y="8" rx="2" />
       <path d="M2 14h2" />
