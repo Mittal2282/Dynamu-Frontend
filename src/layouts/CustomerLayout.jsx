@@ -333,7 +333,7 @@ export default function CustomerLayout() {
             setAiChatOpen((v) => !v);
             setDrawerOpen(false);
           }}
-          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-2xl text-2xl"
+          className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer active:scale-95 transition-all shadow-2xl"
           style={{
             background: aiChatOpen ? "var(--t-accent)" : "var(--t-surface)",
             border: "1.5px solid var(--t-accent2-40)",
@@ -341,7 +341,28 @@ export default function CustomerLayout() {
           }}
           title={aiChatOpen ? "Close AI Assistant" : "Open AI Assistant"}
         >
-          {aiChatOpen ? "✕" : "🤖"}
+          {aiChatOpen ? (
+            "✕"
+          ) : (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "var(--t-accent2)" }}
+            >
+              <path d="M12 8V4H8" />
+              <rect width="16" height="12" x="4" y="8" rx="2" />
+              <path d="M2 14h2" />
+              <path d="M20 14h2" />
+              <path d="M15 13v2" />
+              <path d="M9 13v2" />
+            </svg>
+          )}
         </button>
       </div>
 

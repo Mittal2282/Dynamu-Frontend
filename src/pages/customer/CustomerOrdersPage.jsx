@@ -308,14 +308,18 @@ export default function CustomerOrdersPage() {
                         >
                           {item.name}
                         </p>
-                        {item.price != null && (
+                        {item.unit_price != null && (
                           <p
                             className="text-[11px] mt-0.5 tabular-nums"
                             style={{ color: "var(--t-nav-muted)" }}
                           >
-                            {item.quantity ?? 1} × {formatCurrency(item.price, currencySymbol)} ={" "}
+                            {item.quantity ?? 1} × {formatCurrency(item.unit_price, currencySymbol)}{" "}
+                            ={" "}
                             <span className="font-bold" style={{ color: "var(--t-accent)" }}>
-                              {formatCurrency((item.quantity ?? 1) * item.price, currencySymbol)}
+                              {formatCurrency(
+                                (item.quantity ?? 1) * item.unit_price,
+                                currencySymbol,
+                              )}
                             </span>
                           </p>
                         )}

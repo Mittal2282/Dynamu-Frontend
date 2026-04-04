@@ -1,4 +1,4 @@
-import { NavLink, useParams, useLocation } from 'react-router-dom';
+import { NavLink, useParams } from 'react-router-dom';
 
 /* ─── SVG Icons ─────────────────────────────────────────────────────────────── */
 function IconHome({ className, style }) {
@@ -23,11 +23,22 @@ function IconMenu({ className, style }) {
 
 function IconAI({ className, style }) {
   return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z" />
-      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-      <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="3" strokeLinecap="round" />
-      <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="3" strokeLinecap="round" />
+    <svg
+      className={className}
+      style={style}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
     </svg>
   );
 }
@@ -51,7 +62,6 @@ function IconOrders({ className, style }) {
  * @param {function} onNavigate
  */
 export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, onChatClick, onNavigate }) {
-  const location = useLocation();
   const { qrCodeId, tableNumber } = useParams();
   const basePath =
     basePathProp ||
@@ -59,8 +69,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
 
   const base = basePath.replace(/\/$/, '');
 
-  const tabClass = ({ isActive }) => {
-    const active = isActive && !aiChatOpen;
+  const tabClass = () => {
     return [
       'flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl',
       'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--t-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--t-bg)]',
@@ -68,7 +77,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen, on
     ].join(' ');
   };
 
-  const innerClass = (active) =>
+  const innerClass = () =>
     [
       'w-full flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1 transition-colors duration-200',
     ].join(' ');

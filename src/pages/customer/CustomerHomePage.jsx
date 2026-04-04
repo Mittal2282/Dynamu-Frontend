@@ -130,20 +130,46 @@ function ExploreMenuCard({ onClick }) {
         border: "1px solid color-mix(in srgb, var(--t-accent) 25%, var(--t-line))",
       }}
     >
-      {/* Decorative plate */}
-      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 text-[80px] md:text-[100px] opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
-        🍽️
+      {/* Decorative background plate */}
+      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-[0.06] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
+        <svg
+          width="120"
+          height="120"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--t-accent)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2v20" />
+          <path d="M2 12h20" />
+        </svg>
       </div>
 
       <div className="relative flex items-center gap-4">
         <div
-          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 text-xl md:text-2xl"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0"
           style={{
             background: "color-mix(in srgb, var(--t-accent) 20%, transparent)",
             border: "1px solid color-mix(in srgb, var(--t-accent) 30%, transparent)",
           }}
         >
-          📖
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--t-accent)" }}
+          >
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
           <p
@@ -182,29 +208,51 @@ function AskAICard({ onClick }) {
         border: "1px solid color-mix(in srgb, var(--t-accent2) 20%, var(--t-line))",
       }}
     >
-      {/* Animated sparkles */}
-      <span
-        className="absolute right-5 top-4 text-xl opacity-20 pointer-events-none select-none animate-pulse"
-        style={{ color: "var(--t-accent2)", animationDuration: "2.5s" }}
-      >
-        ✦
-      </span>
-      <span
-        className="absolute right-12 bottom-5 text-sm opacity-15 pointer-events-none select-none animate-pulse"
-        style={{ color: "var(--t-accent2)", animationDuration: "3.5s" }}
-      >
-        ✦
-      </span>
+      {/* Animated background sparkles */}
+      <div className="absolute right-0 bottom-0 translate-x-4 translate-y-4 opacity-[0.08] pointer-events-none select-none transition-transform group-hover:translate-x-2 group-hover:translate-y-2">
+        <svg
+          width="100"
+          height="100"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--t-accent2)"
+          strokeWidth="1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="animate-pulse"
+          style={{ animationDuration: "4s" }}
+        >
+          <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.021 0l-.707-.707M6.343 6.343l-.707-.707" />
+          <path d="m12 8 1 3h3l-2.5 2 1 3-2.5-2-2.5 2 1-3L6 11h3z" />
+        </svg>
+      </div>
 
       <div className="relative flex items-center gap-4">
         <div
-          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0 text-xl md:text-2xl"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shrink-0"
           style={{
             background: "color-mix(in srgb, var(--t-accent2) 15%, transparent)",
             border: "1px solid color-mix(in srgb, var(--t-accent2) 25%, transparent)",
           }}
         >
-          🤖
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--t-accent2)" }}
+          >
+            <path d="M12 8V4H8" />
+            <rect width="16" height="12" x="4" y="8" rx="2" />
+            <path d="M2 14h2" />
+            <path d="M20 14h2" />
+            <path d="M15 13v2" />
+            <path d="M9 13v2" />
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">

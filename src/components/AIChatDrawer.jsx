@@ -91,25 +91,15 @@ function RecommendationRow({ item }) {
   );
 }
 
-function BookIcon({ className }) {
+function BotIcon({ className }) {
   return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.5 2H20V20H6.5C5.83696 20 5.20107 19.7366 4.73223 19.2678C4.26339 18.7989 4 18.163 4 17.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M8 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 8V4H8" />
+      <rect width="16" height="12" x="4" y="8" rx="2" />
+      <path d="M2 14h2" />
+      <path d="M20 14h2" />
+      <path d="M15 13v2" />
+      <path d="M9 13v2" />
     </svg>
   );
 }
@@ -200,10 +190,10 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
 
 function ChatHeader({ onClose }) {
   return (
-    <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 shrink-0">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-[var(--t-accent)] shrink-0">
-          <BookIcon />
+    <div className="px-4 py-3.5 flex items-center justify-between border-b border-white/10 shrink-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-[var(--t-accent2)] shrink-0">
+          <BotIcon />
         </span>
         <Text
           as="h2"
@@ -212,7 +202,7 @@ function ChatHeader({ onClose }) {
           color="white"
           className="truncate uppercase tracking-wide"
         >
-          AI Menu Assistant
+          AI Assistant
         </Text>
       </div>
       <button
