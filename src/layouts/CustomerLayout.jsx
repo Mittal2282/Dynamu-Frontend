@@ -32,7 +32,7 @@ export default function CustomerLayout() {
 
   useTheme();
 
-  const { add, remove, clear, setCart } = cartStore();
+  const { remove, clear, setCart } = cartStore();
   const items = useCartItems();
   const count = useCartCount();
   const total = useCartTotal();
