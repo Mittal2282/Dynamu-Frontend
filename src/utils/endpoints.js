@@ -44,6 +44,7 @@ export const ENDPOINTS = {
 
   // Customer — special sections
   CART_SUGGESTIONS:   '/api/customer/suggestions',
+  MENU_TIME_BASED:    '/api/customer/menu/time-based',
   MENU_TRENDING:      '/api/customer/menu/trending',
   MENU_CHEFS_SPECIAL: '/api/customer/menu/chefs-special',
   MENU_FEATURED:      '/api/customer/menu/featured',

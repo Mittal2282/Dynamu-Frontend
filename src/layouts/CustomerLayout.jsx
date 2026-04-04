@@ -11,7 +11,7 @@ import Text from '../components/ui/Text';
 import useTheme from '../hooks/useTheme';
 import {
   getCart, placeOrder, syncCart,
-  getTrendingItems, getChefsSpecials, getFeaturedItems,
+  getTrendingItems, getChefsSpecials, getFeaturedItems, getTimeBasedMenu,
   respondToJoin,
 } from '../services/customerService';
 import { connectSocket, disconnectSocket, getSocket } from '../services/socketService';
@@ -48,6 +48,8 @@ export default function CustomerLayout() {
   const [trendingItems, setTrendingItems] = useState([]);
   const [chefsSpecials, setChefsSpecials] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
+  const [timeBasedItems, setTimeBasedItems] = useState([]);
+  const [mealTime, setMealTime] = useState('');
   const [sectionsLoading, setSectionsLoading] = useState(true);
 
   // Base path for this QR session
@@ -77,6 +79,10 @@ export default function CustomerLayout() {
         getTrendingItems().then(setTrendingItems),
         getChefsSpecials().then(setChefsSpecials),
         getFeaturedItems().then(setFeaturedItems),
+        getTimeBasedMenu().then(({ items, meal_time }) => {
+          setTimeBasedItems(items);
+          setMealTime(meal_time);
+        }),
       ]).finally(() => setSectionsLoading(false));
 
       // Restore server-side cart
@@ -245,7 +251,7 @@ export default function CustomerLayout() {
 
       {/* ── Child page ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-h-0">
-        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, orderVersion, basePath, sectionsLoading, onOpenAI: () => { setAiChatOpen(v => !v); setDrawerOpen(false); } }} />
+        <Outlet context={{ menu, featuredItems, chefsSpecials, trendingItems, timeBasedItems, mealTime, orderVersion, basePath, sectionsLoading, onOpenAI: () => { setAiChatOpen(v => !v); setDrawerOpen(false); } }} />
       </div>
 
       {/* ── Cart bottom bar — Home and Menu routes ───────────────────────── */}

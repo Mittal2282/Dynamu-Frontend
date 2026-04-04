@@ -170,3 +170,17 @@ export async function getFeaturedItems() {
   const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.MENU_FEATURED });
   return data.data ?? [];
 }
+
+/**
+ * Get available menu items for the current time slot (breakfast / lunch / dinner).
+ * Passes the client's local hour so the server uses the user's timezone.
+ * @returns {Promise<{ items: Array, meal_time: string }>}
+ */
+export async function getTimeBasedMenu() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.MENU_TIME_BASED,
+    params:   { hour: new Date().getHours() },
+  });
+  return { items: data.data ?? [], meal_time: data.meal_time ?? '' };
+}
