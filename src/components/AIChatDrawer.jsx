@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { VegBadge } from "../components/ui/Badge";
 import Drawer from "../components/ui/Drawer";
-import LazyImage from "../components/ui/LazyImage";
 import { Spinner } from "../components/ui/Spinner";
 import Text from "../components/ui/Text";
 import { getChatHistory, getWelcomeMessage, sendChatMessage } from "../services/chatService";
 import { chatStore } from "../store/chatStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { QUICK_CHAT_CHIPS } from "../utils/constants";
-import { formatCurrency } from "../utils/formatters";
-import CartControl from "./customer/CartControl";
+import MenuItemCard from "./customer/MenuItemCard";
 
 const WELCOME_FALLBACK =
   "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?";
@@ -31,67 +28,6 @@ function formatMessageTime(ts) {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-/* ─── Spice level dots ──────────────────────────────────────────────────────── */
-function SpiceIndicator({ level }) {
-  if (!level || level === 0) return null;
-  return (
-    <span className="flex items-center gap-0.5">
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className={`w-1.5 h-1.5 rounded-full ${i < level ? "bg-red-400" : "bg-white/10"}`}
-        />
-      ))}
-    </span>
-  );
-}
-
-/* ─── Full-width recommendation row (CartItem-style, no instructions) ─────── */
-function RecommendationRow({ item }) {
-  const { currencySymbol } = restaurantStore();
-
-  return (
-    <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-      <div className="flex items-start gap-3">
-        <VegBadge isVeg={item.is_veg} className="mt-0.5 shrink-0" />
-
-        <LazyImage
-          src={item.image_url}
-          alt={item.name}
-          containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
-          placeholder={
-            <div
-              className="w-full h-full flex items-center justify-center"
-              style={{ background: "var(--t-float)" }}
-            >
-              <span className="text-xl">{item.is_veg ? "🥗" : "🍗"}</span>
-            </div>
-          }
-        />
-
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
-            {item.name}
-          </Text>
-          {item.description && (
-            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
-              {item.description}
-            </Text>
-          )}
-          <div className="flex items-center gap-2 mt-1">
-            <Text as="p" size="sm" weight="bold" color="brand">
-              {formatCurrency(item.price, currencySymbol)}
-            </Text>
-            <SpiceIndicator level={item.spice_level} />
-          </div>
-        </div>
-
-        <CartControl item={item} />
-      </div>
-    </div>
-  );
 }
 
 function BotIcon({ className }) {
@@ -235,6 +171,7 @@ function ChatHeader({ onClose }) {
  * Props: isOpen, onClose
  */
 export default function AIChatDrawer({ isOpen, onClose }) {
+  const { currencySymbol } = restaurantStore();
   const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } =
     chatStore();
   const [welcomeText, setWelcomeText] = useState("");
@@ -422,9 +359,13 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                   )}
 
                   {!isUser && m.items?.length > 0 && (
-                    <div className="mt-3 w-full max-w-full space-y-2.5 pl-0">
+                    <div className="mt-3 w-full max-w-full space-y-3 pl-0">
                       {m.items.map((item) => (
-                        <RecommendationRow key={item._id ?? item.id} item={item} />
+                        <MenuItemCard
+                          key={item._id ?? item.id}
+                          item={item}
+                          currencySymbol={currencySymbol}
+                        />
                       ))}
                     </div>
                   )}

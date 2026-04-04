@@ -130,6 +130,7 @@ export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [endingSession, setEndingSession] = useState(false);
+  const [billRequested, setBillRequested] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -160,8 +161,12 @@ export default function CustomerOrdersPage() {
   const addons = orders.filter((o) => o.is_addon);
   const grandTotal = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
+  const SERVED_STATUSES = ["served", "completed", "cancelled"];
+  const allServed =
+    orders.length > 0 && orders.every((o) => SERVED_STATUSES.includes(o.status));
+
   async function handleRequestBill() {
-    if (endingSession) return;
+    if (endingSession || !allServed) return;
     setEndingSession(true);
     try {
       try {
@@ -172,10 +177,7 @@ export default function CustomerOrdersPage() {
       authStore.getState().setSessionToken(null);
       cartStore.getState().clear();
       disconnectSocket();
-      navigate("/login", {
-        replace: true,
-        state: { message: "Thanks for dining with us!" },
-      });
+      setBillRequested(true);
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -185,6 +187,45 @@ export default function CustomerOrdersPage() {
     } finally {
       setEndingSession(false);
     }
+  }
+
+  if (billRequested) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center gap-6"
+        style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
+      >
+        <div className="text-7xl">🙏</div>
+        <div className="space-y-3 max-w-sm">
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+            Thank You!
+          </h1>
+          <p className="text-base leading-relaxed" style={{ color: "var(--t-dim)" }}>
+            Your bill has been requested. Our staff will be with you shortly.
+          </p>
+          <p
+            className="text-sm leading-relaxed pt-2"
+            style={{ color: "var(--t-nav-muted)" }}
+          >
+            Craving something more?{" "}
+            <span className="font-semibold" style={{ color: "var(--t-accent)" }}>
+              Scan the QR code on your table
+            </span>{" "}
+            to start a new session and order again.
+          </p>
+        </div>
+        <div
+          className="mt-2 px-5 py-3 rounded-2xl border text-xs font-semibold uppercase tracking-widest"
+          style={{
+            borderColor: "var(--t-accent-40)",
+            color: "var(--t-accent)",
+            background: "var(--t-accent-10)",
+          }}
+        >
+          Hope to see you again soon!
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -277,70 +318,73 @@ export default function CustomerOrdersPage() {
             </span>
           </div>
 
-          <ul className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
             {order.items?.map((item, i) => {
-              const note = item.instruction ?? item.note ?? item.notes ?? "";
+              const note = item.special_instructions ?? item.instruction ?? item.note ?? "";
               const imageUrl = item.image_url ?? item.menu_item?.image_url;
+              const isVeg = item.is_veg ?? item.menu_item?.is_veg;
+              const unitPrice = item.unit_price ?? item.price ?? 0;
+              const effectiveTotal = item.total_price ?? (item.quantity ?? 1) * unitPrice;
               return (
-                <li key={i} className="border-b border-white/[0.06] last:border-0 last:pb-0 pb-4">
-                  <div className="flex gap-3 items-start">
+                <div
+                  key={i}
+                  className="rounded-2xl overflow-hidden border flex flex-col"
+                  style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
+                >
+                  {/* Image */}
+                  <div className="relative w-full h-[70px] overflow-hidden">
                     <LazyImage
                       src={imageUrl}
                       alt={item.name}
-                      containerClassName="w-12 h-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center"
+                      containerClassName="w-full h-full"
+                      imgClassName="w-full h-full object-cover"
                       placeholder={
                         <div
                           className="w-full h-full flex items-center justify-center"
                           style={{ background: "var(--t-float)" }}
                         >
-                          <span className="text-xl">
-                            {(item.is_veg ?? item.menu_item?.is_veg) ? "🥗" : "🍗"}
-                          </span>
+                          <span className="text-4xl">{isVeg ? "🥗" : "🍗"}</span>
                         </div>
                       }
                     />
-
-                    <div className="flex justify-between gap-4 items-start flex-1">
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-[14px] md:text-base font-bold uppercase tracking-wide leading-snug"
-                          style={{ color: "#ffffff" }}
-                        >
-                          {item.name}
-                        </p>
-                        {item.unit_price != null && (
-                          <p
-                            className="text-[11px] mt-0.5 tabular-nums"
-                            style={{ color: "var(--t-nav-muted)" }}
-                          >
-                            {item.quantity ?? 1} × {formatCurrency(item.unit_price, currencySymbol)}{" "}
-                            ={" "}
-                            <span className="font-bold" style={{ color: "var(--t-accent)" }}>
-                              {formatCurrency(
-                                (item.quantity ?? 1) * item.unit_price,
-                                currencySymbol,
-                              )}
-                            </span>
-                          </p>
-                        )}
+                    {/* Veg badge overlay */}
+                    <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+                      <div
+                        className="w-2.5 h-2.5 rounded-sm border-2 flex items-center justify-center"
+                        style={{ borderColor: isVeg ? "#22c55e" : "#ef4444" }}
+                      >
+                        <div
+                          className="w-1 h-1 rounded-full"
+                          style={{ background: isVeg ? "#22c55e" : "#ef4444" }}
+                        />
                       </div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
-                        QTY: {item.quantity ?? 1}
-                      </span>
                     </div>
                   </div>
-                  {note ? (
+
+                  {/* Content */}
+                  <div className="p-2 flex flex-col gap-0.5 flex-1">
                     <p
-                      className="text-[12px] mt-2 leading-relaxed italic"
-                      style={{ color: "var(--t-nav-muted)" }}
+                      className="text-xs font-bold leading-snug line-clamp-2"
+                      style={{ color: "#ffffff" }}
                     >
-                      {note}
+                      {item.name}
                     </p>
-                  ) : null}
-                </li>
+                    <p className="text-[10px] tabular-nums leading-relaxed" style={{ color: "var(--t-nav-muted)" }}>
+                      {item.quantity ?? 1} × {formatCurrency(unitPrice, currencySymbol)}
+                    </p>
+                    <p className="text-xs font-bold tabular-nums" style={{ color: "var(--t-accent)" }}>
+                      = {formatCurrency(effectiveTotal, currencySymbol)}
+                    </p>
+                    {note ? (
+                      <p className="text-[10px] italic mt-0.5 line-clamp-2" style={{ color: "var(--t-nav-muted)" }}>
+                        "{note}"
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
               );
             })}
-          </ul>
+          </div>
 
           <div className="flex items-center justify-between pt-1 gap-3 border-t border-white/[0.06]">
             <div className={`flex items-center gap-2.5 min-w-0 ${statusTone}`}>
@@ -386,31 +430,39 @@ export default function CustomerOrdersPage() {
         </p>
       </div>
 
-      <div className="flex flex-row gap-3">
+      <div className="flex flex-row gap-2.5">
         <Button
           variant="secondary"
           onClick={() => navigate(`${basePath}/menu`)}
-          className="flex-1 py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
+          className="flex-1 py-2 !rounded-xl text-xs font-bold uppercase tracking-wider transition-opacity active:opacity-90"
           style={{
             backgroundColor: "transparent",
             color: "white",
-            border: "2px solid color-mix(in srgb, white 35%, var(--t-bg))",
+            border: "1.5px solid color-mix(in srgb, white 30%, var(--t-bg))",
           }}
         >
           + Order more
         </Button>
-        <Button
-          loading={endingSession}
-          onClick={handleRequestBill}
-          className="flex-1 py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90"
-          style={{
-            backgroundColor: "var(--t-accent)",
-            color: "var(--t-bg)",
-          }}
-        >
-          <IconReceipt className="w-4 h-4" />
-          {endingSession ? "Please wait…" : "Request final bill"}
-        </Button>
+        <div className="flex-1 flex flex-col gap-1">
+          <Button
+            loading={endingSession}
+            onClick={handleRequestBill}
+            disabled={!allServed}
+            className="w-full py-2 !rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-opacity active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: "var(--t-accent)",
+              color: "var(--t-bg)",
+            }}
+          >
+            <IconReceipt className="w-3.5 h-3.5" />
+            {endingSession ? "Please wait…" : "Request final bill"}
+          </Button>
+          {!allServed && (
+            <p className="text-[10px] text-center" style={{ color: "var(--t-nav-muted)" }}>
+              Available once all items are served
+            </p>
+          )}
+        </div>
       </div>
     </>
   );
