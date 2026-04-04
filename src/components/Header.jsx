@@ -1,7 +1,9 @@
+import { NavLink } from 'react-router-dom';
 import { CountBadge } from '../components/ui/Badge';
 import Text from '../components/ui/Text';
-import { useCartCount } from '../store/cartStore';
+import { useCartCount, useCartTotal } from '../store/cartStore';
 import { restaurantStore } from '../store/restaurantStore';
+import { formatCurrency } from '../utils/formatters';
 
 function IconCutlery({ className, style }) {
   return (
@@ -26,21 +28,32 @@ function IconCartBag({ className, style }) {
 }
 
 /**
- * @param {{ onCartClick: () => void, variant?: 'legacy' | 'customer' }} props
+ * @param {{ onCartClick: () => void, variant?: 'legacy' | 'customer', basePath?: string, aiChatOpen?: boolean, onAIClick?: () => void }} props
  */
-export default function Header({ onCartClick, variant = 'legacy' }) {
-  const { name, tagline } = restaurantStore();
+export default function Header({ onCartClick, variant = 'legacy', basePath = '', aiChatOpen = false, onAIClick }) {
+  const { name, tagline, currencySymbol } = restaurantStore();
   const count = useCartCount();
+  const total = useCartTotal();
 
   if (variant === 'customer') {
     const title = name || 'Restaurant';
+    const base = basePath.replace(/\/$/, '');
+
+    const navLinkClass = (isActive) => [
+      'px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap',
+      isActive
+        ? 'text-[var(--t-accent)] bg-[var(--t-accent-10)]'
+        : 'text-[var(--t-dim)] hover:text-white hover:bg-white/5',
+    ].join(' ');
+
     return (
       <header
         className="px-5 py-3.5 sticky top-0 z-30 border-b border-white/[0.08]"
         style={{ backgroundColor: 'color-mix(in srgb, var(--t-bg) 96%, black)' }}
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+          {/* Logo + name */}
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
             <IconCutlery className="w-7 h-7 shrink-0" style={{ color: 'var(--t-accent)' }} />
             <h1
               className="text-[15px] font-bold uppercase tracking-[0.12em] leading-tight truncate"
@@ -49,10 +62,42 @@ export default function Header({ onCartClick, variant = 'legacy' }) {
               {title}
             </h1>
           </div>
+
+          {/* Inline nav — tablet/desktop only */}
+          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+            <NavLink
+              to={base}
+              end
+              className={({ isActive }) => navLinkClass(isActive && !aiChatOpen)}
+            >
+              Home
+            </NavLink>
+            <NavLink
+              to={`${base}/menu`}
+              className={({ isActive }) => navLinkClass(isActive && !aiChatOpen)}
+            >
+              Menu
+            </NavLink>
+            <button
+              type="button"
+              onClick={onAIClick}
+              className={navLinkClass(aiChatOpen)}
+            >
+              AI Assistant
+            </button>
+            <NavLink
+              to={`${base}/orders`}
+              className={({ isActive }) => navLinkClass(isActive && !aiChatOpen)}
+            >
+              Orders
+            </NavLink>
+          </nav>
+
+          {/* Mobile cart button — opens drawer */}
           <button
             type="button"
             onClick={onCartClick}
-            className="relative w-11 h-11 rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+            className="relative w-11 h-11 md:hidden rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition-transform"
             style={{
               background: 'color-mix(in srgb, var(--t-bg) 70%, white 8%)',
               border: '1px solid color-mix(in srgb, white 12%, var(--t-bg))',
@@ -62,6 +107,43 @@ export default function Header({ onCartClick, variant = 'legacy' }) {
             <IconCartBag className="w-5 h-5" style={{ color: 'var(--t-accent)' }} />
             <CountBadge count={count} showZero />
           </button>
+
+          {/* Desktop cart — NavLink to cart page, shows count + total when non-empty */}
+          <NavLink
+            to={`${base}/cart`}
+            className={({ isActive }) => [
+              'hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95',
+              count > 0
+                ? 'border'
+                : 'opacity-60 hover:opacity-100',
+              isActive
+                ? 'text-[var(--t-accent)] bg-[var(--t-accent-10)] border-[var(--t-accent-40)]'
+                : count > 0
+                  ? 'text-white border-[var(--t-accent-40)] bg-[var(--t-accent-10)] hover:bg-[var(--t-accent-20)]'
+                  : 'text-[var(--t-dim)] hover:text-white hover:bg-white/5',
+            ].join(' ')}
+            aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
+          >
+            <div className="relative">
+              <IconCartBag className="w-4 h-4" style={{ color: count > 0 ? 'var(--t-accent)' : 'currentColor' }} />
+              {count > 0 && (
+                <span
+                  className="absolute -top-2 -right-2 w-4 h-4 rounded-full flex items-center justify-center text-white font-bold"
+                  style={{ background: 'var(--t-accent)', fontSize: '9px' }}
+                >
+                  {count > 9 ? '9+' : count}
+                </span>
+              )}
+            </div>
+            {count > 0 && (
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="text-xs font-bold whitespace-nowrap" style={{ color: 'var(--t-accent)' }}>
+                  {formatCurrency(total, currencySymbol)}
+                </span>
+                <span className="text-xs" style={{ color: 'var(--t-accent)', opacity: 0.7 }}>→</span>
+              </div>
+            )}
+          </NavLink>
         </div>
       </header>
     );

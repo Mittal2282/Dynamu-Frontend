@@ -7,6 +7,7 @@ import {
 
 // Customer-facing
 import CustomerLayout from "../layouts/CustomerLayout";
+import CustomerCartPage from "../pages/customer/CustomerCartPage";
 import CustomerHomePage from "../pages/customer/CustomerHomePage";
 import CustomerMenuPage from "../pages/customer/CustomerMenuPage";
 import CustomerOrdersPage from "../pages/customer/CustomerOrdersPage";
@@ -41,6 +42,7 @@ export default function Routes() {
       <Route path="/:qrCodeId/:tableNumber" element={<CustomerLayout />}>
         <Route index element={<CustomerHomePage />} />
         <Route path="menu" element={<CustomerMenuPage />} />
+        <Route path="cart" element={<CustomerCartPage />} />
         <Route path="orders" element={<CustomerOrdersPage />} />
         <Route path="my-orders" element={<RedirectMyOrdersToOrders />} />
       </Route>

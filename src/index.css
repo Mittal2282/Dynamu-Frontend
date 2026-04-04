@@ -69,6 +69,24 @@
   --font-sans: 'Outfit', sans-serif;
 }
 
+/* ─── Responsive base font scaling ─────────────────────────────────────────── */
+/* All Tailwind rem-based classes (text-sm, text-xl, etc.) scale proportionally */
+@media (min-width: 768px)  { html { font-size: 106.25%; } } /* ~17px  */
+@media (min-width: 1024px) { html { font-size: 112.5%;  } } /* 18px   */
+
+/* Scale up absolute-pixel micro-text on tablet/desktop so it doesn't look tiny */
+@media (min-width: 768px) {
+  .text-\[10px\] { font-size: 0.75rem !important; }   /* 12px → 12.75px */
+  .text-\[11px\] { font-size: 0.8125rem !important; } /* 11px → 13.8px  */
+  .text-\[9px\]  { font-size: 0.6875rem !important; } /* 9px  → 11.7px  */
+}
+@media (min-width: 1024px) {
+  .text-\[10px\] { font-size: 0.8125rem !important; } /* ~13px */
+  .text-\[11px\] { font-size: 0.875rem !important;  } /* ~14px */
+  .text-\[9px\]  { font-size: 0.75rem !important;   } /* ~12px */
+  .text-\[14px\] { font-size: 1rem !important;       } /* ~16px */
+}
+
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
 body {
   background-color: var(--t-bg);
