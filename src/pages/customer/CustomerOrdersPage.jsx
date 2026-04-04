@@ -1,21 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import Button from "../../components/ui/Button";
+import LazyImage from "../../components/ui/LazyImage";
 import { Spinner } from "../../components/ui/Spinner";
 import {
+  CUSTOMER_STATUS_PHASE,
+  getOrderStatusConfig,
+} from "../../constants/orderStatusConfig";
+import {
+  endCustomerSession,
   getCustomerOrders,
   requestBill,
-  endCustomerSession,
 } from "../../services/customerService";
 import { disconnectSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
 import { cartStore } from "../../store/cartStore";
 import { restaurantStore } from "../../store/restaurantStore";
 import { formatCurrency } from "../../utils/formatters";
-import LazyImage from "../../components/ui/LazyImage";
-import {
-  getOrderStatusConfig,
-  CUSTOMER_STATUS_PHASE,
-} from "../../constants/orderStatusConfig";
 
 function dotToTextClass(dot) {
   return dot.replace(/^bg-/, "text-");
@@ -220,7 +221,10 @@ export default function CustomerOrdersPage() {
           🍽️
         </span>
         <div className="space-y-3 max-w-sm">
-          <p className="text-xl md:text-2xl font-bold text-white tracking-wide uppercase" style={{ color: "#ffffff" }}>
+          <p
+            className="text-xl md:text-2xl font-bold text-white tracking-wide uppercase"
+            style={{ color: "#ffffff" }}
+          >
             No orders yet
           </p>
           <p
@@ -230,15 +234,17 @@ export default function CustomerOrdersPage() {
             Browse the menu and send your first order to the kitchen.
           </p>
         </div>
-        <button
-          type="button"
+        <Button
           onClick={() => navigate(`${basePath}/menu`)}
-          className="mt-2 px-10 py-4 rounded-xl font-bold uppercase text-sm md:text-base tracking-wider text-white transition-opacity active:opacity-90"
+          className="mt-2 px-10 py-4 font-bold uppercase text-sm md:text-base tracking-wider text-white transition-opacity active:opacity-90"
           style={{ backgroundColor: "var(--t-accent)" }}
         >
           Open menu
-        </button>
-        <p className="text-xs md:text-sm pt-2" style={{ color: "var(--t-nav-muted)" }}>
+        </Button>
+        <p
+          className="text-xs md:text-sm pt-2"
+          style={{ color: "var(--t-nav-muted)" }}
+        >
           Status updates automatically every 15s
         </p>
       </div>
@@ -310,7 +316,10 @@ export default function CustomerOrdersPage() {
                     />
 
                     <div className="flex justify-between gap-4 items-start flex-1">
-                      <p className="text-[14px] md:text-base font-bold uppercase tracking-wide text-white leading-snug flex-1" style={{ color: "#ffffff" }}>
+                      <p
+                        className="text-[14px] md:text-base font-bold uppercase tracking-wide text-white leading-snug flex-1"
+                        style={{ color: "#ffffff" }}
+                      >
                         {item.name}
                       </p>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-white/20 text-slate-300 shrink-0">
@@ -370,19 +379,16 @@ export default function CustomerOrdersPage() {
         >
           {formatCurrency(grandTotal, currencySymbol)}
         </p>
-        <p
-          className="text-xs mt-1"
-          style={{ color: "var(--t-nav-muted)" }}
-        >
+        <p className="text-xs mt-1" style={{ color: "var(--t-nav-muted)" }}>
           + Service tax included
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={() => navigate(`${basePath}/menu`)}
-          className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
+          className="w-full py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity active:opacity-90"
           style={{
             backgroundColor: "transparent",
             color: "white",
@@ -390,12 +396,11 @@ export default function CustomerOrdersPage() {
           }}
         >
           + Order more
-        </button>
-        <button
-          type="button"
-          disabled={endingSession}
+        </Button>
+        <Button
+          loading={endingSession}
           onClick={handleRequestBill}
-          className="w-full py-3.5 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90 disabled:opacity-60"
+          className="w-full py-3.5 !rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity active:opacity-90"
           style={{
             backgroundColor: "var(--t-accent)",
             color: "var(--t-bg)",
@@ -403,7 +408,7 @@ export default function CustomerOrdersPage() {
         >
           <IconReceipt className="w-4 h-4" />
           {endingSession ? "Please wait…" : "Request final bill"}
-        </button>
+        </Button>
       </div>
     </>
   );
@@ -417,7 +422,6 @@ export default function CustomerOrdersPage() {
     >
       {/* ── Desktop two-column layout ──────────────────────────────────────── */}
       <div className="lg:flex lg:gap-10 lg:items-start">
-
         {/* Left: header + order cards */}
         <div className="flex-1 space-y-8">
           <div className="flex flex-col gap-4">
@@ -462,7 +466,10 @@ export default function CustomerOrdersPage() {
               boxShadow: "0 0 24px var(--t-accent2-20)",
             }}
           >
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--t-accent)" }}>
+            <p
+              className="text-xs font-bold uppercase tracking-widest"
+              style={{ color: "var(--t-accent)" }}
+            >
               Bill Summary
             </p>
             {billPanelContent}
@@ -471,9 +478,7 @@ export default function CustomerOrdersPage() {
       </div>
 
       {/* ── Mobile/tablet: fixed bottom bill panel ─────────────────────────── */}
-      <div
-        className="lg:hidden fixed left-0 right-0 z-40 flex justify-center px-5 pointer-events-none bottom-[88px] md:bottom-5"
-      >
+      <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center px-5 pointer-events-none bottom-[88px] md:bottom-5">
         <div
           className="w-full md:max-w-3xl rounded-2xl border border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{

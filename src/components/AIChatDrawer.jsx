@@ -1,34 +1,43 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { VegBadge } from '../components/ui/Badge';
-import Button from '../components/ui/Button';
-import Drawer from '../components/ui/Drawer';
-import { Spinner } from '../components/ui/Spinner';
-import Text from '../components/ui/Text';
-import LazyImage from '../components/ui/LazyImage';
-import { getChatHistory, getWelcomeMessage, sendChatMessage } from '../services/chatService';
-import { cartStore } from '../store/cartStore';
-import { chatStore } from '../store/chatStore';
-import { restaurantStore } from '../store/restaurantStore';
-import { QUICK_CHAT_CHIPS } from '../utils/constants';
-import { formatCurrency } from '../utils/formatters';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { VegBadge } from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Drawer from "../components/ui/Drawer";
+import LazyImage from "../components/ui/LazyImage";
+import { Spinner } from "../components/ui/Spinner";
+import Text from "../components/ui/Text";
+import {
+  getChatHistory,
+  getWelcomeMessage,
+  sendChatMessage,
+} from "../services/chatService";
+import { cartStore } from "../store/cartStore";
+import { chatStore } from "../store/chatStore";
+import { restaurantStore } from "../store/restaurantStore";
+import { QUICK_CHAT_CHIPS } from "../utils/constants";
+import { formatCurrency } from "../utils/formatters";
 
 const WELCOME_FALLBACK =
-  "I can help you find dishes based on your mood, budget, or dietary needs. What are you craving today?";
+  "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?";
 
-const SpeechRecognitionAvailable = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+const SpeechRecognitionAvailable = !!(
+  window.SpeechRecognition || window.webkitSpeechRecognition
+);
 
-const INFRA_FOOTER = 'SECURE AI INFRASTRUCTURE v2.4.0';
+const INFRA_FOOTER = "SECURE AI INFRASTRUCTURE v2.4.0";
 
 function parseChatTimestamp(m) {
   const raw = m.created_at ?? m.createdAt ?? m.timestamp ?? m.time;
   if (raw == null) return undefined;
-  const t = typeof raw === 'number' ? raw : new Date(raw).getTime();
+  const t = typeof raw === "number" ? raw : new Date(raw).getTime();
   return Number.isFinite(t) ? t : undefined;
 }
 
 function formatMessageTime(ts) {
   if (ts == null) return null;
-  return new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 /* ─── Spice level dots ──────────────────────────────────────────────────────── */
@@ -36,10 +45,10 @@ function SpiceIndicator({ level }) {
   if (!level || level === 0) return null;
   return (
     <span className="flex items-center gap-0.5">
-      {[0, 1, 2].map(i => (
+      {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className={`w-1.5 h-1.5 rounded-full ${i < level ? 'bg-red-400' : 'bg-white/10'}`}
+          className={`w-1.5 h-1.5 rounded-full ${i < level ? "bg-red-400" : "bg-white/10"}`}
         />
       ))}
     </span>
@@ -51,7 +60,7 @@ function Stepper({ qty, onAdd, onRemove }) {
   return (
     <div
       className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-      style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+      style={{ border: "1px solid rgba(255,255,255,0.12)" }}
     >
       <button
         type="button"
@@ -67,9 +76,9 @@ function Stepper({ qty, onAdd, onRemove }) {
         weight="bold"
         color="white"
         className="w-8 text-center select-none"
-        style={{ lineHeight: '2rem' }}
+        style={{ lineHeight: "2rem" }}
       >
-        {String(qty).padStart(2, '0')}
+        {String(qty).padStart(2, "0")}
       </Text>
       <button
         type="button"
@@ -109,11 +118,22 @@ function RecommendationRow({ item }) {
         />
 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
+          <Text
+            as="p"
+            size="sm"
+            weight="semibold"
+            color="white"
+            className="leading-snug"
+          >
             {item.name}
           </Text>
           {item.description && (
-            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
+            <Text
+              as="p"
+              size="xs"
+              color="white"
+              className="opacity-40 mt-0.5 line-clamp-1"
+            >
               {item.description}
             </Text>
           )}
@@ -135,7 +155,11 @@ function RecommendationRow({ item }) {
             ＋ ADD TO CART
           </Button>
         ) : (
-          <Stepper qty={q} onAdd={() => add(item)} onRemove={() => remove(item)} />
+          <Stepper
+            qty={q}
+            onAdd={() => add(item)}
+            onRemove={() => remove(item)}
+          />
         )}
       </div>
     </div>
@@ -144,7 +168,14 @@ function RecommendationRow({ item }) {
 
 function BookIcon({ className }) {
   return (
-    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
         stroke="currentColor"
@@ -159,15 +190,31 @@ function BookIcon({ className }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M8 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M8 7H16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8 11H13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
 function SendIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
     </svg>
   );
@@ -186,7 +233,7 @@ function RichChatText({ text, className }) {
           </span>
         ) : (
           <span key={i}>{part}</span>
-        )
+        ),
       )}
     </span>
   );
@@ -198,9 +245,9 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
       <div
         className="self-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95 mb-6 ai-chat-badge-pulse"
         style={{
-          background: 'var(--t-accent2-20)',
-          border: '1px solid var(--t-accent2-40)',
-          color: 'var(--t-accent2)',
+          background: "var(--t-accent2-20)",
+          border: "1px solid var(--t-accent2-40)",
+          color: "var(--t-accent2)",
         }}
       >
         ✨ INTELLIGENCE ACTIVE
@@ -208,9 +255,9 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
 
       <h2
         className="text-2xl sm:text-[1.65rem] font-bold text-white leading-tight text-center ai-chat-fade-in-up"
-        style={{ animationDelay: '60ms' }}
+        style={{ animationDelay: "60ms" }}
       >
-        Hello! I&apos;m your{' '}
+        Hello! I&apos;m your{" "}
         <span className="ai-chat-gradient-text">AI Sommelier.</span>
       </h2>
 
@@ -219,7 +266,7 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
         size="sm"
         color="muted"
         className="text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
-        style={{ animationDelay: '120ms' }}
+        style={{ animationDelay: "120ms" }}
       >
         {welcomeParagraph || WELCOME_FALLBACK}
       </Text>
@@ -228,7 +275,7 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
         as="p"
         size="xs"
         className="mt-10 mb-3 text-white/35 uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
-        style={{ animationDelay: '180ms' }}
+        style={{ animationDelay: "180ms" }}
       >
         TRY THESE SUGGESTIONS
       </Text>
@@ -257,7 +304,13 @@ function ChatHeader({ onClose }) {
         <span className="text-[var(--t-accent)] shrink-0">
           <BookIcon />
         </span>
-        <Text as="h2" size="md" weight="bold" color="white" className="truncate uppercase tracking-wide">
+        <Text
+          as="h2"
+          size="md"
+          weight="bold"
+          color="white"
+          className="truncate uppercase tracking-wide"
+        >
           AI Menu Assistant
         </Text>
       </div>
@@ -278,14 +331,23 @@ function ChatHeader({ onClose }) {
  * Props: isOpen, onClose
  */
 export default function AIChatDrawer({ isOpen, onClose }) {
-  const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } = chatStore();
-  const [welcomeText, setWelcomeText] = useState('');
+  const {
+    messages,
+    loading,
+    initialized,
+    setMessages,
+    addMessage,
+    setLoading,
+    setInitialized,
+  } = chatStore();
+  const [welcomeText, setWelcomeText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [inputText, setInputText] = useState("");
   const inputRef = useRef(null);
   const endRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  const hasUserMessage = messages.some(m => m.role === 'user');
+  const hasUserMessage = messages.some((m) => m.role === "user");
   const showWelcomeLayout = messages.length === 0 && !loading;
 
   useEffect(() => {
@@ -296,12 +358,14 @@ export default function AIChatDrawer({ isOpen, onClose }) {
       .then((history) => {
         if (Array.isArray(history) && history.length > 0) {
           setMessages(
-            history.map(m => ({
-              role: m.role === 'user' ? 'user' : 'ai',
+            history.map((m) => ({
+              role: m.role === "user" ? "user" : "ai",
               text: m.content,
-              items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
+              items: Array.isArray(m.recommended_items)
+                ? m.recommended_items
+                : [],
               timestamp: parseChatTimestamp(m),
-            }))
+            })),
           );
           return undefined;
         }
@@ -309,18 +373,20 @@ export default function AIChatDrawer({ isOpen, onClose }) {
         return getWelcomeMessage();
       })
       .then((welcome) => {
-        if (typeof welcome === 'string' && welcome.trim()) {
+        if (typeof welcome === "string" && welcome.trim()) {
           setWelcomeText(welcome.trim());
         }
       })
       .catch(() => {
         setMessages([]);
-        setWelcomeText("Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️");
+        setWelcomeText(
+          "Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️",
+        );
       });
   }, [isOpen, initialized, setInitialized, setMessages]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, showWelcomeLayout]);
 
   useEffect(() => {
@@ -328,27 +394,32 @@ export default function AIChatDrawer({ isOpen, onClose }) {
   }, [isOpen]);
 
   const startListening = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = 'en-IN';
+    recognition.lang = "en-IN";
     recognitionRef.current = recognition;
 
     recognition.onstart = () => setIsListening(true);
-    recognition.onend   = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);
 
     recognition.onresult = (e) => {
-      const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
-      if (inputRef.current) inputRef.current.value = transcript;
+      const transcript = Array.from(e.results)
+        .map((r) => r[0].transcript)
+        .join("");
+      setInputText(transcript);
       if (e.results[e.results.length - 1].isFinal) {
+        // Use functional state or a ref if send needs to be stable
+        // But since we are calling it now, we can just pass the transcript
         send(transcript);
       }
     };
     recognition.start();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stopListening = useCallback(() => {
@@ -357,28 +428,33 @@ export default function AIChatDrawer({ isOpen, onClose }) {
 
   const send = useCallback(
     async (overrideText) => {
-      const text = (overrideText ?? inputRef.current?.value ?? '').trim();
+      const text = (overrideText ?? inputText ?? "").trim();
       if (!text) return;
       if (text.length > 500) {
-        addMessage({ role: 'ai', text: 'Your message is a bit long — try a shorter question! 😊', items: [], timestamp: Date.now() });
+        addMessage({
+          role: "ai",
+          text: "Your message is a bit long — try a shorter question! 😊",
+          items: [],
+          timestamp: Date.now(),
+        });
         return;
       }
-      if (!overrideText && inputRef.current) inputRef.current.value = '';
+      setInputText("");
 
-      addMessage({ role: 'user', text, items: [], timestamp: Date.now() });
+      addMessage({ role: "user", text, items: [], timestamp: Date.now() });
       setLoading(true);
 
       try {
         const { reply, recommended_items } = await sendChatMessage(text);
         addMessage({
-          role: 'ai',
+          role: "ai",
           text: reply,
           items: recommended_items || [],
           timestamp: Date.now(),
         });
       } catch {
         addMessage({
-          role: 'ai',
+          role: "ai",
           text: "Sorry, I'm having trouble right now. Please try again in a moment.",
           items: [],
           timestamp: Date.now(),
@@ -387,10 +463,12 @@ export default function AIChatDrawer({ isOpen, onClose }) {
         setLoading(false);
       }
     },
-    [addMessage, setLoading]
+    [addMessage, setLoading, inputText],
   );
 
-  const inputPlaceholder = hasUserMessage ? 'Ask follow-up…' : 'Ask for suggestions…';
+  const inputPlaceholder = hasUserMessage
+    ? "Ask follow-up…"
+    : "Ask for suggestions…";
 
   /* ── Shared chat body ─────────────────────────────────────────────────── */
   const chatBody = (
@@ -401,23 +479,29 @@ export default function AIChatDrawer({ isOpen, onClose }) {
         ) : (
           <div className="space-y-5">
             {messages.map((m, i) => {
-              const isUser = m.role === 'user';
+              const isUser = m.role === "user";
               const t = formatMessageTime(m.timestamp);
 
               return (
-                <div key={i} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                <div
+                  key={i}
+                  className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
+                >
                   {!isUser && (
                     <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
                       <span
                         className="w-1.5 h-1.5 rounded-sm shrink-0"
-                        style={{ background: 'var(--t-accent2)', boxShadow: '0 0 6px var(--t-accent2-40)' }}
+                        style={{
+                          background: "var(--t-accent2)",
+                          boxShadow: "0 0 6px var(--t-accent2-40)",
+                        }}
                       />
                       <Text
                         as="span"
                         size="xs"
                         weight="bold"
                         className="uppercase tracking-widest"
-                        style={{ color: 'var(--t-accent2)' }}
+                        style={{ color: "var(--t-accent2)" }}
                       >
                         INTELLIGENCE AGENT
                       </Text>
@@ -426,17 +510,24 @@ export default function AIChatDrawer({ isOpen, onClose }) {
 
                   <div
                     className={[
-                      'max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                      "max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
                       isUser
-                        ? 'bg-brand text-white rounded-tr-sm'
-                        : 'bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4',
-                    ].join(' ')}
-                    style={!isUser ? { borderLeftColor: 'var(--t-accent2)' } : undefined}
+                        ? "bg-brand text-white rounded-tr-sm"
+                        : "bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4",
+                    ].join(" ")}
+                    style={
+                      !isUser
+                        ? { borderLeftColor: "var(--t-accent2)" }
+                        : undefined
+                    }
                   >
                     {isUser ? (
                       m.text
                     ) : (
-                      <RichChatText text={m.text} className="whitespace-pre-wrap break-words" />
+                      <RichChatText
+                        text={m.text}
+                        className="whitespace-pre-wrap break-words"
+                      />
                     )}
                   </div>
 
@@ -446,14 +537,17 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                       size="xs"
                       className="mt-1.5 px-1 uppercase tracking-wide text-white/35"
                     >
-                      {isUser ? 'YOU' : 'ASSISTANT'} · {t}
+                      {isUser ? "YOU" : "ASSISTANT"} · {t}
                     </Text>
                   )}
 
                   {!isUser && m.items?.length > 0 && (
                     <div className="mt-3 w-full max-w-full space-y-2.5 pl-0">
-                      {m.items.map(item => (
-                        <RecommendationRow key={item._id ?? item.id} item={item} />
+                      {m.items.map((item) => (
+                        <RecommendationRow
+                          key={item._id ?? item.id}
+                          item={item}
+                        />
                       ))}
                     </div>
                   )}
@@ -466,24 +560,27 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                 <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
                   <span
                     className="w-1.5 h-1.5 rounded-sm shrink-0"
-                    style={{ background: 'var(--t-accent2)', boxShadow: '0 0 6px var(--t-accent2-40)' }}
+                    style={{
+                      background: "var(--t-accent2)",
+                      boxShadow: "0 0 6px var(--t-accent2-40)",
+                    }}
                   />
                   <Text
                     as="span"
                     size="xs"
                     weight="bold"
                     className="uppercase tracking-widest"
-                    style={{ color: 'var(--t-accent2)' }}
+                    style={{ color: "var(--t-accent2)" }}
                   >
                     INTELLIGENCE AGENT
                   </Text>
                 </div>
                 <div
                   className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-sm border border-white/10 border-l-4"
-                  style={{ borderLeftColor: 'var(--t-accent2)' }}
+                  style={{ borderLeftColor: "var(--t-accent2)" }}
                 >
                   <div className="flex gap-1 items-center">
-                    {[0, 150, 300].map(delay => (
+                    {[0, 150, 300].map((delay) => (
                       <span
                         key={delay}
                         className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
@@ -504,9 +601,10 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           <input
             ref={inputRef}
             type="text"
-            defaultValue=""
-            onKeyDown={e => {
-              if (e.key === 'Enter') send();
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") send();
             }}
             placeholder={inputPlaceholder}
             disabled={loading}
@@ -519,10 +617,10 @@ export default function AIChatDrawer({ isOpen, onClose }) {
               disabled={loading}
               className={`w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
                 isListening
-                  ? 'bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse'
-                  : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white'
+                  ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse"
+                  : "bg-white/5 border border-white/10 text-slate-400 hover:text-white"
               }`}
-              title={isListening ? 'Stop listening' : 'Speak your order'}
+              title={isListening ? "Stop listening" : "Speak your order"}
             >
               🎙️
             </button>
@@ -532,7 +630,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             onClick={() => send()}
             disabled={loading}
             className="w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
-            style={{ background: 'var(--t-accent)' }}
+            style={{ background: "var(--t-accent)" }}
             aria-label="Send"
           >
             {loading ? (
@@ -544,7 +642,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
         </div>
 
         <div className="flex gap-2 overflow-x-auto mt-3 pb-0.5 no-scrollbar">
-          {QUICK_CHAT_CHIPS.map(chip => (
+          {QUICK_CHAT_CHIPS.map((chip) => (
             <button
               key={chip.label}
               type="button"
@@ -557,7 +655,11 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           ))}
         </div>
 
-        <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
+        <Text
+          as="p"
+          size="xs"
+          className="text-center mt-3 text-white/25 uppercase tracking-widest"
+        >
           {INFRA_FOOTER}
         </Text>
       </div>
@@ -575,19 +677,20 @@ export default function AIChatDrawer({ isOpen, onClose }) {
       {/* ── Desktop: floating panel anchored to bottom-right ──────────────── */}
       <div
         className={[
-          'hidden md:flex fixed bottom-6 right-6 z-50 flex-col overflow-hidden shadow-2xl',
-          'transition-all duration-300 origin-bottom-right',
+          "hidden md:flex fixed bottom-6 right-6 z-50 flex-col overflow-hidden shadow-2xl",
+          "transition-all duration-300 origin-bottom-right",
           isOpen
-            ? 'opacity-100 scale-100 pointer-events-auto'
-            : 'opacity-0 scale-90 pointer-events-none',
-        ].join(' ')}
+            ? "opacity-100 scale-100 pointer-events-auto"
+            : "opacity-0 scale-90 pointer-events-none",
+        ].join(" ")}
         style={{
-          width: '420px',
-          height: '560px',
-          background: 'var(--t-bg)',
-          borderRadius: '20px',
-          border: '1.5px solid var(--t-accent)',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--t-accent-20)',
+          width: "420px",
+          height: "560px",
+          background: "var(--t-bg)",
+          borderRadius: "20px",
+          border: "1.5px solid var(--t-accent)",
+          boxShadow:
+            "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--t-accent-20)",
         }}
       >
         <ChatHeader onClose={onClose} />

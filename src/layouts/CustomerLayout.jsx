@@ -338,7 +338,7 @@ export default function CustomerLayout() {
 
       {/* ── Cart bottom bar — mobile only ────────────────────────────────── */}
       {count > 0 && !isOrders && (
-        <div className="md:hidden fixed bottom-[85px] left-0 right-0 z-30 flex justify-center px-4">
+        <div className="md:hidden fixed bottom-[95px] left-0 right-0 z-30 flex justify-center px-4">
           <div className="w-full bg-brand rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xl shadow-[var(--t-accent-40)]">
             <div>
               <Text size="sm" weight="bold">
