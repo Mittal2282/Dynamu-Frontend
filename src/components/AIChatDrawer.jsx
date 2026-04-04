@@ -1,27 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { VegBadge } from "../components/ui/Badge";
-import Button from "../components/ui/Button";
 import Drawer from "../components/ui/Drawer";
 import LazyImage from "../components/ui/LazyImage";
 import { Spinner } from "../components/ui/Spinner";
 import Text from "../components/ui/Text";
-import {
-  getChatHistory,
-  getWelcomeMessage,
-  sendChatMessage,
-} from "../services/chatService";
-import { cartStore } from "../store/cartStore";
+import { getChatHistory, getWelcomeMessage, sendChatMessage } from "../services/chatService";
 import { chatStore } from "../store/chatStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { QUICK_CHAT_CHIPS } from "../utils/constants";
 import { formatCurrency } from "../utils/formatters";
+import CartControl from "./customer/CartControl";
 
 const WELCOME_FALLBACK =
   "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?";
 
-const SpeechRecognitionAvailable = !!(
-  window.SpeechRecognition || window.webkitSpeechRecognition
-);
+const SpeechRecognitionAvailable = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
 const INFRA_FOOTER = "SECURE AI INFRASTRUCTURE v2.4.0";
 
@@ -55,49 +48,9 @@ function SpiceIndicator({ level }) {
   );
 }
 
-/* ─── Same stepper pattern as CartDrawer ────────────────────────────────────── */
-function Stepper({ qty, onAdd, onRemove }) {
-  return (
-    <div
-      className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-      style={{ border: "1px solid rgba(255,255,255,0.12)" }}
-    >
-      <button
-        type="button"
-        onClick={onRemove}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Remove one"
-      >
-        −
-      </button>
-      <Text
-        as="span"
-        size="sm"
-        weight="bold"
-        color="white"
-        className="w-8 text-center select-none"
-        style={{ lineHeight: "2rem" }}
-      >
-        {String(qty).padStart(2, "0")}
-      </Text>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/5 text-lg font-bold transition-colors active:scale-90 cursor-pointer"
-        aria-label="Add one"
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
 /* ─── Full-width recommendation row (CartItem-style, no instructions) ─────── */
 function RecommendationRow({ item }) {
-  const { add, remove, getQty } = cartStore();
   const { currencySymbol } = restaurantStore();
-  const id = item._id ?? item.id;
-  const q = getQty(id);
 
   return (
     <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-3">
@@ -118,22 +71,11 @@ function RecommendationRow({ item }) {
         />
 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
-          <Text
-            as="p"
-            size="sm"
-            weight="semibold"
-            color="white"
-            className="leading-snug"
-          >
+          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
             {item.name}
           </Text>
           {item.description && (
-            <Text
-              as="p"
-              size="xs"
-              color="white"
-              className="opacity-40 mt-0.5 line-clamp-1"
-            >
+            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
               {item.description}
             </Text>
           )}
@@ -145,22 +87,7 @@ function RecommendationRow({ item }) {
           </div>
         </div>
 
-        {q === 0 ? (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => add(item)}
-            className="shrink-0 !uppercase !tracking-wide !text-[10px] !px-3 !py-2 !rounded-xl"
-          >
-            ＋ ADD TO CART
-          </Button>
-        ) : (
-          <Stepper
-            qty={q}
-            onAdd={() => add(item)}
-            onRemove={() => remove(item)}
-          />
-        )}
+        <CartControl item={item} />
       </div>
     </div>
   );
@@ -168,14 +95,7 @@ function RecommendationRow({ item }) {
 
 function BookIcon({ className }) {
   return (
-    <svg
-      className={className}
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
-    >
+    <svg className={className} width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20"
         stroke="currentColor"
@@ -190,31 +110,15 @@ function BookIcon({ className }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M8 7H16"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M8 11H13"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M8 11H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function SendIcon() {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-    >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
     </svg>
   );
@@ -257,8 +161,7 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }) {
         className="text-2xl sm:text-[1.65rem] font-bold text-white leading-tight text-center ai-chat-fade-in-up"
         style={{ animationDelay: "60ms" }}
       >
-        Hello! I&apos;m your{" "}
-        <span className="ai-chat-gradient-text">AI Sommelier.</span>
+        Hello! I&apos;m your <span className="ai-chat-gradient-text">AI Sommelier.</span>
       </h2>
 
       <Text
@@ -331,15 +234,8 @@ function ChatHeader({ onClose }) {
  * Props: isOpen, onClose
  */
 export default function AIChatDrawer({ isOpen, onClose }) {
-  const {
-    messages,
-    loading,
-    initialized,
-    setMessages,
-    addMessage,
-    setLoading,
-    setInitialized,
-  } = chatStore();
+  const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } =
+    chatStore();
   const [welcomeText, setWelcomeText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -361,9 +257,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             history.map((m) => ({
               role: m.role === "user" ? "user" : "ai",
               text: m.content,
-              items: Array.isArray(m.recommended_items)
-                ? m.recommended_items
-                : [],
+              items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
               timestamp: parseChatTimestamp(m),
             })),
           );
@@ -379,9 +273,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
       })
       .catch(() => {
         setMessages([]);
-        setWelcomeText(
-          "Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️",
-        );
+        setWelcomeText("Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️");
       });
   }, [isOpen, initialized, setInitialized, setMessages]);
 
@@ -394,8 +286,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
   }, [isOpen]);
 
   const startListening = useCallback(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
@@ -466,9 +357,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
     [addMessage, setLoading, inputText],
   );
 
-  const inputPlaceholder = hasUserMessage
-    ? "Ask follow-up…"
-    : "Ask for suggestions…";
+  const inputPlaceholder = hasUserMessage ? "Ask follow-up…" : "Ask for suggestions…";
 
   /* ── Shared chat body ─────────────────────────────────────────────────── */
   const chatBody = (
@@ -483,10 +372,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
               const t = formatMessageTime(m.timestamp);
 
               return (
-                <div
-                  key={i}
-                  className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
-                >
+                <div key={i} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                   {!isUser && (
                     <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
                       <span
@@ -515,19 +401,12 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                         ? "bg-brand text-white rounded-tr-sm"
                         : "bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4",
                     ].join(" ")}
-                    style={
-                      !isUser
-                        ? { borderLeftColor: "var(--t-accent2)" }
-                        : undefined
-                    }
+                    style={!isUser ? { borderLeftColor: "var(--t-accent2)" } : undefined}
                   >
                     {isUser ? (
                       m.text
                     ) : (
-                      <RichChatText
-                        text={m.text}
-                        className="whitespace-pre-wrap break-words"
-                      />
+                      <RichChatText text={m.text} className="whitespace-pre-wrap break-words" />
                     )}
                   </div>
 
@@ -544,10 +423,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                   {!isUser && m.items?.length > 0 && (
                     <div className="mt-3 w-full max-w-full space-y-2.5 pl-0">
                       {m.items.map((item) => (
-                        <RecommendationRow
-                          key={item._id ?? item.id}
-                          item={item}
-                        />
+                        <RecommendationRow key={item._id ?? item.id} item={item} />
                       ))}
                     </div>
                   )}
@@ -655,11 +531,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           ))}
         </div>
 
-        <Text
-          as="p"
-          size="xs"
-          className="text-center mt-3 text-white/25 uppercase tracking-widest"
-        >
+        <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
           {INFRA_FOOTER}
         </Text>
       </div>
@@ -689,8 +561,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
           background: "var(--t-bg)",
           borderRadius: "20px",
           border: "1.5px solid var(--t-accent)",
-          boxShadow:
-            "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--t-accent-20)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px var(--t-accent-20)",
         }}
       >
         <ChatHeader onClose={onClose} />
