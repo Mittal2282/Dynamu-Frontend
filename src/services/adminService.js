@@ -164,6 +164,31 @@ export async function updateDashMenuItem(id, payload) {
 }
 
 /**
+ * Fetch all active tables with live session info.
+ * @returns {Promise<Array>}
+ */
+export async function getDashTables() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_TABLES,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+/**
+ * Free a table — ends its active session and notifies customers via socket.
+ * @param {string} tableId
+ */
+export async function freeTable(tableId) {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_TABLE_FREE(tableId),
+    useAdmin: true,
+  });
+}
+
+/**
  * Manually close a table session (end it so next QR scan starts fresh).
  * @param {string} sessionId
  */

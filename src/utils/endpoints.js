@@ -42,6 +42,8 @@ export const ENDPOINTS = {
   DASH_MENU_FEATURED:      (id) => `/api/restaurant-dash/menu/${id}/featured`,
   DASH_MENU_BULK:          '/api/restaurant-dash/menu/bulk',
   DASH_CATEGORIES:         '/api/restaurant-dash/categories',
+  DASH_TABLES:             '/api/restaurant-dash/tables',
+  DASH_TABLE_FREE:         (id) => `/api/restaurant-dash/tables/${id}/free`,
   DASH_CLOSE_SESSION:      (id) => `/api/restaurant-dash/sessions/${id}/close`,
 
   // Customer — special sections
