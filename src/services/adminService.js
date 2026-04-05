@@ -231,51 +231,60 @@ export async function getRestaurantOrders(restaurantId) {
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 /**
- * Fetch all menu categories for this restaurant (mock).
+ * Fetch all menu categories for this restaurant.
  * @returns {Promise<string[]>}
  */
 export async function getDashCategories() {
-  await sleep(300);
-  return [];
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_CATEGORIES,
+    useAdmin: true,
+  });
+  return data.data ?? [];
 }
 
 /**
- * Create a new category (mock).
+ * Create a new category.
  * @param {string} name
  * @returns {Promise<string>}
  */
 export async function createDashCategory(name) {
-  await sleep(400);
-  return name;
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_CATEGORIES,
+    payload:  { name },
+    useAdmin: true,
+  });
+  return data.data;
 }
 
 // ─── Menu Items ───────────────────────────────────────────────────────────────
 
 /**
- * Create a new menu item (mock).
+ * Create a new menu item.
  * @param {object} payload
  */
 export async function createDashMenuItem(payload) {
-  await sleep(600);
-  return {
-    ...payload,
-    _id: `mock_${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    order_count: 0,
-    __v: 0,
-    combo_items: payload.combo_items ?? [],
-    pairs_well_with: payload.pairs_well_with ?? [],
-  };
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_MENU,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
 }
 
 /**
- * Bulk import menu items from CSV text (mock).
+ * Bulk import menu items from CSV text.
  * @param {string} csvText
  * @returns {Promise<{ imported: number, errors: string[] }>}
  */
 export async function bulkImportMenuItems(csvText) {
-  await sleep(1200);
-  const rows = csvText.trim().split('\n').filter(Boolean).length - 1;
-  return { imported: Math.max(0, rows), errors: [] };
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_MENU_BULK,
+    payload:  { csvText },
+    useAdmin: true,
+  });
+  return data.data;
 }
