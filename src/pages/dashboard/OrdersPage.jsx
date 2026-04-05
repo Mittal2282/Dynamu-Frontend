@@ -1,169 +1,195 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getDashOrders, closeTableSession } from '../../services/adminService';
 import { apiCaller } from '../../api/apiCaller';
-import {
-  ORDER_STATUS_CONFIG as STATUS_CONFIG,
-  ORDER_STATUSES as STATUSES,
-  getOrderStatusConfig,
-} from '../../constants/orderStatusConfig';
+import { getOrderStatusConfig, DASHBOARD_COLUMNS } from '../../constants/orderStatusConfig';
 
-/* ─── Live countdown hook ─────────────────────────────────────────────────── */
-function useCountdown(order) {
-  const [remaining, setRemaining] = useState(null);
-  useEffect(() => {
-    if (!order.estimated_prep_time || !order.confirmed_at) return;
-    const deadline = new Date(order.confirmed_at).getTime() + order.estimated_prep_time * 60_000;
-    const tick = () => setRemaining(Math.ceil((deadline - Date.now()) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [order.estimated_prep_time, order.confirmed_at]);
-  return remaining;
+/* ─── Status group constants ────────────────────────────────────────────────── */
+const ALLOCATED  = ['pending', 'confirmed'];
+const IN_PROGRESS = ['preparing', 'ready'];
+const TERMINAL   = ['served', 'completed', 'cancelled'];
+
+function getSessionColumn(orders) {
+  // Primary order drives the column. Add-ons don't hold the card in Allocated
+  // once the main order has moved to In Progress.
+  const primary = orders.find(o => !o.is_addon) ?? orders[0];
+  if (ALLOCATED.includes(primary?.status))   return 'allocated';
+  if (IN_PROGRESS.includes(primary?.status)) return 'inprogress';
+  // Primary is terminal — check if any add-on is still active
+  if (orders.some(o => IN_PROGRESS.includes(o.status))) return 'inprogress';
+  if (orders.some(o => ALLOCATED.includes(o.status)))   return 'inprogress';
+  return 'completed';
 }
 
+/* ─── Helpers ───────────────────────────────────────────────────────────────── */
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
-  if (diff < 60) return `${Math.floor(diff)}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  return `${Math.floor(diff / 3600)}h`;
+  if (diff < 60) return `${Math.floor(diff)}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
 }
 
 function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/* ─── Inline status controls (used for both original + add-on batches) ── */
-function OrderStatusRow({ order, onStatusChange, updating, label }) {
-  const cfg = getOrderStatusConfig(order.status);
-  const [showPrepInput, setShowPrepInput] = useState(false);
-  const [prepTime, setPrepTime] = useState('');
-  const remaining = useCountdown(order);
+/* ─── Veg / Non-veg dot badge ────────────────────────────────────────────────── */
+function VegDot({ isVeg }) {
+  const color = isVeg ? '#22c55e' : '#ef4444';
+  return (
+    <div className="absolute top-1 left-1 p-[2px] rounded-sm shadow" style={{ background: 'rgba(255,255,255,0.9)' }}>
+      <div
+        className="w-2 h-2 rounded-sm border-2 flex items-center justify-center"
+        style={{ borderColor: color }}
+      >
+        <div className="w-1 h-1 rounded-full" style={{ background: color }} />
+      </div>
+    </div>
+  );
+}
 
-  const handleConfirmClick = () => {
-    if (cfg.next === 'confirmed') setShowPrepInput(true);
-    else onStatusChange(order._id, cfg.next);
-  };
-
-  const handleConfirmWithPrep = () => {
-    const mins = prepTime ? parseInt(prepTime, 10) : undefined;
-    onStatusChange(order._id, 'confirmed', mins);
-    setShowPrepInput(false);
-    setPrepTime('');
-  };
+/* ─── Single item row: image + name + qty/price ──────────────────────────────── */
+function OrderItemRow({ item }) {
+  const imageUrl = item.image_url ?? item.menu_item?.image_url;
+  const isVeg    = item.is_veg    ?? item.menu_item?.is_veg;
+  const unitPrice = item.unit_price ?? 0;
+  const total = Math.round(unitPrice * (item.quantity ?? 1));
 
   return (
-    <div className="space-y-2.5">
-      {/* Sub-header */}
+    <div className="flex items-center gap-3 py-2">
+      {/* Image */}
+      <div
+        className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0"
+        style={{ background: 'var(--t-float)' }}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt={item.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xl">
+            {isVeg === false ? '🍗' : '🥗'}
+          </div>
+        )}
+        {isVeg !== undefined && isVeg !== null && <VegDot isVeg={isVeg} />}
+      </div>
+
+      {/* Name + instructions */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white line-clamp-1">{item.name}</p>
+        {item.special_instructions && (
+          <p className="text-[11px] font-medium mt-1 px-2 py-1 rounded-md leading-snug"
+            style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }}>
+            📝 {item.special_instructions}
+          </p>
+        )}
+      </div>
+
+      {/* Qty + total */}
+      <div className="text-right shrink-0 space-y-0.5">
+        <p className="text-xs text-slate-500">×{item.quantity ?? 1}</p>
+        <p className="text-sm font-bold" style={{ color: 'var(--t-accent)' }}>₹{total}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Single order batch (original or add-on) ────────────────────────────────── */
+function OrderBatch({ order, sessionOrders, onStatusChange, updating }) {
+  const cfg = getOrderStatusConfig(order.status);
+
+  // Determine CTA
+  let ctaLabel    = null;
+  let ctaStatus   = null;
+  let ctaDisabled = false;
+  let ctaTooltip  = null;
+  let ctaBg       = 'var(--t-accent)';
+
+  if (ALLOCATED.includes(order.status)) {
+    ctaLabel  = 'Start Preparing';
+    ctaStatus = 'preparing';
+  } else if (IN_PROGRESS.includes(order.status)) {
+    ctaLabel  = 'Mark Complete';
+    ctaStatus = 'served';
+    const hasAllocatedSibling = sessionOrders.some(
+      s => s._id !== order._id && ALLOCATED.includes(s.status)
+    );
+    if (hasAllocatedSibling) {
+      ctaDisabled = true;
+      ctaTooltip  = 'Accept all orders for this table first';
+      ctaBg       = '#475569';
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Batch header row */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {label && (
-            <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/20 shrink-0">
-              {label}
+        <div className="flex items-center gap-2 min-w-0">
+          {order.is_addon && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border shrink-0"
+              style={{ background: 'rgba(249,115,22,0.12)', color: '#fb923c', borderColor: 'rgba(249,115,22,0.2)' }}>
+              + ADD-ON
             </span>
           )}
-          <span className="text-slate-500 text-xs font-mono">#{order.order_number}</span>
-          <span className="text-slate-600 text-xs">· {formatTime(order.createdAt)} ({timeAgo(order.createdAt)} ago)</span>
+          <span className="text-xs text-slate-500 font-mono">#{order.order_number}</span>
+          <span className="text-slate-600 text-[11px]">
+            {formatTime(order.createdAt)} · {timeAgo(order.createdAt)}
+          </span>
         </div>
         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
-          {order.status}
+          {cfg.label}
         </span>
       </div>
 
-      {/* Items */}
-      <ul className="space-y-1.5">
-        {order.items?.map((item, i) => (
-          <li key={i} className="flex justify-between items-baseline text-sm gap-2">
-            <span className="text-slate-200 leading-tight">{item.name}</span>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-slate-500 text-xs">×{item.quantity}</span>
-              <span className="text-slate-400 text-xs">₹{Math.round((item.unit_price ?? 0) * item.quantity)}</span>
+      {/* Item rows */}
+      <div className="divide-y divide-white/[0.04] rounded-xl overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="px-3">
+          {order.items?.map((item, i) => (
+            <div key={i} className={i > 0 ? 'border-t border-white/5' : ''}>
+              <OrderItemRow item={item} />
             </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+      </div>
 
       {/* Notes */}
       {order.notes && (
-        <p className="text-xs text-slate-400 bg-white/5 border border-white/5 rounded-lg px-2.5 py-1.5">
+        <p className="text-xs text-slate-400 rounded-lg px-2.5 py-1.5"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <span className="font-semibold text-slate-300">Note: </span>{order.notes}
         </p>
       )}
 
-      {/* Prep time / live countdown */}
-      {order.estimated_prep_time && ['confirmed', 'preparing'].includes(order.status) && (
-        remaining === null ? (
-          <p className="text-xs text-blue-400 flex items-center gap-1">
-            <span>⏱</span> Est. {order.estimated_prep_time} min
-          </p>
-        ) : remaining > 0 ? (
-          <p className={`text-xs font-mono font-semibold flex items-center gap-1 ${
-            remaining < 120 ? 'text-red-400' : remaining < 300 ? 'text-orange-400' : 'text-green-400'
-          }`}>
-            <span>⏱</span>
-            {String(Math.floor(remaining / 60)).padStart(2, '0')}:{String(remaining % 60).padStart(2, '0')}
-          </p>
-        ) : (
-          <p className="text-xs font-semibold text-red-400 animate-pulse flex items-center gap-1">
-            ⚠ OVERDUE
-          </p>
-        )
-      )}
-
-      {/* Action row */}
-      <div className="flex items-center justify-between gap-2 pt-0.5">
+      {/* Batch footer: subtotal + CTA */}
+      <div className="flex items-center justify-between gap-2 pt-1">
         <span className="font-bold text-sm" style={{ color: 'var(--t-accent)' }}>
           ₹{Math.round(order.total_amount || 0)}
         </span>
-        {cfg.next && !showPrepInput && (
+        {ctaLabel && (
           <button
-            onClick={handleConfirmClick}
-            disabled={updating === order._id}
-            className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all duration-150 disabled:opacity-40 active:scale-95"
-            style={{ background: 'var(--t-accent)' }}
+            onClick={() => !ctaDisabled && onStatusChange(order._id, ctaStatus)}
+            disabled={updating === order._id || ctaDisabled}
+            title={ctaTooltip ?? undefined}
+            className={`text-xs font-semibold text-white px-3.5 py-1.5 rounded-lg transition-all duration-150 active:scale-95 ${
+              ctaDisabled ? 'cursor-not-allowed' : ''
+            }`}
+            style={{ background: updating === order._id ? 'var(--t-accent)' : ctaBg, opacity: ctaDisabled ? 0.45 : 1 }}
           >
             {updating === order._id ? (
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                <span>Updating</span>
+                Updating…
               </span>
-            ) : cfg.nextLabel}
+            ) : ctaLabel}
           </button>
         )}
       </div>
 
-      {/* Prep time input */}
-      {showPrepInput && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2">
-          <p className="text-xs text-slate-400">Optional: Est. prep time</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="1"
-              placeholder="e.g. 15"
-              value={prepTime}
-              onChange={e => setPrepTime(e.target.value)}
-              className="w-20 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/60 transition-colors"
-            />
-            <span className="text-xs text-slate-500">min</span>
-            <button
-              onClick={handleConfirmWithPrep}
-              disabled={updating === order._id}
-              className="ml-auto text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 active:scale-95"
-              style={{ background: 'var(--t-accent)' }}
-            >
-              Confirm
-            </button>
-            <button onClick={() => setShowPrepInput(false)} className="text-slate-500 hover:text-slate-300 transition-colors text-sm">✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* Cancel */}
-      {['pending', 'confirmed'].includes(order.status) && (
+      {/* Cancel (allocated orders only) */}
+      {ALLOCATED.includes(order.status) && (
         <button
           onClick={() => onStatusChange(order._id, 'cancelled')}
           disabled={updating === order._id}
-          className="text-xs text-red-400/70 hover:text-red-400 transition-colors w-full text-right disabled:opacity-40"
+          className="text-[11px] text-red-400/60 hover:text-red-400 transition-colors w-full text-right disabled:opacity-40"
         >
           Cancel order
         </button>
@@ -172,79 +198,96 @@ function OrderStatusRow({ order, onStatusChange, updating, label }) {
   );
 }
 
-/* ─── Combined session card (original + any add-ons) ── */
-function OrderCard({ order, addons, onStatusChange, onCloseTable, updating, closingTable }) {
-  const cfg = getOrderStatusConfig(order.status);
-  const sessionKey = String(order.session?._id ?? order.session ?? '');
-  const allTerminal =
-    ['served', 'completed', 'cancelled'].includes(order.status) &&
-    (addons ?? []).every(a => ['served', 'completed', 'cancelled'].includes(a.status));
+/* ─── Full session card ────────────────────────────────────────────────────────── */
+function TableOrderCard({ session, column, onStatusChange, onCloseTable, updating, closingTable, isNew }) {
+  const { sessionId, tableNumber, orders: sessionOrders } = session;
+  const allTerminal = sessionOrders.every(o => TERMINAL.includes(o.status));
+  const grandTotal  = sessionOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+  const columnColor = DASHBOARD_COLUMNS.find(c => c.key === column)?.color ?? '#64748b';
 
   return (
-    <div className="bg-slate-900 border border-white/10 rounded-xl overflow-hidden transition-all duration-200">
-      {/* Status colour stripe */}
-      <div className={`h-0.5 w-full bg-gradient-to-r ${cfg.stripe}`} />
+    <div
+      className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+        isNew ? 'ring-2 ring-orange-500/70 ring-offset-2 ring-offset-slate-950' : ''
+      }`}
+      style={{ background: 'var(--t-surface)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      {/* Top accent stripe */}
+      <div className="h-1 w-full" style={{ background: columnColor }} />
 
-      <div className="p-4 space-y-3">
-        {/* Card header */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-bold text-white text-sm">
-            Table {order.table?.table_number ?? order.table_number ?? '?'}
-          </span>
-          {addons?.length > 0 && (
-            <span className="text-[11px] text-slate-500 bg-white/5 border border-white/10 rounded-full px-2 py-0.5">
-              {1 + addons.length} batches
-            </span>
-          )}
+      {/* Card header */}
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0"
+            style={{ background: `${columnColor}18`, color: columnColor }}
+          >
+            {tableNumber ?? '?'}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-white leading-tight">Table {tableNumber ?? '?'}</p>
+            <p className="text-[11px] text-slate-500 leading-tight">
+              {sessionOrders.length} order{sessionOrders.length !== 1 ? 's' : ''}
+              {isNew && <span className="ml-1.5 text-orange-400 font-semibold">· NEW</span>}
+            </p>
+          </div>
         </div>
+        <p className="text-base font-black tabular-nums" style={{ color: columnColor }}>
+          ₹{Math.round(grandTotal)}
+        </p>
+      </div>
 
-        {/* Original order */}
-        <OrderStatusRow
-          order={order}
-          onStatusChange={onStatusChange}
-          updating={updating}
-          label={addons?.length > 0 ? 'Order' : null}
-        />
-
-        {/* Add-on batches */}
-        {addons?.map((addon, idx) => (
-          <div key={addon._id} className="pt-3 border-t border-white/5">
-            <OrderStatusRow
-              order={addon}
+      {/* Order batches */}
+      <div className="px-4 py-4 space-y-5">
+        {sessionOrders.map((order, idx) => (
+          <div key={order._id}>
+            {idx > 0 && (
+              <div className="border-t border-white/[0.06] mb-5" />
+            )}
+            <OrderBatch
+              order={order}
+              sessionOrders={sessionOrders}
               onStatusChange={onStatusChange}
               updating={updating}
-              label={`Add-on${addons.length > 1 ? ` ${idx + 1}` : ''}`}
             />
           </div>
         ))}
+      </div>
 
-        {/* Close Table */}
-        {allTerminal && sessionKey && (
+      {/* Close Table footer */}
+      {allTerminal && sessionId && (
+        <div className="px-4 pb-4">
           <button
-            onClick={() => onCloseTable(sessionKey)}
-            disabled={closingTable === sessionKey}
-            className="w-full py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white border border-white/10 hover:border-white/20 bg-white/3 hover:bg-white/8 transition-all duration-150 mt-1 disabled:opacity-40"
+            onClick={() => onCloseTable(sessionId)}
+            disabled={closingTable === sessionId}
+            className="w-full py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition-all duration-150 disabled:opacity-40"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
-            {closingTable === sessionKey ? (
+            {closingTable === sessionId ? (
               <span className="flex items-center justify-center gap-1.5">
                 <span className="w-3 h-3 border-2 border-slate-400/40 border-t-slate-400 rounded-full animate-spin inline-block" />
                 Closing…
               </span>
             ) : '🔒 Close Table'}
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
+/* ─── Main page ─────────────────────────────────────────────────────────────────── */
 export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [updating, setUpdating] = useState(null);
+  const [orders, setOrders]           = useState([]);
+  const [updating, setUpdating]       = useState(null);
   const [closingTable, setClosingTable] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
-  const [newIds, setNewIds] = useState(new Set());
-  const [selectedTable, setSelectedTable] = useState(null); // null = all tables
+  const [newIds, setNewIds]           = useState(new Set());
+  const [selectedTable, setSelectedTable] = useState(null);
   const prevIdsRef = useRef(new Set());
 
   const fetchOrders = useCallback(async (quiet = false) => {
@@ -270,12 +313,15 @@ export default function OrdersPage() {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  const handleStatusChange = async (orderId, status, prepTime) => {
+  const handleStatusChange = async (orderId, status) => {
     setUpdating(orderId);
     try {
-      const payload = { status };
-      if (prepTime != null) payload.estimated_prep_time = prepTime;
-      await apiCaller({ method: 'PUT', endpoint: `/api/restaurant-dash/orders/${orderId}/status`, payload, useAdmin: true });
+      await apiCaller({
+        method: 'PUT',
+        endpoint: `/api/restaurant-dash/orders/${orderId}/status`,
+        payload: { status },
+        useAdmin: true,
+      });
       await fetchOrders(true);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update status.');
@@ -296,31 +342,50 @@ export default function OrdersPage() {
     }
   };
 
-  // Unique sorted table numbers for the filter chips
+  /* ── Derived data ── */
   const tableNumbers = [...new Set(
     orders.map(o => o.table?.table_number ?? o.table_number).filter(n => n != null)
   )].sort((a, b) => Number(a) - Number(b));
 
-  // Apply table filter
   const visibleOrders = selectedTable != null
     ? orders.filter(o => (o.table?.table_number ?? o.table_number) == selectedTable)
     : orders;
 
-  const addonsBySession = {};
+  // Group by session
+  const sessionMap = {};
   visibleOrders.forEach(o => {
-    if (!o.is_addon) return;
-    const key = String(o.session?._id ?? o.session ?? '');
-    if (!key) return;
-    if (!addonsBySession[key]) addonsBySession[key] = [];
-    addonsBySession[key].push(o);
+    const key = String(o.session?._id ?? o.session ?? o._id);
+    if (!sessionMap[key]) {
+      sessionMap[key] = { sessionId: key, tableNumber: o.table?.table_number ?? o.table_number, orders: [], latestAt: new Date(0) };
+    }
+    sessionMap[key].orders.push(o);
+    const t = new Date(o.createdAt);
+    if (t > sessionMap[key].latestAt) sessionMap[key].latestAt = t;
   });
 
-  const byStatus = (status) => visibleOrders.filter(o => o.status === status && !o.is_addon);
-  const activeCount = orders.filter(o => !['served', 'completed', 'cancelled'].includes(o.status)).length;
+  // Sort within session: original first, then add-ons by time
+  Object.values(sessionMap).forEach(s => {
+    s.orders.sort((a, b) => {
+      if (!a.is_addon && b.is_addon) return -1;
+      if (a.is_addon && !b.is_addon) return 1;
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+  });
+
+  const sessions = Object.values(sessionMap).sort((a, b) => b.latestAt - a.latestAt);
+
+  const columnSessions = {
+    allocated:  sessions.filter(s => getSessionColumn(s.orders) === 'allocated'),
+    inprogress: sessions.filter(s => getSessionColumn(s.orders) === 'inprogress'),
+    completed:  sessions.filter(s => getSessionColumn(s.orders) === 'completed'),
+  };
+
+  const isSessionNew = (session) => session.orders.some(o => newIds.has(o._id));
+  const activeCount  = orders.filter(o => !TERMINAL.includes(o.status)).length;
 
   return (
     <div className="space-y-6">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1
@@ -333,15 +398,13 @@ export default function OrdersPage() {
             {activeCount > 0 && (
               <span
                 className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: 'var(--t-accent-20))', color: 'var(--t-accent)' }}
+                style={{ background: 'var(--t-accent-20)', color: 'var(--t-accent)' }}
               >
                 {activeCount} active
               </span>
             )}
             <span className="text-slate-500 text-xs">Auto-refreshes every 10s</span>
-            {lastRefresh && (
-              <span className="text-slate-600 text-xs">· {lastRefresh.toLocaleTimeString()}</span>
-            )}
+            {lastRefresh && <span className="text-slate-600 text-xs">· {lastRefresh.toLocaleTimeString()}</span>}
           </div>
         </div>
         <button
@@ -383,58 +446,66 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ── Kanban ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {STATUSES.map(status => {
-          const cfg = STATUS_CONFIG[status];
-          const cols = byStatus(status);
+      {/* ── 3-Column Kanban ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+        {DASHBOARD_COLUMNS.map(({ key, label, color }) => {
+          const cols = columnSessions[key] ?? [];
           return (
-            <div key={status} className="space-y-3">
+            <div key={key} className="space-y-4">
               {/* Column header */}
-              <div className="flex items-center justify-between px-1">
+              <div
+                className="flex items-center justify-between px-1 pb-3 border-b"
+                style={{ borderColor: `${color}28` }}
+              >
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${cfg.dot} shrink-0`} />
-                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{cfg.label}</h2>
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
+                  <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color }}>
+                    {label}
+                  </h2>
                 </div>
-                {cols.length > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-white/10 text-slate-400 text-[11px] font-bold flex items-center justify-center">
-                    {cols.length}
-                  </span>
-                )}
+                <div
+                  className="min-w-[24px] h-6 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center"
+                  style={{ background: `${color}18`, color }}
+                >
+                  {cols.length}
+                </div>
               </div>
 
               {/* Cards */}
-              <div className="space-y-3 min-h-[80px]">
+              <div className="space-y-4 min-h-[80px]">
                 {cols.length === 0 ? (
-                  <div className="border border-dashed border-white/8 rounded-xl h-14 flex items-center justify-center">
-                    <span className="text-slate-700 text-xs">Empty</span>
-                  </div>
-                ) : cols.map(order => (
                   <div
-                    key={order._id}
-                    className={newIds.has(order._id)
-                      ? 'ring-2 ring-orange-500/70 ring-offset-2 ring-offset-slate-950 rounded-xl'
-                      : ''}
+                    className="rounded-2xl h-20 flex items-center justify-center"
+                    style={{ border: `1px dashed ${color}20` }}
                   >
-                    <OrderCard
-                      order={order}
-                      addons={addonsBySession[String(order.session?._id ?? order.session ?? '')] ?? []}
+                    <span className="text-slate-700 text-xs">No orders</span>
+                  </div>
+                ) : (
+                  cols.map(session => (
+                    <TableOrderCard
+                      key={session.sessionId}
+                      session={session}
+                      column={key}
                       onStatusChange={handleStatusChange}
                       onCloseTable={handleCloseTable}
                       updating={updating}
                       closingTable={closingTable}
+                      isNew={isSessionNew(session)}
                     />
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ── Empty state ─────────────────────────────────────────────────────── */}
+      {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {orders.length === 0 && (
-        <div className="bg-slate-900 border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 text-center gap-3">
+        <div
+          className="border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 text-center gap-3"
+          style={{ background: 'var(--t-surface)' }}
+        >
           <span className="text-5xl">🍽️</span>
           <p className="text-white font-semibold">No orders yet</p>
           <p className="text-slate-500 text-sm">Waiting for customers to place orders…</p>
