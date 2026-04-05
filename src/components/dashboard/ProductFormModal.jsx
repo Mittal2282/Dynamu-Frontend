@@ -1,0 +1,496 @@
+import { useState, useEffect } from 'react';
+import Modal from '../ui/Modal';
+import { createDashMenuItem, updateDashMenuItem } from '../../services/adminService';
+
+const TASTE_OPTIONS = ['Savory', 'Sweet', 'Spicy', 'Tangy', 'Mild', 'Bitter'];
+const GST_OPTIONS = [0, 5, 12, 18, 28];
+const MEAL_TAG_SUGGESTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Lunch / Dinner', 'All Day', 'Snack', 'Dessert'];
+
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  category: '',
+  meal_tag: '',
+  price: '',
+  discount_percentage: 0,
+  gst_slab: 5,
+  is_veg: true,
+  spice_level: 0,
+  taste_profile: 'Savory',
+  preparation_time: '',
+  serves: '',
+  is_available: true,
+  is_chefs_special: false,
+  is_featured: false,
+  stock_status: true,
+  ingredients: '',
+  allergens: '',
+  tags: '',
+  image_url: '',
+  display_order: '',
+  is_combo: false,
+  combo_discount: 0,
+};
+
+function arrToStr(val) {
+  if (Array.isArray(val)) return val.join(', ');
+  return val ?? '';
+}
+
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">
+      {children}
+    </p>
+  );
+}
+
+function FieldLabel({ children, hint }) {
+  return (
+    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+      {children}
+      {hint && <span className="ml-1 text-slate-600 font-normal">{hint}</span>}
+    </label>
+  );
+}
+
+function InputStyle({ children }) {
+  return children;
+}
+
+const inputCls = 'w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none transition-colors';
+
+function Toggle({ checked, onChange, label }) {
+  return (
+    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${checked ? 'bg-green-500' : 'bg-slate-600'}`}
+      >
+        <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+      </button>
+      <span className="text-xs text-slate-300">{label}</span>
+    </label>
+  );
+}
+
+export default function ProductFormModal({ isOpen, onClose, onSave, item, existingCategories }) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const isEdit = item !== null && item !== undefined;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isEdit) {
+      setForm({
+        ...EMPTY_FORM,
+        ...item,
+        ingredients: arrToStr(item.ingredients),
+        allergens: arrToStr(item.allergens),
+        tags: arrToStr(item.tags),
+        price: item.price ?? '',
+        preparation_time: item.preparation_time ?? '',
+        serves: item.serves ?? '',
+        display_order: item.display_order ?? '',
+      });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+    setError('');
+  }, [isOpen, item]);
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleFocus = e => { e.target.style.borderColor = 'var(--t-accent)'; };
+  const handleBlur = e => { e.target.style.borderColor = ''; };
+
+  const handleSubmit = async () => {
+    if (!form.name.trim()) { setError('Item name is required.'); return; }
+    if (!form.price || parseFloat(form.price) <= 0) { setError('Price must be greater than 0.'); return; }
+    if ((existingCategories ?? []).length > 0 && !form.category) { setError('Please select a category.'); return; }
+
+    const payload = {
+      ...form,
+      price: parseFloat(form.price),
+      discount_percentage: Number(form.discount_percentage),
+      gst_slab: Number(form.gst_slab),
+      preparation_time: form.preparation_time !== '' ? Number(form.preparation_time) : undefined,
+      serves: form.serves !== '' ? Number(form.serves) : undefined,
+      display_order: form.display_order !== '' ? Number(form.display_order) : undefined,
+      combo_discount: form.is_combo ? Number(form.combo_discount) : 0,
+      ingredients: form.ingredients.split(',').map(s => s.trim()).filter(Boolean),
+      allergens: form.allergens.split(',').map(s => s.trim()).filter(Boolean),
+      tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
+    };
+
+    setSaving(true);
+    setError('');
+    try {
+      const saved = isEdit
+        ? await updateDashMenuItem(item._id, payload)
+        : await createDashMenuItem(payload);
+      onSave(saved);
+    } catch {
+      setError('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEdit ? 'Edit Product' : 'Add Product'}
+      maxWidth="max-w-2xl"
+    >
+      <div className="space-y-6">
+
+        {/* ── Core Details ── */}
+        <div>
+          <SectionLabel>Core Details</SectionLabel>
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Name <span className="text-red-400">*</span></FieldLabel>
+              <input
+                type="text"
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Paneer Tikka"
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <textarea
+                rows={2}
+                value={form.description}
+                onChange={e => set('description', e.target.value)}
+                placeholder="Brief description shown to customers"
+                className={`${inputCls} resize-none`}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Category</FieldLabel>
+                {(existingCategories ?? []).length === 0 ? (
+                  <p className="text-xs text-slate-500 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+                    No categories yet — use the <span className="text-white font-medium">Add Category</span> button first.
+                  </p>
+                ) : (
+                  <select
+                    value={form.category}
+                    onChange={e => set('category', e.target.value)}
+                    className={`${inputCls} cursor-pointer`}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                  >
+                    <option value="">Select a category…</option>
+                    {(existingCategories ?? []).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <FieldLabel>Meal Tag</FieldLabel>
+                <input
+                  list="meal-tag-list"
+                  type="text"
+                  value={form.meal_tag}
+                  onChange={e => set('meal_tag', e.target.value)}
+                  placeholder="e.g. Lunch / Dinner"
+                  className={inputCls}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                />
+                <datalist id="meal-tag-list">
+                  {MEAL_TAG_SUGGESTIONS.map(t => <option key={t} value={t} />)}
+                </datalist>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Pricing ── */}
+        <div>
+          <SectionLabel>Pricing</SectionLabel>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <FieldLabel>Price (₹) <span className="text-red-400">*</span></FieldLabel>
+              <input
+                type="number"
+                min="0"
+                value={form.price}
+                onChange={e => set('price', e.target.value)}
+                placeholder="299"
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+            <div>
+              <FieldLabel>Discount %</FieldLabel>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={form.discount_percentage}
+                onChange={e => set('discount_percentage', Math.min(100, Math.max(0, Number(e.target.value))))}
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+            <div>
+              <FieldLabel>GST Slab</FieldLabel>
+              <select
+                value={form.gst_slab}
+                onChange={e => set('gst_slab', Number(e.target.value))}
+                className={`${inputCls} cursor-pointer`}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                style={{ background: 'rgba(255,255,255,0.05)' }}
+              >
+                {GST_OPTIONS.map(g => <option key={g} value={g}>{g}%</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Properties ── */}
+        <div>
+          <SectionLabel>Properties</SectionLabel>
+          <div className="space-y-3">
+            <div className="flex items-center gap-6 flex-wrap">
+              <Toggle checked={form.is_veg} onChange={v => set('is_veg', v)} label={form.is_veg ? '🟢 Vegetarian' : '🔴 Non-Vegetarian'} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Spice Level</FieldLabel>
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => set('spice_level', n)}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all border ${
+                        form.spice_level === n
+                          ? 'text-white border-transparent'
+                          : 'text-slate-400 border-white/10 hover:border-white/20 bg-white/5'
+                      }`}
+                      style={form.spice_level === n ? { background: 'var(--t-accent)', borderColor: 'var(--t-accent)' } : {}}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-600 mt-1">0 = No spice · 5 = Extra hot</p>
+              </div>
+              <div>
+                <FieldLabel>Taste Profile</FieldLabel>
+                <select
+                  value={form.taste_profile}
+                  onChange={e => set('taste_profile', e.target.value)}
+                  className={`${inputCls} cursor-pointer`}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                >
+                  {TASTE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Preparation Time <span className="text-slate-600">(minutes)</span></FieldLabel>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.preparation_time}
+                  onChange={e => set('preparation_time', e.target.value)}
+                  placeholder="15"
+                  className={inputCls}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                />
+              </div>
+              <div>
+                <FieldLabel>Serves</FieldLabel>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.serves}
+                  onChange={e => set('serves', e.target.value)}
+                  placeholder="1"
+                  className={inputCls}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Status Flags ── */}
+        <div>
+          <SectionLabel>Status</SectionLabel>
+          <div className="grid grid-cols-2 gap-3">
+            <Toggle checked={form.is_available}    onChange={v => set('is_available', v)}    label="Available to order" />
+            <Toggle checked={form.stock_status}    onChange={v => set('stock_status', v)}    label="In stock" />
+            <Toggle checked={form.is_chefs_special} onChange={v => set('is_chefs_special', v)} label="Chef's Special" />
+            <Toggle checked={form.is_featured}     onChange={v => set('is_featured', v)}     label="Featured" />
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Content ── */}
+        <div>
+          <SectionLabel>Ingredients & Allergens</SectionLabel>
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Ingredients</FieldLabel>
+              <textarea
+                rows={2}
+                value={form.ingredients}
+                onChange={e => set('ingredients', e.target.value)}
+                placeholder="Paneer, tomato, bell peppers, tandoori masala, yogurt"
+                className={`${inputCls} resize-none`}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <p className="text-[10px] text-slate-600 mt-1">Comma-separated list of key ingredients</p>
+            </div>
+            <div>
+              <FieldLabel>Allergens</FieldLabel>
+              <input
+                type="text"
+                value={form.allergens}
+                onChange={e => set('allergens', e.target.value)}
+                placeholder="Dairy, Gluten, Nuts"
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <p className="text-[10px] text-slate-600 mt-1">Comma-separated allergen list</p>
+            </div>
+            <div>
+              <FieldLabel>Tags</FieldLabel>
+              <input
+                type="text"
+                value={form.tags}
+                onChange={e => set('tags', e.target.value)}
+                placeholder="bestseller, spicy, quick"
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <p className="text-[10px] text-slate-600 mt-1">Comma-separated labels for filtering</p>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Media & Display ── */}
+        <div>
+          <SectionLabel>Media & Display</SectionLabel>
+          <div className="space-y-3">
+            <div>
+              <FieldLabel>Image URL</FieldLabel>
+              <input
+                type="text"
+                value={form.image_url}
+                onChange={e => set('image_url', e.target.value)}
+                placeholder="https://..."
+                className={inputCls}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div>
+                <FieldLabel>Display Order</FieldLabel>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.display_order}
+                  onChange={e => set('display_order', e.target.value)}
+                  placeholder="0"
+                  className={inputCls}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                />
+                <p className="text-[10px] text-slate-600 mt-1">Lower number = shown first</p>
+              </div>
+              <div className="pb-1">
+                <Toggle checked={form.is_combo} onChange={v => set('is_combo', v)} label="Combo item" />
+              </div>
+            </div>
+            {form.is_combo && (
+              <div>
+                <FieldLabel>Combo Discount %</FieldLabel>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.combo_discount}
+                  onChange={e => set('combo_discount', Math.min(100, Math.max(0, Number(e.target.value))))}
+                  className={inputCls}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Error + Actions ── */}
+        {error && (
+          <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
+
+        <div className="flex gap-3 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
+            style={{ background: 'var(--t-accent)' }}
+          >
+            {saving && (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            )}
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Product'}
+          </button>
+        </div>
+
+      </div>
+    </Modal>
+  );
+}

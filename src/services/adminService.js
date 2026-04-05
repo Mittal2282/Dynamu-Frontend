@@ -1,5 +1,6 @@
 import { apiCaller } from '../api/apiCaller';
 import { ENDPOINTS } from '../utils/endpoints';
+import { sleep } from '../utils/helpers';
 
 /**
  * Admin API services (all requests use the admin axios instance).
@@ -163,6 +164,31 @@ export async function updateDashMenuItem(id, payload) {
 }
 
 /**
+ * Fetch all active tables with live session info.
+ * @returns {Promise<Array>}
+ */
+export async function getDashTables() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_TABLES,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+/**
+ * Free a table — ends its active session and notifies customers via socket.
+ * @param {string} tableId
+ */
+export async function freeTable(tableId) {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_TABLE_FREE(tableId),
+    useAdmin: true,
+  });
+}
+
+/**
  * Manually close a table session (end it so next QR scan starts fresh).
  * @param {string} sessionId
  */
@@ -225,4 +251,65 @@ export async function getRestaurantOrders(restaurantId) {
     useAdmin: true,
   });
   return data.data ?? [];
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all menu categories for this restaurant.
+ * @returns {Promise<string[]>}
+ */
+export async function getDashCategories() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_CATEGORIES,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+/**
+ * Create a new category.
+ * @param {string} name
+ * @returns {Promise<string>}
+ */
+export async function createDashCategory(name) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_CATEGORIES,
+    payload:  { name },
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+// ─── Menu Items ───────────────────────────────────────────────────────────────
+
+/**
+ * Create a new menu item.
+ * @param {object} payload
+ */
+export async function createDashMenuItem(payload) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_MENU,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
+ * Bulk import menu items from CSV text.
+ * @param {string} csvText
+ * @returns {Promise<{ imported: number, errors: string[] }>}
+ */
+export async function bulkImportMenuItems(csvText) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_MENU_BULK,
+    payload:  { csvText },
+    useAdmin: true,
+  });
+  return data.data;
 }

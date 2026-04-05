@@ -29,6 +29,7 @@ import RestaurantsPage from "../pages/superadmin/RestaurantsPage";
 import MenuManagePage from "../pages/dashboard/MenuManagePage";
 import OrdersPage from "../pages/dashboard/OrdersPage";
 import StatsPage from "../pages/dashboard/StatsPage";
+import TableStatusPage from "../pages/dashboard/TableStatusPage";
 
 function RedirectMyOrdersToOrders() {
   const { qrCodeId, tableNumber } = useParams();
@@ -80,6 +81,7 @@ export default function Routes() {
       >
         <Route index element={<OrdersPage />} />
         <Route path="stats" element={<StatsPage />} />
+        <Route path="tables" element={<TableStatusPage />} />
         <Route path="menu" element={<MenuManagePage />} />
       </Route>
 
