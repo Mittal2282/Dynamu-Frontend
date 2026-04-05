@@ -56,6 +56,32 @@ function timeAgo(dateStr) {
 
 // ─── Table card ────────────────────────────────────────────────────────────────
 
+function TableIcon({ color }) {
+  return (
+    <svg viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '88px', height: '88px' }}>
+      {/* Chairs */}
+      <rect x="33" y="5"  width="22" height="11" rx="4" fill={color} opacity="0.18"/>
+      <rect x="33" y="72" width="22" height="11" rx="4" fill={color} opacity="0.18"/>
+      <rect x="5"  y="33" width="11" height="22" rx="4" fill={color} opacity="0.18"/>
+      <rect x="72" y="33" width="11" height="22" rx="4" fill={color} opacity="0.18"/>
+      {/* Chair connectors (legs) */}
+      <rect x="42" y="16" width="4"  height="6" rx="1.5" fill={color} opacity="0.1"/>
+      <rect x="42" y="66" width="4"  height="6" rx="1.5" fill={color} opacity="0.1"/>
+      <rect x="16" y="42" width="6"  height="4" rx="1.5" fill={color} opacity="0.1"/>
+      <rect x="66" y="42" width="6"  height="4" rx="1.5" fill={color} opacity="0.1"/>
+      {/* Table surface */}
+      <circle cx="44" cy="44" r="22" fill={color} opacity="0.08" stroke={color} strokeOpacity="0.25" strokeWidth="1.5"/>
+      {/* Place settings */}
+      <circle cx="44" cy="29" r="4.5" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="1.2"/>
+      <circle cx="44" cy="59" r="4.5" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="1.2"/>
+      <circle cx="29" cy="44" r="4.5" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="1.2"/>
+      <circle cx="59" cy="44" r="4.5" fill="none" stroke={color} strokeOpacity="0.35" strokeWidth="1.2"/>
+      {/* Center dot */}
+      <circle cx="44" cy="44" r="2.5" fill={color} opacity="0.25"/>
+    </svg>
+  );
+}
+
 function TableCard({ table, onFree }) {
   const cfg        = STATUS_CONFIG[table.display_status] ?? STATUS_CONFIG.free;
   const isOccupied = table.display_status !== 'free';
@@ -90,6 +116,7 @@ function TableCard({ table, onFree }) {
     <div
       className="flex flex-col overflow-hidden rounded-2xl border transition-shadow duration-200"
       style={{
+        minHeight:       isOccupied ? undefined : '210px',
         backgroundColor: cfg.bg,
         borderColor:     'rgba(255,255,255,0.07)',
         boxShadow:       cfg.glow,
@@ -102,7 +129,7 @@ function TableCard({ table, onFree }) {
       />
 
       {/* ── Content ──────────────────────────────────── */}
-      <div className="flex flex-col px-4 pt-3 pb-4 gap-3">
+      <div className={`flex flex-col px-4 pt-3 pb-4 gap-3 ${isOccupied ? '' : 'flex-1'}`}>
 
         {/* Row 1: table number + status pill */}
         <div className="flex items-center justify-between">
@@ -116,6 +143,13 @@ function TableCard({ table, onFree }) {
             {cfg.label}
           </span>
         </div>
+
+        {/* Free state: centered table illustration */}
+        {!isOccupied && (
+          <div className="flex-1 flex items-center justify-center py-2">
+            <TableIcon color={cfg.dot} />
+          </div>
+        )}
 
         {/* Row 2: members + elapsed time (occupied only) */}
         {isOccupied && members.length > 0 && (
@@ -308,18 +342,17 @@ function SkeletonCard() {
   return (
     <div
       className="rounded-2xl border overflow-hidden animate-pulse"
-      style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'var(--t-surface)' }}
+      style={{ minHeight: '210px', borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'var(--t-surface)' }}
     >
       <div style={{ height: '3px', backgroundColor: 'var(--t-line)' }} />
-      <div className="px-4 pt-3 pb-3 flex flex-col gap-2">
+      <div className="px-4 pt-3 pb-4 flex flex-col gap-3 h-full">
         <div className="flex items-center justify-between">
           <div className="h-5 w-8 rounded" style={{ backgroundColor: 'var(--t-line)' }} />
           <div className="h-4 w-12 rounded-full" style={{ backgroundColor: 'var(--t-line)' }} />
         </div>
-        <div className="h-2.5 w-28 rounded" style={{ backgroundColor: 'var(--t-line)' }} />
-        <div className="h-7 w-full rounded-lg" style={{ backgroundColor: 'var(--t-line)' }} />
-        <div className="h-7 w-full rounded-lg" style={{ backgroundColor: 'var(--t-line)' }} />
-        <div className="h-7 w-full rounded-lg" style={{ backgroundColor: 'var(--t-line)' }} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full" style={{ backgroundColor: 'var(--t-line)' }} />
+        </div>
       </div>
     </div>
   );
