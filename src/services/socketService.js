@@ -29,6 +29,33 @@ export function disconnectSocket() {
   _socket = null;
 }
 
+// ─── Anonymous table watcher socket (pre-session) ────────────────────────────
+
+let _tableSocket = null;
+
+export function connectTableSocket(qrCodeId) {
+  if (_tableSocket?.connected) return _tableSocket;
+
+  _tableSocket = io(SOCKET_URL, {
+    auth: { qr_code_id: qrCodeId },
+    transports: ['websocket', 'polling'],
+  });
+
+  _tableSocket.on('connect', () => console.log('[table-socket] connected', _tableSocket.id));
+  _tableSocket.on('connect_error', (err) => console.error('[table-socket] connect error', err.message));
+
+  return _tableSocket;
+}
+
+export function getTableSocket() {
+  return _tableSocket;
+}
+
+export function disconnectTableSocket() {
+  _tableSocket?.disconnect();
+  _tableSocket = null;
+}
+
 // ─── Admin / restaurant socket (JWT-authenticated) ────────────────────────────
 
 let _adminSocket = null;
