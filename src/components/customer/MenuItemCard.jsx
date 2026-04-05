@@ -57,25 +57,64 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
       <div className={`${isSmall ? "p-2.5" : "p-3"} flex gap-3 flex-1`}>
-        {/* ── Image ──────────────────────────────────────────────────────── */}
-        <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
-          <LazyImage
-            src={item.image_url}
-            alt={item.name}
-            containerClassName={isSmall ? "w-[64px] h-[64px] rounded-xl overflow-hidden" : "w-[88px] h-[88px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden"}
-            imgClassName="w-full h-full object-cover"
-            placeholder={
-              <div
-                className="w-full h-full flex items-center justify-center"
-                style={{ background: "var(--t-float)" }}
-              >
-                <span className="text-3xl">{item.is_veg ? "🥗" : "🍗"}</span>
+        {/* ── Image + Price ──────────────────────────────────────────────── */}
+        <div className="shrink-0 flex flex-col items-center gap-3 self-start">
+          <div className="relative overflow-hidden rounded-xl">
+            <LazyImage
+              src={item.image_url}
+              alt={item.name}
+              containerClassName={isSmall ? "w-[64px] h-[64px] rounded-xl overflow-hidden" : "w-[88px] h-[88px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden"}
+              imgClassName="w-full h-full object-cover"
+              placeholder={
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: "var(--t-float)" }}
+                >
+                  <span className="text-3xl">{item.is_veg ? "🥗" : "🍗"}</span>
+                </div>
+              }
+            />
+            {/* Veg / Non-veg dot */}
+            <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+              <VegBadge isVeg={item.is_veg} size="sm" />
+            </div>
+          </div>
+
+          {/* Price below image */}
+          <div className="flex flex-col items-center gap-1 w-full">
+            {/* Main price pill */}
+            <div
+              className="w-full text-center font-black text-[13px] leading-none px-2 py-1.5 rounded-lg"
+              style={{
+                color: "var(--t-accent)",
+                background: "color-mix(in srgb, var(--t-accent) 10%, transparent)",
+              }}
+            >
+              {formatCurrency(
+                discountedPrice ?? item.price_label ?? item.price,
+                currencySymbol,
+              )}
+            </div>
+            {hasDiscount && (
+              <div className="flex flex-col items-center gap-1">
+                <span
+                  className="text-[10px] line-through leading-none tracking-wide"
+                  style={{ color: "var(--t-dim)", opacity: 0.6 }}
+                >
+                  {formatCurrency(item.price, currencySymbol)}
+                </span>
+                <span
+                  className="text-[9px] font-black px-1.5 py-0.5 rounded-full border uppercase leading-none tracking-tight"
+                  style={{
+                    background: "color-mix(in srgb, var(--t-success) 12%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--t-success) 25%, transparent)",
+                    color: "var(--t-success)",
+                  }}
+                >
+                  {item.discount_percentage}% off
+                </span>
               </div>
-            }
-          />
-          {/* Veg / Non-veg dot */}
-          <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
-            <VegBadge isVeg={item.is_veg} size="sm" />
+            )}
           </div>
         </div>
 
@@ -114,47 +153,8 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
             </div>
           )}
 
-          {/* Pricing + Cart control */}
-          <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-            <div className="flex items-end gap-2 pr-3 mt-1.5 min-h-[32px]">
-              <div
-                className="font-black text-sm"
-                style={{ color: "var(--t-accent)" }}
-              >
-                {formatCurrency(
-                  discountedPrice ?? item.price_label ?? item.price,
-                  currencySymbol,
-                )}
-              </div>
-              {hasDiscount && (
-                <div className="flex flex-col items-start gap-1">
-                  <span
-                    className="text-[9px] font-black px-1.5 py-0.5 rounded-md border uppercase leading-none tracking-tight"
-                    style={{
-                      background:
-                        "color-mix(in srgb, var(--t-success) 12%, transparent)",
-                      borderColor:
-                        "color-mix(in srgb, var(--t-success) 20%, transparent)",
-                      color: "var(--t-success)",
-                    }}
-                  >
-                    {item.discount_percentage}% off
-                  </span>
-                  <span
-                    className="text-[10px] line-through opacity-70 ml-1 leading-none"
-                    style={{ color: "var(--t-dim)" }}
-                  >
-                    {formatCurrency(item.price, currencySymbol)}
-                  </span>
-                </div>
-              )}
-              <span
-                className="text-[9px] mb-0.5"
-                style={{ color: "var(--t-dim)" }}
-              >
-                incl. GST
-              </span>
-            </div>
+          {/* Cart control */}
+          <div className="mt-auto pt-2 flex items-center justify-end">
             <div className="shrink-0">
               <CartControl item={item} />
             </div>
