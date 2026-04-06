@@ -4,6 +4,7 @@ import { Spinner } from "../components/ui/Spinner";
 import Text from "../components/ui/Text";
 import { getChatHistory, getWelcomeMessage, sendChatMessage } from "../services/chatService";
 import { chatStore } from "../store/chatStore";
+import { useCartCount } from "../store/cartStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { QUICK_CHAT_CHIPS } from "../utils/constants";
 import MenuItemCard from "./customer/MenuItemCard";
@@ -61,23 +62,79 @@ function SendIcon() {
   );
 }
 
-/** Renders plain text with **segments** as bold brand-colored spans */
-function RichChatText({ text, className }) {
+/** Renders inline markdown: **bold** → brand-colored bold */
+function renderInline(text, keyPrefix = "") {
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <span key={`${keyPrefix}b${i}`} className="font-bold text-[var(--t-accent)]">
+          {part.slice(2, -2)}
+        </span>
+      );
+    }
+    return part;
+  });
+}
+
+/** Renders a full AI response with markdown: ###/## headings, - lists, **bold** */
+function MarkdownMessage({ text }) {
   if (!text) return null;
-  const parts = String(text).split(/\*\*/);
-  return (
-    <span className={className}>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <span key={i} className="font-bold text-[var(--t-accent)]">
-            {part}
-          </span>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </span>
-  );
+  const lines = String(text).split("\n");
+  const result = [];
+  let pendingListItems = [];
+
+  function flushList(key) {
+    if (pendingListItems.length === 0) return;
+    result.push(
+      <ul key={key} className="mt-1.5 mb-1 space-y-1.5">
+        {pendingListItems.map((item, i) => (
+          <li key={i} className="flex gap-2 items-start">
+            <span
+              className="shrink-0 mt-[6px] w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--t-accent2)", opacity: 0.7 }}
+            />
+            <span>{renderInline(item, `li${i}`)}</span>
+          </li>
+        ))}
+      </ul>,
+    );
+    pendingListItems = [];
+  }
+
+  lines.forEach((line, i) => {
+    const t = line.trim();
+    if (t.startsWith("### ")) {
+      flushList(`fl-${i}`);
+      result.push(
+        <p key={i} className="font-bold text-white text-sm mt-2.5 mb-1 first:mt-0">
+          {renderInline(t.slice(4), `h3-${i}`)}
+        </p>,
+      );
+    } else if (t.startsWith("## ")) {
+      flushList(`fl-${i}`);
+      result.push(
+        <p key={i} className="font-semibold text-white text-[15px] mt-2.5 mb-1 first:mt-0">
+          {renderInline(t.slice(3), `h2-${i}`)}
+        </p>,
+      );
+    } else if (t.startsWith("- ") || t.startsWith("* ")) {
+      pendingListItems.push(t.slice(2));
+    } else if (t === "") {
+      flushList(`fl-${i}`);
+    } else {
+      flushList(`fl-${i}`);
+      result.push(
+        <p key={i} className="leading-relaxed">
+          {renderInline(t, `p-${i}`)}
+        </p>,
+      );
+    }
+  });
+
+  flushList("final");
+
+  return <>{result}</>;
 }
 
 function WelcomeScreen({ welcomeParagraph, onSuggest }) {
@@ -168,10 +225,11 @@ function ChatHeader({ onClose }) {
 
 /* ─── AIChatDrawer ──────────────────────────────────────────────────────────── */
 /**
- * Props: isOpen, onClose
+ * Props: isOpen, onClose, onGoToCart
  */
-export default function AIChatDrawer({ isOpen, onClose }) {
+export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
   const { currencySymbol } = restaurantStore();
+  const cartCount = useCartCount();
   const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } =
     chatStore();
   const [welcomeText, setWelcomeText] = useState("");
@@ -344,7 +402,7 @@ export default function AIChatDrawer({ isOpen, onClose }) {
                     {isUser ? (
                       m.text
                     ) : (
-                      <RichChatText text={m.text} className="whitespace-pre-wrap break-words" />
+                      <MarkdownMessage text={m.text} />
                     )}
                   </div>
 
@@ -472,6 +530,30 @@ export default function AIChatDrawer({ isOpen, onClose }) {
             </button>
           ))}
         </div>
+
+        {cartCount > 0 && onGoToCart && (
+          <button
+            type="button"
+            onClick={onGoToCart}
+            className="w-full mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between text-sm font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: "var(--t-accent)",
+              color: "#fff",
+              boxShadow: "0 4px 16px var(--t-accent-40)",
+            }}
+          >
+            <span>Go to Cart</span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-bold"
+                style={{ background: "rgba(0,0,0,0.2)" }}
+              >
+                {cartCount} {cartCount === 1 ? "item" : "items"}
+              </span>
+              <span>→</span>
+            </span>
+          </button>
+        )}
 
         <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
           {INFRA_FOOTER}
