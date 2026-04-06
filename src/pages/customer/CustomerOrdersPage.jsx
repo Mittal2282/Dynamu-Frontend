@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import LazyImage from "../../components/ui/LazyImage";
 import { Spinner } from "../../components/ui/Spinner";
-import { CUSTOMER_STATUS_PHASE, getOrderStatusConfig } from "../../constants/orderStatusConfig";
+import { getCustomerPhase, getOrderStatusConfig } from "../../constants/orderStatusConfig";
 import { endCustomerSession, getCustomerOrders, requestBill } from "../../services/customerService";
 import { disconnectSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
@@ -11,9 +11,6 @@ import { cartStore } from "../../store/cartStore";
 import { restaurantStore } from "../../store/restaurantStore";
 import { formatCurrency } from "../../utils/formatters";
 
-function dotToTextClass(dot) {
-  return dot.replace(/^bg-/, "text-");
-}
 
 function IconLive({ className }) {
   return (
@@ -100,23 +97,6 @@ function IconReceipt({ className }) {
   );
 }
 
-function StatusGlyph({ status, className }) {
-  const tc = className || "w-4 h-4 shrink-0";
-  if (status === "cancelled") {
-    return (
-      <span className={`${tc} text-red-400`} aria-hidden>
-        ✕
-      </span>
-    );
-  }
-  if (["ready", "served", "completed"].includes(status)) {
-    return <IconCheck className={tc} style={{ color: "inherit" }} />;
-  }
-  if (["confirmed", "preparing"].includes(status)) {
-    return <IconFlame className={tc} style={{ color: "inherit" }} />;
-  }
-  return <IconHourglass className={tc} style={{ color: "inherit" }} />;
-}
 
 export default function CustomerOrdersPage() {
   const outlet = useOutletContext();
@@ -161,12 +141,12 @@ export default function CustomerOrdersPage() {
   const addons = orders.filter((o) => o.is_addon);
   const grandTotal = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
-  const SERVED_STATUSES = ["served", "completed", "cancelled"];
-  const allServed =
-    orders.length > 0 && orders.every((o) => SERVED_STATUSES.includes(o.status));
+  const TERMINAL_STATUSES = ["served", "completed", "cancelled"];
+  const allCompleted =
+    orders.length > 0 && orders.every((o) => TERMINAL_STATUSES.includes(o.status));
 
   async function handleRequestBill() {
-    if (endingSession || !allServed) return;
+    if (endingSession || !allCompleted) return;
     setEndingSession(true);
     try {
       try {
@@ -280,16 +260,21 @@ export default function CustomerOrdersPage() {
     );
   }
 
+  const PHASE_CONFIG = {
+    waiting:   { label: 'Waiting for Restaurant to Accept', color: '#f59e0b', Icon: IconHourglass },
+    preparing: { label: 'Preparing',                        color: '#a855f7', Icon: IconFlame },
+    completed: { label: 'Completed',                        color: '#22c55e', Icon: IconCheck },
+  };
+
   function OrderBatch({ order, batchIndex }) {
     const cfg = getOrderStatusConfig(order.status);
-    const phase = CUSTOMER_STATUS_PHASE[order.status] ?? cfg.label;
-    const metaKicker = `${batchIndex} / ${phase.toUpperCase()}`;
+    const phaseKey = getCustomerPhase(order.status);
+    const phaseInfo = PHASE_CONFIG[phaseKey];
+    const metaKicker = `Order ${batchIndex}`;
 
     const showEst =
       order.estimated_prep_time &&
       !["ready", "served", "completed", "cancelled"].includes(order.status);
-
-    const statusTone = dotToTextClass(cfg.dot);
 
     return (
       <article
@@ -306,7 +291,7 @@ export default function CustomerOrdersPage() {
               className="text-[10px] font-bold uppercase tracking-[0.1em] leading-relaxed max-w-[70%]"
               style={{ color: "var(--t-nav-muted)" }}
             >
-              <span className={statusTone}>{metaKicker}</span>
+              <span style={{ color: phaseInfo.color }}>{metaKicker}</span>
               {" · "}#{order.order_number}
               {" · "}
               {formatTime(order.createdAt)}
@@ -387,10 +372,10 @@ export default function CustomerOrdersPage() {
           </div>
 
           <div className="flex items-center justify-between pt-1 gap-3 border-t border-white/[0.06]">
-            <div className={`flex items-center gap-2.5 min-w-0 ${statusTone}`}>
-              <StatusGlyph status={order.status} className="w-4 h-4 shrink-0" />
-              <span className="text-[11px] font-bold uppercase tracking-wide truncate">
-                {phase}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <phaseInfo.Icon className="w-4 h-4 shrink-0" style={{ color: phaseInfo.color }} />
+              <span className="text-[11px] font-bold uppercase tracking-wide truncate" style={{ color: phaseInfo.color }}>
+                {phaseInfo.label}
               </span>
             </div>
             <span className="text-base font-bold text-white tabular-nums shrink-0">
@@ -447,7 +432,7 @@ export default function CustomerOrdersPage() {
           <Button
             loading={endingSession}
             onClick={handleRequestBill}
-            disabled={!allServed}
+            disabled={!allCompleted}
             className="w-full py-2 !rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-opacity active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: "var(--t-accent)",
@@ -457,9 +442,9 @@ export default function CustomerOrdersPage() {
             <IconReceipt className="w-3.5 h-3.5" />
             {endingSession ? "Please wait…" : "Request final bill"}
           </Button>
-          {!allServed && (
+          {!allCompleted && (
             <p className="text-[10px] text-center" style={{ color: "var(--t-nav-muted)" }}>
-              Available once all items are served
+              Available once all orders are completed
             </p>
           )}
         </div>

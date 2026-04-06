@@ -5,6 +5,10 @@ import {
   requestJoinSession,
   startSession,
 } from "../../services/customerService";
+import {
+  connectTableSocket,
+  disconnectTableSocket,
+} from "../../services/socketService";
 import { authStore } from "../../store/authStore";
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
@@ -78,6 +82,27 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     check();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrCodeId]);
+
+  // ── Watch for session appearing while on name_entry (real-time via socket) ──
+  useEffect(() => {
+    if (gateState !== "name_entry") return;
+
+    const socket = connectTableSocket(qrCodeId);
+
+    const onSessionStarted = (payload) => {
+      disconnectTableSocket();
+      setExistingName(payload.customer_name || "");
+      setAnyoneOnline(payload.anyone_online ?? true);
+      setGateState("join_or_create");
+    };
+
+    socket.on("session:started", onSessionStarted);
+
+    return () => {
+      socket.off("session:started", onSessionStarted);
+      disconnectTableSocket();
+    };
+  }, [gateState, qrCodeId]);
 
   // ── Polling (waiting for approval) ─────────────────────────────────────
   const stopPolling = useCallback(() => {
@@ -424,23 +449,12 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
               Request Rejected
             </Text>
             <Text size="sm" color="muted" className="mt-1">
-              Your request to join was rejected.
+              Your request to join was declined.
             </Text>
           </div>
-          <div className="flex flex-col gap-2 w-full">
-            <Button onClick={handleRetry} className="w-full">
-              Try again
-            </Button>
-            <button
-              onClick={() => {
-                setNameInput("");
-                setGateState("name_entry_new");
-              }}
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors py-1"
-            >
-              Create new session instead
-            </button>
-          </div>
+          <Button onClick={handleRetry} className="w-full">
+            Try again
+          </Button>
         </div>
       </>,
     );

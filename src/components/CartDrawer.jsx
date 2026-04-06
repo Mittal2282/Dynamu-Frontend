@@ -203,22 +203,32 @@ export default function CartDrawer({
   // AI suggestions — stale-while-revalidate, no loader
   const [suggestions, setSuggestions] = useState([]);
   const debounceRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    const cartIds = new Set(items.map((i) => i._id));
+
+    // Remove newly-added suggestions immediately so the section feels responsive.
+    setSuggestions((prev) => prev.filter((item) => !cartIds.has(item._id)));
+
     if (items.length === 0) {
       setSuggestions([]);
       return;
     }
 
-    // Don't clear stale suggestions — they stay visible until new ones arrive
+    const currentRequestId = ++requestIdRef.current;
+
+    // Keep stale suggestions visible while refreshing, but refresh quickly.
     debounceRef.current = setTimeout(() => {
       getCartSuggestions(items.map((i) => i._id))
         .then((data) => {
-          if (data.length > 0) setSuggestions(data);
+          if (requestIdRef.current !== currentRequestId) return;
+          const latestCartIds = new Set(items.map((i) => i._id));
+          setSuggestions((data || []).filter((item) => !latestCartIds.has(item._id)));
         })
         .catch(() => {});
-    }, 800);
+    }, 250);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

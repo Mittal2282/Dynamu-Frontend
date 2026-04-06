@@ -71,11 +71,84 @@ function Step1({ form, onChange, onNext, loading, error }) {
         <Field label="Password *"    value={form.owner_password} name="owner_password" onChange={onChange} type="password" placeholder="Min. 8 characters" />
       </div>
 
-      <SectionLabel title="Tables" />
-      <div className="grid grid-cols-2 gap-4 max-w-xs">
-        <Field label="Number of Tables *" value={form.table_count}  name="table_count"  onChange={onChange} type="number" placeholder="10" />
-        <Field label="Starting Table #"   value={form.start_number} name="start_number" onChange={onChange} type="number" placeholder="1" />
+      <SectionLabel title="Tables" sub="Configure floors and tables. Each floor has its own table numbering." />
+
+      {/* Floor count */}
+      <div className="flex items-center gap-4">
+        <div className="w-40">
+          <Field
+            label="Number of Floors *"
+            name="floor_count"
+            value={form.floor_count}
+            onChange={onChange}
+            type="number"
+            placeholder="1"
+          />
+        </div>
+        <p className="text-xs text-slate-500 mt-5">
+          {parseInt(form.floor_count) > 1
+            ? `Configure tables per floor below`
+            : 'Set table count and starting number'}
+        </p>
       </div>
+
+      {/* Per-floor config */}
+      {parseInt(form.floor_count) > 1 ? (
+        <div className="space-y-3">
+          {Array.from({ length: Math.min(parseInt(form.floor_count) || 1, 10) }).map((_, idx) => {
+            const floorNum = idx + 1;
+            const floorKey = `floor_${floorNum}`;
+            const floorData = form.floors?.[idx] || { floor_number: floorNum, floor_name: '', table_count: '10', start_number: '1' };
+            return (
+              <div
+                key={floorNum}
+                className="rounded-xl p-4 border border-white/10 space-y-3"
+                style={{ background: 'rgba(255,255,255,0.03)' }}
+              >
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--t-accent)' }}>
+                  Floor {floorNum}
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field
+                    label="Floor Name"
+                    name={`${floorKey}_name`}
+                    value={floorData.floor_name}
+                    onChange={(_, v) => onChange('floors', form.floors?.map((f, i) =>
+                      i === idx ? { ...f, floor_name: v } : f
+                    ) || [])}
+                    placeholder={floorNum === 1 ? 'Ground Floor' : `Floor ${floorNum}`}
+                  />
+                  <Field
+                    label="Tables *"
+                    name={`${floorKey}_count`}
+                    value={floorData.table_count}
+                    onChange={(_, v) => onChange('floors', form.floors?.map((f, i) =>
+                      i === idx ? { ...f, table_count: v } : f
+                    ) || [])}
+                    type="number"
+                    placeholder="10"
+                  />
+                  <Field
+                    label="Starting #"
+                    name={`${floorKey}_start`}
+                    value={floorData.start_number}
+                    onChange={(_, v) => onChange('floors', form.floors?.map((f, i) =>
+                      i === idx ? { ...f, start_number: v } : f
+                    ) || [])}
+                    type="number"
+                    placeholder="1"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 max-w-xs">
+          <Field label="Number of Tables *" value={form.table_count}  name="table_count"  onChange={onChange} type="number" placeholder="10" />
+          <Field label="Starting Table #"   value={form.start_number} name="start_number" onChange={onChange} type="number" placeholder="1" />
+        </div>
+      )}
 
       <div className="flex justify-end pt-2">
         <button
@@ -384,10 +457,25 @@ export default function OnboardPage() {
     name: '', slug: '', description: '', phone: '', email: '',
     opening_hours: '', city: '', state: '',
     owner_name: '', owner_email: '', owner_password: '',
+    floor_count: '1',
     table_count: '10', start_number: '1',
+    floors: [
+      { floor_number: 1, floor_name: 'Ground Floor', table_count: '10', start_number: '1' },
+    ],
   });
 
   const handleChange = (name, value) => {
+    if (name === 'floor_count') {
+      const n = Math.max(1, Math.min(10, parseInt(value) || 1));
+      setForm(p => {
+        const existing = p.floors || [];
+        const updated = Array.from({ length: n }, (_, i) =>
+          existing[i] || { floor_number: i + 1, floor_name: i === 0 ? 'Ground Floor' : `Floor ${i + 1}`, table_count: '10', start_number: '1' }
+        );
+        return { ...p, floor_count: String(n), floors: updated };
+      });
+      return;
+    }
     setForm(p => ({ ...p, [name]: value }));
     if (name === 'name' && !form.slug) {
       setForm(p => ({
@@ -406,7 +494,8 @@ export default function OnboardPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await createRestaurant({
+      const isMultiFloor = parseInt(form.floor_count) > 1;
+      const payload = {
         name:           form.name,
         slug:           form.slug,
         description:    form.description,
@@ -415,9 +504,19 @@ export default function OnboardPage() {
         owner_name:     form.owner_name,
         owner_email:    form.owner_email,
         owner_password: form.owner_password,
-        table_count:    parseInt(form.table_count) || 0,
-        start_number:   parseInt(form.start_number) || 1,
-      });
+      };
+      if (isMultiFloor) {
+        payload.floors = form.floors.map(f => ({
+          floor_number: parseInt(f.floor_number) || 1,
+          floor_name: f.floor_name || '',
+          table_count: parseInt(f.table_count) || 0,
+          start_number: parseInt(f.start_number) || 1,
+        }));
+      } else {
+        payload.table_count  = parseInt(form.table_count) || 0;
+        payload.start_number = parseInt(form.start_number) || 1;
+      }
+      const data = await createRestaurant(payload);
       setRestaurantId(data.restaurant._id);
       setStep(1);
     } catch (err) {

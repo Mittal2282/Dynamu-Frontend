@@ -189,6 +189,27 @@ export async function freeTable(tableId) {
 }
 
 /**
+ * Add tables to a floor (new or existing).
+ * @param {{ floor_number, floor_name, table_count, start_number }} floorData
+ */
+export async function toggleTableActive(tableId) {
+  return apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_TABLE_TOGGLE_ACTIVE(tableId),
+    useAdmin: true,
+  });
+}
+
+export async function addTablesToFloor(floorData) {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_TABLES_BULK,
+    payload:  floorData,
+    useAdmin: true,
+  });
+}
+
+/**
  * Manually close a table session (end it so next QR scan starts fresh).
  * @param {string} sessionId
  */
@@ -231,6 +252,15 @@ export async function toggleChefsSpecial(id) {
  * Toggle Featured flag on a menu item.
  * @param {string} id
  */
+export async function deleteDashMenuItem(id) {
+  const data = await apiCaller({
+    method:   'DELETE',
+    endpoint: ENDPOINTS.DASH_MENU_ITEM_DELETE(id),
+    useAdmin: true,
+  });
+  return data;
+}
+
 export async function toggleFeatured(id) {
   const data = await apiCaller({
     method:   'PATCH',
@@ -309,6 +339,25 @@ export async function bulkImportMenuItems(csvText) {
     method:   'POST',
     endpoint: ENDPOINTS.DASH_MENU_BULK,
     payload:  { csvText },
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function getIngredients() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function toggleIngredient(name, isAvailable) {
+  const data = await apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS_TOGGLE,
+    payload:  { name, is_available: isAvailable },
     useAdmin: true,
   });
   return data.data;
