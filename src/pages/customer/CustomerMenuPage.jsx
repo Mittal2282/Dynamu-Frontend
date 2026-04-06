@@ -4,7 +4,6 @@ import MenuItemCard from "../../components/customer/MenuItemCard";
 import Text from "../../components/ui/Text";
 import { useCartCount } from "../../store/cartStore";
 import { restaurantStore } from "../../store/restaurantStore";
-import { formatCurrency } from "../../utils/formatters";
 
 // ── Category ordering ──────────────────────────────────────────────────────────
 const CATEGORY_PRIORITY = [
@@ -60,78 +59,44 @@ function CategorySection({ name, items, currencySymbol, innerRef }) {
   );
 }
 
-// ── Dual-thumb price range slider ─────────────────────────────────────────────
-function PriceRangeSlider({ allItems, priceMin, setPriceMin, priceMax, setPriceMax, currencySymbol, onClose }) {
-  const prices = useMemo(() => allItems.map((i) => i.price).filter(Boolean), [allItems]);
-  const minBound = useMemo(() => Math.floor(Math.min(...prices, 0)), [prices]);
-  const maxBound = useMemo(() => Math.ceil(Math.max(...prices, 1000)), [prices]);
-
-  const currentMin = priceMin !== "" ? Number(priceMin) : minBound;
-  const currentMax = priceMax !== "" ? Number(priceMax) : maxBound;
-
-  const minPct = ((currentMin - minBound) / (maxBound - minBound)) * 100;
-  const maxPct = ((currentMax - minBound) / (maxBound - minBound)) * 100;
-
+// ── Compact veg / non-veg toggle ──────────────────────────────────────────────
+function VegToggle({ vegFilter, onChange }) {
   return (
-    <div className="flex items-center gap-2.5 shrink-0 px-3 py-1.5 rounded-full border" style={{ background: "var(--t-accent-10)", borderColor: "var(--t-accent)" }}>
-      {/* Min label */}
-      <span className="text-[10px] font-bold tabular-nums whitespace-nowrap" style={{ color: "var(--t-accent)", minWidth: "2.5rem", textAlign: "right" }}>
-        {formatCurrency(currentMin, currencySymbol)}
-      </span>
-
-      {/* Track + thumbs */}
-      <div className="relative flex items-center" style={{ width: "96px", height: "20px" }}>
-        {/* Background track */}
-        <div className="absolute w-full h-[4px] rounded-full" style={{ background: "var(--t-line)" }} />
-        {/* Active range fill */}
-        <div
-          className="absolute h-[4px] rounded-full"
-          style={{
-            left: `${minPct}%`,
-            width: `${maxPct - minPct}%`,
-            background: "var(--t-accent)",
-          }}
-        />
-        {/* Min thumb */}
-        <input
-          type="range"
-          min={minBound}
-          max={maxBound}
-          value={currentMin}
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            if (v <= currentMax) setPriceMin(v === minBound ? "" : String(v));
-          }}
-          className="price-range-thumb"
-          style={{ zIndex: currentMin > maxBound - (maxBound - minBound) * 0.1 ? 5 : 3 }}
-        />
-        {/* Max thumb */}
-        <input
-          type="range"
-          min={minBound}
-          max={maxBound}
-          value={currentMax}
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            if (v >= currentMin) setPriceMax(v === maxBound ? "" : String(v));
-          }}
-          className="price-range-thumb"
-          style={{ zIndex: 4 }}
-        />
-      </div>
-
-      {/* Max label */}
-      <span className="text-[10px] font-bold tabular-nums whitespace-nowrap" style={{ color: "var(--t-accent)", minWidth: "2.5rem" }}>
-        {formatCurrency(currentMax, currencySymbol)}
-      </span>
-
-      {/* Close */}
+    <div
+      className="flex items-center shrink-0 rounded-full p-0.5 gap-0.5"
+      style={{ background: "var(--t-float)", border: "1.5px solid var(--t-line)" }}
+    >
+      {/* Veg */}
       <button
-        onClick={onClose}
-        className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 transition-opacity hover:opacity-80"
-        style={{ background: "var(--t-accent)", color: "var(--t-bg)" }}
+        onClick={() => onChange(vegFilter === true ? null : true)}
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90"
+        title="Veg only"
+        style={
+          vegFilter === true
+            ? { background: "#22c55e22", border: "1.5px solid #22c55e" }
+            : { border: "1.5px solid transparent" }
+        }
       >
-        ✕
+        <span
+          className="w-2.5 h-2.5 rounded-full transition-opacity"
+          style={{ background: "#22c55e", opacity: vegFilter === true ? 1 : 0.35 }}
+        />
+      </button>
+      {/* Non-veg */}
+      <button
+        onClick={() => onChange(vegFilter === false ? null : false)}
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90"
+        title="Non-veg only"
+        style={
+          vegFilter === false
+            ? { background: "#ef444422", border: "1.5px solid #ef4444" }
+            : { border: "1.5px solid transparent" }
+        }
+      >
+        <span
+          className="w-2.5 h-2.5 rounded-sm transition-opacity"
+          style={{ background: "#ef4444", opacity: vegFilter === false ? 1 : 0.35 }}
+        />
       </button>
     </div>
   );
@@ -165,10 +130,7 @@ export default function CustomerMenuPage() {
     () => categories[0] ?? null,
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [vegFilter, setVegFilter] = useState(null); // null | true | false
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
 
   const headerRef = useRef(null);
   const categoryRefs = useRef({});
@@ -177,8 +139,7 @@ export default function CustomerMenuPage() {
 
   const allMenuItems = useMemo(() => Object.values(menu).flat(), [menu]);
 
-  const activeFilterCount =
-    (vegFilter !== null ? 1 : 0) + (priceMin !== "" || priceMax !== "" ? 1 : 0);
+  const activeFilterCount = vegFilter !== null ? 1 : 0;
 
   const isSearchActive = searchQuery.trim() !== "" || activeFilterCount > 0;
 
@@ -188,8 +149,6 @@ export default function CustomerMenuPage() {
     return allMenuItems
       .map((item) => {
         if (vegFilter !== null && item.is_veg !== vegFilter) return null;
-        if (priceMin !== "" && item.price < parseFloat(priceMin)) return null;
-        if (priceMax !== "" && item.price > parseFloat(priceMax)) return null;
         if (!q) return { ...item, _score: 0 };
         const iName = (item.name || "").toLowerCase();
         const iDesc = (item.description || "").toLowerCase();
@@ -203,14 +162,7 @@ export default function CustomerMenuPage() {
       })
       .filter(Boolean)
       .sort((a, b) => b._score - a._score);
-  }, [
-    allMenuItems,
-    isSearchActive,
-    searchQuery,
-    vegFilter,
-    priceMin,
-    priceMax,
-  ]);
+  }, [allMenuItems, isSearchActive, searchQuery, vegFilter]);
 
   // ── Scroll spy ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -276,8 +228,6 @@ export default function CustomerMenuPage() {
   const clearAllFilters = () => {
     setSearchQuery("");
     setVegFilter(null);
-    setPriceMin("");
-    setPriceMax("");
   };
 
   // ── Sync category slider scroll when activeCategory changes ──────────
@@ -321,9 +271,9 @@ export default function CustomerMenuPage() {
         className="sticky top-[57px] z-20 border-b"
         style={{ background: "color-mix(in srgb, var(--t-bg) 96%, black)", borderColor: "var(--t-line)" }}
       >
-        {/* Search bar */}
-        <div className="px-4 md:px-6 pt-3 pb-2">
-          <div className="relative">
+        {/* Search bar + veg toggle in one row */}
+        <div className="px-4 md:px-6 pt-3 pb-2.5 flex items-center gap-2">
+          <div className="relative flex-1">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--t-dim)" }}>
               <SearchIcon />
             </span>
@@ -350,82 +300,7 @@ export default function CustomerMenuPage() {
               </button>
             )}
           </div>
-        </div>
-
-        {/* Quick filter chips — always visible */}
-        <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {/* Veg chips */}
-          {[
-            { label: "Veg", value: true, dot: "#22c55e" },
-            { label: "Non-Veg", value: false, dot: "#ef4444" },
-          ].map((opt) => {
-            const active = vegFilter === opt.value;
-            return (
-              <button
-                key={String(opt.value)}
-                onClick={() => setVegFilter(active ? null : opt.value)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all duration-200 shrink-0"
-                style={
-                  active
-                    ? { background: `${opt.dot}22`, borderColor: opt.dot, color: opt.dot }
-                    : { background: "var(--t-float)", borderColor: "var(--t-line)", color: "var(--t-dim)" }
-                }
-              >
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: opt.dot, opacity: active ? 1 : 0.5 }} />
-                {opt.label}
-                {active && <span className="ml-0.5 opacity-70">✕</span>}
-              </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="w-px h-4 shrink-0" style={{ background: "var(--t-line)" }} />
-
-          {/* Price chip / inline slider */}
-          {showPriceFilter ? (
-            <PriceRangeSlider
-              allItems={allMenuItems}
-              priceMin={priceMin}
-              setPriceMin={setPriceMin}
-              priceMax={priceMax}
-              setPriceMax={setPriceMax}
-              currencySymbol={currencySymbol}
-              onClose={() => { setShowPriceFilter(false); setPriceMin(""); setPriceMax(""); }}
-            />
-          ) : (
-            <button
-              onClick={() => setShowPriceFilter(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all duration-200 shrink-0"
-              style={
-                priceMin || priceMax
-                  ? { background: "var(--t-accent-10)", borderColor: "var(--t-accent)", color: "var(--t-accent)" }
-                  : { background: "var(--t-float)", borderColor: "var(--t-line)", color: "var(--t-dim)" }
-              }
-            >
-              <span>₹</span>
-              {priceMin && priceMax
-                ? `${formatCurrency(priceMin, currencySymbol)} – ${formatCurrency(priceMax, currencySymbol)}`
-                : priceMin
-                  ? `From ${formatCurrency(priceMin, currencySymbol)}`
-                  : priceMax
-                    ? `Up to ${formatCurrency(priceMax, currencySymbol)}`
-                    : "Price"}
-            </button>
-          )}
-
-          {/* Clear all */}
-          {activeFilterCount > 0 && (
-            <button
-              onClick={clearAllFilters}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-all"
-              style={{ background: "var(--t-accent-10)", borderColor: "var(--t-accent-40)", color: "var(--t-accent)" }}
-            >
-              Clear all
-              <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black" style={{ background: "var(--t-accent)", color: "var(--t-bg)" }}>
-                {activeFilterCount}
-              </span>
-            </button>
-          )}
+          <VegToggle vegFilter={vegFilter} onChange={setVegFilter} />
         </div>
 
         {/* Category slider — always visible */}

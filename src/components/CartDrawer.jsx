@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { getCartSuggestions } from "../services/customerService";
-import { cartStore } from "../store/cartStore";
 import { restaurantStore } from "../store/restaurantStore";
 import { formatCurrency } from "../utils/formatters";
 import CartControl from "./customer/CartControl";
@@ -18,24 +17,6 @@ const TAX_RATE = 0.05; // 5 %
 
 /* ─── Cart item row ────────────────────────────────────────────────────────── */
 function CartItem({ item, currencySymbol }) {
-  const [instructionOpen, setInstructionOpen] = useState(false);
-  const [draft, setDraft] = useState(item.instruction || "");
-
-  // Keep draft in sync when instruction changes externally
-  useEffect(() => {
-    setDraft(item.instruction || "");
-  }, [item.instruction]);
-
-  const handleSave = () => {
-    cartStore.getState().setInstruction(item._id ?? item.id, draft.trim());
-    setInstructionOpen(false);
-  };
-
-  const handleCancel = () => {
-    setDraft(item.instruction || "");
-    setInstructionOpen(false);
-  };
-
   return (
     <div
       className="rounded-2xl overflow-hidden border mb-3 last:mb-0"
@@ -89,69 +70,6 @@ function CartItem({ item, currencySymbol }) {
               {formatCurrency(item.price, currencySymbol)}
             </Text>
           )}
-
-          {/* Inline Instruction */}
-          <div className="mt-2.5">
-            {instructionOpen ? (
-              <div className="flex flex-col gap-1.5">
-                <textarea
-                  autoFocus
-                  rows={2}
-                  maxLength={150}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="e.g. No sugar, extra spicy, sauce on the side..."
-                  className="w-full bg-black/20 border border-white/10 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[var(--t-accent)] transition-colors placeholder:text-white/30 resize-none"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSave}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer active:scale-[0.98]"
-                    style={{ background: "var(--t-accent)", color: "var(--t-bg)" }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer active:scale-[0.98]"
-                    style={{ color: "var(--t-dim)" }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : item.instruction ? (
-              <div className="cursor-pointer" onClick={() => setInstructionOpen(true)}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span style={{ color: "var(--t-accent)", opacity: 0.8 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                  </span>
-                  <Text as="span" size="xs" weight="medium" color="brand" className="opacity-80 hover:underline">
-                    Edit Instruction
-                  </Text>
-                </div>
-                <p className="text-white/60 text-xs italic border-l-2 pl-2" style={{ borderColor: "var(--t-accent)" }}>
-                  "{item.instruction}"
-                </p>
-              </div>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                leftIcon={
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                  </svg>
-                }
-                onClick={() => setInstructionOpen(true)}
-                className="!px-2.5 !py-1 !text-xs !font-medium !bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10"
-              >
-                Add Instruction
-              </Button>
-            )}
-          </div>
         </div>
 
         <CartControl item={item} showDelete={true} />
@@ -159,7 +77,6 @@ function CartItem({ item, currencySymbol }) {
     </div>
   );
 }
-
 
 /* ─── Bill row ─────────────────────────────────────────────────────────────── */
 function BillRow({ label, value, muted }) {
@@ -199,6 +116,9 @@ export default function CartDrawer({
   const basePath =
     baseFromOutlet ||
     (qrCodeId != null && tableNumber != null ? `/${qrCodeId}/${tableNumber}` : "/");
+
+  // Order level notes
+  const [orderNote, setOrderNote] = useState("");
 
   // AI suggestions — stale-while-revalidate, no loader
   const [suggestions, setSuggestions] = useState([]);
@@ -272,7 +192,6 @@ export default function CartDrawer({
           </button>
         </div>
       </div>
-
       {/* ── Scrollable body ────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Empty state */}
@@ -298,14 +217,31 @@ export default function CartDrawer({
         {items.length > 0 && (
           <>
             {/* Cart items */}
-            <div className="px-5">
+            <div
+              style={{
+                padding: "10px 20px 10px 20px",
+              }}
+            >
               {items.map((item) => (
-                <CartItem
-                  key={item._id ?? item.id}
-                  item={item}
-                  currencySymbol={currencySymbol}
-                />
+                <CartItem key={item._id ?? item.id} item={item} currencySymbol={currencySymbol} />
               ))}
+            </div>
+
+            {/* Global Order Note */}
+            <div className="px-5 mt-4">
+              <textarea
+                rows={3}
+                maxLength={500}
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                placeholder="Add special instructions for the kitchen... (e.g. less spicy, allergies)"
+                className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[var(--t-accent)] focus:bg-white/[0.06] transition-colors placeholder:text-white/30 resize-none shadow-inner"
+              />
+              <div className="mt-1 flex justify-end">
+                <span className="text-[10px]" style={{ color: "var(--t-nav-muted)" }}>
+                  {orderNote.length}/500
+                </span>
+              </div>
             </div>
 
             {/* You might also like — shown only when suggestions are available */}
@@ -381,7 +317,7 @@ export default function CartDrawer({
             fullWidth
             size="xl"
             loading={loading}
-            onClick={onPlaceOrder}
+            onClick={() => onPlaceOrder(orderNote.trim())}
             className="uppercase tracking-widest shadow-[0_8px_32px_-4px_var(--t-accent-40)]"
           >
             Place Order
@@ -389,7 +325,6 @@ export default function CartDrawer({
           </Button>
         </div>
       )}
-
     </Drawer>
   );
 }

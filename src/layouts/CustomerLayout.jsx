@@ -43,6 +43,7 @@ export default function CustomerLayout() {
   const [error, setError] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const openedCartFromAI = useRef(false);
   const [ordering, setOrdering] = useState(false);
   const [orderVersion, setOrderVersion] = useState(0);
   const [pendingJoinRequests, setPendingJoinRequests] = useState([]);
@@ -437,7 +438,13 @@ export default function CustomerLayout() {
       {/* ── Drawers ───────────────────────────────────────────────────────── */}
       <CartDrawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          if (openedCartFromAI.current) {
+            openedCartFromAI.current = false;
+            setAiChatOpen(true);
+          }
+        }}
         items={items}
         onRemove={remove}
         onPlaceOrder={handlePlaceOrder}
@@ -447,7 +454,15 @@ export default function CustomerLayout() {
         subtitle={drawerSubtitle}
       />
 
-      <AIChatDrawer isOpen={aiChatOpen} onClose={() => setAiChatOpen(false)} />
+      <AIChatDrawer
+        isOpen={aiChatOpen}
+        onClose={() => setAiChatOpen(false)}
+        onGoToCart={() => {
+          openedCartFromAI.current = true;
+          setAiChatOpen(false);
+          setDrawerOpen(true);
+        }}
+      />
     </div>
   );
 }
