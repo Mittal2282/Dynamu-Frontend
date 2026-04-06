@@ -25,9 +25,11 @@ export const restaurantStore = create(
         aiWelcomeMessage:      '',
 
         // Table
-        tableId:     null,
-        tableNumber: null,
-        tableName:   '',
+        tableId:        null,
+        tableNumber:    null,
+        tableName:      '',
+        tableFloor:     null,
+        tableFloorName: '',
 
         /** Menu categories → items (session; not persisted — see partialize) */
         menu: {},
@@ -48,9 +50,11 @@ export const restaurantStore = create(
 
         setTable: (table) =>
           set(() => ({
-            tableId:     table.id,
-            tableNumber: table.table_number,
-            tableName:   table.name,
+            tableId:        table.id,
+            tableNumber:    table.table_number,
+            tableName:      table.name,
+            tableFloor:     table.floor ?? null,
+            tableFloorName: table.floor_name ?? '',
           })),
 
         setMenu: (menu) => set(() => ({ menu: menu && typeof menu === 'object' ? menu : {} })),
@@ -63,7 +67,7 @@ export const restaurantStore = create(
             currencySymbol:       '₹',
             acceptsOnlinePayment: false,
             aiWelcomeMessage:     '',
-            tableId: null, tableNumber: null, tableName: '',
+            tableId: null, tableNumber: null, tableName: '', tableFloor: null, tableFloorName: '',
             menu: {},
           })),
       }),

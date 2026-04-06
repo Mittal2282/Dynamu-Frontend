@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getDashTables, freeTable } from '../../services/adminService';
+import { getDashTables, freeTable, addTablesToFloor, toggleTableActive } from '../../services/adminService';
 import { connectAdminSocket, disconnectAdminSocket } from '../../services/socketService';
 import { authStore } from '../../store/authStore';
+import { ENDPOINTS } from '../../utils/endpoints';
 
 // ─── Status config ─────────────────────────────────────────────────────────────
 
@@ -43,6 +44,15 @@ const STATUS_CONFIG = {
     glow:  '0 8px 28px -6px color-mix(in srgb, var(--t-accent2) 22%, transparent)',
     pillBg: 'color-mix(in srgb, var(--t-accent2) 18%, transparent)',
   },
+  unserviceable: {
+    label: 'Offline',
+    bg:    'rgba(255,255,255,0.02)',
+    text:  'rgba(255,255,255,0.25)',
+    dot:   'rgba(255,255,255,0.2)',
+    bar:   'rgba(255,255,255,0.1)',
+    glow:  'none',
+    pillBg: 'rgba(255,255,255,0.07)',
+  },
 };
 
 
@@ -82,13 +92,17 @@ function TableIcon({ color }) {
   );
 }
 
-function TableCard({ table, onFree }) {
-  const cfg        = STATUS_CONFIG[table.display_status] ?? STATUS_CONFIG.free;
-  const isOccupied = table.display_status !== 'free';
+function TableCard({ table, onFree, onToggleActive }) {
+  const cfg              = STATUS_CONFIG[table.display_status] ?? STATUS_CONFIG.free;
+  const isUnserviceable  = table.display_status === 'unserviceable';
+  const isOccupied       = !isUnserviceable && table.display_status !== 'free';
 
-  const [confirming, setConfirming] = useState(false);
-  const [freeing, setFreeing]       = useState(false);
-  const confirmTimer                = useRef(null);
+  const [confirming, setConfirming]         = useState(false);
+  const [freeing, setFreeing]               = useState(false);
+  const [togglingActive, setTogglingActive] = useState(false);
+  const [infoOpen, setInfoOpen]             = useState(false);
+  const confirmTimer                        = useRef(null);
+  const infoRef                             = useRef(null);
 
   const startConfirm = (e) => {
     e.stopPropagation();
@@ -108,44 +122,116 @@ function TableCard({ table, onFree }) {
     finally { setFreeing(false); setConfirming(false); }
   };
 
+  const handleToggleActive = async (e) => {
+    e.stopPropagation();
+    setTogglingActive(true);
+    try { await onToggleActive(table._id); }
+    finally { setTogglingActive(false); }
+  };
+
   const sess    = table.session;
   const members = sess?.members ?? [];
   const orders  = sess?.orders  ?? [];
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-2xl border transition-shadow duration-200"
+      className="flex flex-col rounded-2xl border transition-all duration-200"
       style={{
-        minHeight:       isOccupied ? undefined : '210px',
+        minHeight:       (isOccupied && !isUnserviceable) ? undefined : '210px',
         backgroundColor: cfg.bg,
-        borderColor:     'rgba(255,255,255,0.07)',
+        borderColor:     isUnserviceable ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)',
         boxShadow:       cfg.glow,
+        opacity:         isUnserviceable ? 0.6 : 1,
       }}
     >
       {/* ── Top accent bar ───────────────────────────── */}
       <div
-        className="shrink-0"
+        className="shrink-0 rounded-t-2xl"
         style={{ height: '3px', backgroundColor: cfg.bar, opacity: isOccupied ? 1 : 0.5 }}
       />
 
       {/* ── Content ──────────────────────────────────── */}
-      <div className={`flex flex-col px-4 pt-3 pb-4 gap-3 ${isOccupied ? '' : 'flex-1'}`}>
+      <div className={`flex flex-col px-4 pt-3 pb-4 gap-3 ${(isOccupied && !isUnserviceable) ? '' : 'flex-1'}`}>
 
-        {/* Row 1: table number + status pill */}
+        {/* Row 1: table number + status pill + serviceable toggle */}
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold leading-none" style={{ color: 'var(--t-text)' }}>
+          <span
+            className="text-xl font-bold leading-none"
+            style={{ color: isUnserviceable ? 'var(--t-dim)' : 'var(--t-text)' }}
+          >
             T{table.table_number}
           </span>
-          <span
-            className="text-[9px] font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full leading-none"
-            style={{ color: cfg.text, backgroundColor: cfg.pillBg }}
-          >
-            {cfg.label}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-[9px] font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full leading-none"
+              style={{ color: cfg.text, backgroundColor: cfg.pillBg }}
+            >
+              {cfg.label}
+            </span>
+            {/* Info button → serviceable popup */}
+            <div className="relative" ref={infoRef}>
+              <button
+                type="button"
+                onClick={() => setInfoOpen(v => !v)}
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0 text-[10px] font-bold leading-none"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'rgba(255,255,255,0.35)',
+                }}
+              >
+                i
+              </button>
+
+              {infoOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-40" onClick={() => setInfoOpen(false)} />
+
+                  {/* Popover */}
+                  <div
+                    className="absolute right-0 top-7 z-50 w-56 rounded-xl p-3 space-y-2.5 shadow-2xl"
+                    style={{
+                      background: 'var(--t-surface)',
+                      border: '1px solid var(--t-line)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'var(--t-dim)' }}>
+                      This table is currently{' '}
+                      <span className="font-semibold" style={{ color: isUnserviceable ? '#f87171' : '#4ade80' }}>
+                        {isUnserviceable ? 'unserviceable' : 'active'}
+                      </span>.{' '}
+                      {isUnserviceable
+                        ? 'Customers cannot scan or place orders. Mark it serviceable to bring it back online.'
+                        : 'Do you want to mark it as unserviceable? Customers will not be able to use this table.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        setInfoOpen(false);
+                        await handleToggleActive(e);
+                      }}
+                      disabled={togglingActive}
+                      className="w-full py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-50"
+                      style={isUnserviceable
+                        ? { background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }
+                        : { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
+                      }
+                    >
+                      {togglingActive
+                        ? 'Updating…'
+                        : isUnserviceable ? 'Mark as Serviceable' : 'Mark as Unserviceable'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Free state: centered table illustration */}
-        {!isOccupied && (
+        {/* Free/unserviceable state: centered table illustration */}
+        {(!isOccupied || isUnserviceable) && (
           <div className="flex-1 flex items-center justify-center py-2">
             <TableIcon color={cfg.dot} />
           </div>
@@ -286,7 +372,7 @@ function TableCard({ table, onFree }) {
 
         {/* Row 4: action */}
         <div style={{ height: '30px' }} className="shrink-0">
-          {isOccupied && (
+          {isOccupied && !isUnserviceable && (
             !confirming ? (
               <button
                 type="button"
@@ -358,12 +444,208 @@ function SkeletonCard() {
   );
 }
 
+// ─── Add Tables Modal ──────────────────────────────────────────────────────────
+
+function AddTablesModal({ existingFloors, onClose, onSuccess }) {
+  const [form, setForm] = useState({
+    floor_number: '',
+    floor_name: '',
+    table_count: '5',
+    start_number: '1',
+    is_new_floor: true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (name, value) => setForm(p => ({ ...p, [name]: value }));
+
+  const handleSubmit = async () => {
+    const count = parseInt(form.table_count);
+    if (!count || count < 1) { setError('Table count must be at least 1'); return; }
+
+    let floorNum = parseInt(form.floor_number);
+    if (!form.is_new_floor) {
+      if (!floorNum) { setError('Select a floor'); return; }
+    } else {
+      // Auto-assign next floor number if not provided
+      if (!floorNum) {
+        floorNum = existingFloors.length > 0
+          ? Math.max(...existingFloors.map(f => f.floor)) + 1
+          : 1;
+      }
+    }
+
+    setError('');
+    setSaving(true);
+    try {
+      await addTablesToFloor({
+        floor_number: floorNum,
+        floor_name: form.floor_name.trim(),
+        table_count: count,
+        start_number: parseInt(form.start_number) || 1,
+      });
+      onSuccess();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add tables.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = {
+    background: 'var(--t-float)',
+    border: '1px solid var(--t-line)',
+    borderRadius: '10px',
+    color: 'var(--t-text)',
+    padding: '8px 12px',
+    fontSize: '13px',
+    width: '100%',
+    outline: 'none',
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 space-y-5"
+        style={{ background: 'var(--t-surface)', border: '1px solid var(--t-line)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold" style={{ color: 'var(--t-text)' }}>Add Tables</p>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none">×</button>
+        </div>
+
+        {error && (
+          <div className="text-xs px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">{error}</div>
+        )}
+
+        {/* Floor type toggle */}
+        {existingFloors.length > 0 && (
+          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--t-line)' }}>
+            {[{ v: true, label: 'New Floor' }, { v: false, label: 'Existing Floor' }].map(({ v, label }) => (
+              <button
+                key={String(v)}
+                onClick={() => handleChange('is_new_floor', v)}
+                className="flex-1 py-2 text-xs font-semibold transition-all"
+                style={form.is_new_floor === v
+                  ? { background: 'var(--t-accent)', color: '#fff' }
+                  : { background: 'transparent', color: 'var(--t-dim)' }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Floor selection (existing) */}
+        {!form.is_new_floor && existingFloors.length > 0 && (
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor</label>
+            <select
+              value={form.floor_number}
+              onChange={e => handleChange('floor_number', e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              <option value="">Select floor…</option>
+              {existingFloors.map(f => (
+                <option key={f.floor} value={f.floor}>
+                  {f.floor_name ? `Floor ${f.floor} — ${f.floor_name}` : `Floor ${f.floor}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* New floor fields */}
+        {form.is_new_floor && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor #</label>
+              <input
+                type="number"
+                min="1"
+                value={form.floor_number}
+                onChange={e => handleChange('floor_number', e.target.value)}
+                placeholder="Auto"
+                style={inputStyle}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor Name</label>
+              <input
+                type="text"
+                value={form.floor_name}
+                onChange={e => handleChange('floor_name', e.target.value)}
+                placeholder="e.g. Rooftop"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Table count + start number */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Tables to Add *</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={form.table_count}
+              onChange={e => handleChange('table_count', e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Starting # </label>
+            <input
+              type="number"
+              min="1"
+              value={form.start_number}
+              onChange={e => handleChange('start_number', e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors"
+            style={{ color: 'var(--t-dim)', border: '1px solid var(--t-line)', background: 'transparent' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+            style={{ background: 'var(--t-accent)' }}
+          >
+            {saving
+              ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : 'Add Tables'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TableStatusPage() {
-  const [tables, setTables]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [tables, setTables]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [activeFloor, setActiveFloor]   = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [pdfLoading, setPdfLoading]     = useState(false);
 
   const fetchTables = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -397,20 +679,66 @@ export default function TableStatusPage() {
     fetchTables(true);
   };
 
+  const handleToggleActive = async (tableId) => {
+    await toggleTableActive(tableId);
+    fetchTables(true);
+  };
+
+  const downloadQRPDF = async () => {
+    setPdfLoading(true);
+    try {
+      const token = authStore.getState().adminAccessToken;
+      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const res = await fetch(`${base}${ENDPOINTS.DASH_TABLES_QR_PDF}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'qr-codes.pdf'; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   const totalTables = tables.length;
   const counts = {
-    free:     tables.filter(t => t.display_status === 'free').length,
-    occupied: tables.filter(t => t.display_status === 'occupied').length,
-    billing:  tables.filter(t => t.display_status === 'billing').length,
+    free:          tables.filter(t => t.display_status === 'free').length,
+    occupied:      tables.filter(t => t.display_status === 'occupied').length,
+    billing:       tables.filter(t => t.display_status === 'billing').length,
+    unserviceable: tables.filter(t => t.display_status === 'unserviceable').length,
   };
   const totalOccupied = counts.occupied + counts.billing;
 
-  // Summary rows: Free | Active | Billing
+  // Summary rows
   const STATS = [
-    { key: 'free',     label: 'Free',    count: counts.free,     cfg: STATUS_CONFIG.free },
-    { key: 'occupied', label: 'Active',  count: counts.occupied, cfg: STATUS_CONFIG.occupied },
-    { key: 'billing',  label: 'Billing', count: counts.billing,  cfg: STATUS_CONFIG.billing },
+    { key: 'free',          label: 'Free',      count: counts.free,          cfg: STATUS_CONFIG.free },
+    { key: 'occupied',      label: 'Active',    count: counts.occupied,      cfg: STATUS_CONFIG.occupied },
+    { key: 'billing',       label: 'Billing',   count: counts.billing,       cfg: STATUS_CONFIG.billing },
+    { key: 'unserviceable', label: 'Offline',   count: counts.unserviceable, cfg: STATUS_CONFIG.unserviceable },
   ];
+
+  // Multi-floor grouping
+  const floorGroups = {};
+  for (const t of tables) {
+    const key = t.floor ?? 1;
+    if (!floorGroups[key]) {
+      floorGroups[key] = { floor: key, floor_name: t.floor_name || '', tables: [] };
+    }
+    floorGroups[key].tables.push(t);
+  }
+  const floorKeys = Object.keys(floorGroups).map(Number).sort((a, b) => a - b);
+  const isMultiFloor = floorKeys.length > 1;
+
+  // Active floor tab (default to first floor)
+  const currentFloor = activeFloor ?? (floorKeys[0] ?? 1);
+  const visibleTables = isMultiFloor
+    ? (floorGroups[currentFloor]?.tables ?? [])
+    : tables;
 
   const floorSubline = loading
     ? 'Loading…'
@@ -424,7 +752,7 @@ export default function TableStatusPage() {
     <div className="space-y-5">
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1
             className="text-2xl font-bold"
@@ -440,19 +768,50 @@ export default function TableStatusPage() {
             Live floor map
           </p>
         </div>
-        <button
-          onClick={() => fetchTables()}
-          disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 bg-white/5 border border-white/10 hover:bg-white/8 transition-all disabled:opacity-40"
-        >
-          <svg
-            className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Add Tables */}
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+            style={{ background: 'var(--t-accent)', color: '#fff' }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Tables
+          </button>
+
+          {/* Download QR PDF */}
+          <button
+            onClick={downloadQRPDF}
+            disabled={pdfLoading || tables.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40"
+            style={{ color: 'var(--t-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            {pdfLoading
+              ? <span className="w-3.5 h-3.5 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin" />
+              : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )
+            }
+            QR Codes PDF
+          </button>
+
+          {/* Refresh */}
+          <button
+            onClick={() => fetchTables()}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40"
+            style={{ color: 'var(--t-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* ── Error ────────────────────────────────────────────────────────────── */}
@@ -506,10 +865,10 @@ export default function TableStatusPage() {
         style={{ backgroundColor: 'var(--t-surface)', borderColor: 'var(--t-line)' }}
       >
         {/* Section header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>
-              Floor Overview
+              {isMultiFloor ? 'Floor Plan' : 'Floor Overview'}
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--t-dim)' }}>
               {floorSubline}
@@ -519,15 +878,56 @@ export default function TableStatusPage() {
           <div className="hidden sm:flex items-center gap-3">
             {STATS.map(({ key, label, cfg }) => (
               <div key={key} className="flex items-center gap-1.5">
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: cfg.dot }}
-                />
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.dot }} />
                 <span className="text-[10px] font-medium" style={{ color: 'var(--t-dim)' }}>{label}</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Floor tabs (multi-floor only) */}
+        {isMultiFloor && !loading && (
+          <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+            {floorKeys.map(fKey => {
+              const g = floorGroups[fKey];
+              const isActive = fKey === currentFloor;
+              const occupied = g.tables.filter(t => t.display_status !== 'free').length;
+              return (
+                <button
+                  key={fKey}
+                  onClick={() => setActiveFloor(fKey)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150"
+                  style={isActive ? {
+                    background: 'linear-gradient(90deg, rgba(var(--t-accent-rgb,249,115,22),0.18), rgba(var(--t-accent-rgb,249,115,22),0.07))',
+                    color: 'var(--t-accent)',
+                    border: '1px solid rgba(249,115,22,0.22)',
+                  } : {
+                    background: 'rgba(255,255,255,0.04)',
+                    color: 'var(--t-dim)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                  }}
+                >
+                  <span>{g.floor_name || `Floor ${g.floor}`}</span>
+                  <span
+                    className="px-1.5 py-0.5 rounded-md text-[9px] font-bold"
+                    style={{
+                      background: occupied > 0 ? 'rgba(249,115,22,0.15)' : 'rgba(255,255,255,0.06)',
+                      color: occupied > 0 ? 'var(--t-accent)' : 'var(--t-dim)',
+                    }}
+                  >
+                    {g.tables.length}
+                  </span>
+                  {occupied > 0 && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: 'var(--t-accent)', boxShadow: '0 0 4px var(--t-accent)' }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Grid */}
         {loading && tables.length === 0 ? (
@@ -540,12 +940,24 @@ export default function TableStatusPage() {
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {tables.map((table) => (
-              <TableCard key={table._id} table={table} onFree={handleFree} />
+            {visibleTables.map((table) => (
+              <TableCard key={table._id} table={table} onFree={handleFree} onToggleActive={handleToggleActive} />
             ))}
           </div>
         )}
       </div>
+
+      {/* ── Add Tables Modal ─────────────────────────────────────────────────── */}
+      {addModalOpen && (
+        <AddTablesModal
+          existingFloors={Object.values(floorGroups)}
+          onClose={() => setAddModalOpen(false)}
+          onSuccess={() => {
+            setAddModalOpen(false);
+            fetchTables(true);
+          }}
+        />
+      )}
     </div>
   );
 }

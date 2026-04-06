@@ -34,14 +34,21 @@ function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
 }
 
 /* ─── Item Card ──────────────────────────────────────────────────────────────── */
-function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, saving }) {
+function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, onUpdateDiscount, saving }) {
   const isSaving = saving === item._id;
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingDiscount, setEditingDiscount] = useState(false);
+  const [discountInput, setDiscountInput] = useState(String(item.discount_percentage ?? 0));
   const discount = item.discount_percentage ?? 0;
   const effectivePrice = discount > 0 ? Math.round(item.price * (1 - discount / 100)) : null;
   const isVeg = item.is_veg !== false;
   const blockedByIngredient = item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
-  const isHidden = !item.is_available || blockedByIngredient;
+
+  const commitDiscount = () => {
+    const val = Math.min(100, Math.max(0, parseInt(discountInput, 10) || 0));
+    setEditingDiscount(false);
+    if (val !== discount) onUpdateDiscount(item._id, val);
+  };
 
   return (
     <div
@@ -149,12 +156,47 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           <p className="text-sm font-semibold text-white line-clamp-1 leading-snug">
             {item.name}
           </p>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
-              ₹{effectivePrice ?? item.price}
-            </span>
-            {effectivePrice && (
-              <span className="text-xs line-through text-slate-500">₹{item.price}</span>
+          <div className="flex items-center justify-between gap-1 mt-0.5">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
+                ₹{effectivePrice ?? item.price}
+              </span>
+              {effectivePrice && (
+                <span className="text-xs line-through text-slate-500">₹{item.price}</span>
+              )}
+            </div>
+
+            {/* Inline discount editor */}
+            {editingDiscount ? (
+              <div className="flex items-center gap-1">
+                <input
+                  autoFocus
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value)}
+                  onBlur={commitDiscount}
+                  onKeyDown={(e) => { if (e.key === "Enter") commitDiscount(); if (e.key === "Escape") setEditingDiscount(false); }}
+                  className="w-12 text-center text-xs font-bold rounded-md py-0.5 focus:outline-none"
+                  style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                />
+                <span className="text-[10px] text-slate-500">%</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setDiscountInput(String(discount)); setEditingDiscount(true); }}
+                disabled={isSaving}
+                title="Set discount"
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all duration-150 disabled:opacity-40"
+                style={
+                  discount > 0
+                    ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }
+                    : { background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }
+                }
+              >
+                {discount > 0 ? `−${discount}%` : "Add Discount"}
+              </button>
             )}
           </div>
         </div>
@@ -359,6 +401,7 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
                 onToggleFeatured={handlers.onToggleFeatured}
                 onEdit={handlers.onEdit}
                 onDelete={handlers.onDelete}
+                onUpdateDiscount={handlers.onUpdateDiscount}
                 saving={handlers.saving}
               />
             ))}
@@ -491,6 +534,18 @@ export default function MenuManagePage() {
     setBulkModalOpen(false);
   };
 
+  const handleUpdateDiscount = async (itemId, value) => {
+    setSaving(itemId);
+    try {
+      const updated = await updateDashMenuItem(itemId, { discount_percentage: value });
+      setItems((prev) => prev.map((i) => (i._id === itemId ? { ...i, ...updated } : i)));
+    } catch {
+      // silently ignore
+    } finally {
+      setSaving(null);
+    }
+  };
+
   const handleDelete = async (itemId) => {
     setSaving(itemId);
     try {
@@ -509,6 +564,7 @@ export default function MenuManagePage() {
     onToggleFeatured: handleToggleFeatured,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    onUpdateDiscount: handleUpdateDiscount,
     saving,
   };
 
