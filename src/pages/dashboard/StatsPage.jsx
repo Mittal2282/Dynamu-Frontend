@@ -2,60 +2,285 @@ import { useEffect, useState } from "react";
 import { getDashOrders } from "../../services/adminService";
 import { apiCaller } from "../../api/apiCaller";
 
-
-
 const RANGES = [
-  { label: "Today", value: "today" },
-  { label: "This Week", value: "week" },
+  { label: "Today",      value: "today" },
+  { label: "This Week",  value: "week" },
   { label: "This Month", value: "month" },
 ];
 
-const STATUS_BADGE = {
-  pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  confirmed: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  preparing: "bg-purple-500/15 text-purple-400 border-purple-500/20",
-  ready: "bg-green-500/15 text-green-400 border-green-500/20",
-  served: "bg-slate-500/15 text-slate-300 border-slate-500/20",
-  completed: "bg-slate-500/15 text-slate-300 border-slate-500/20",
-  cancelled: "bg-red-500/15 text-red-400 border-red-500/20",
+const STATUS_CONFIG = {
+  pending:   { label: "Pending",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.2)"  },
+  confirmed: { label: "Confirmed", color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.2)"  },
+  preparing: { label: "Preparing", color: "#a855f7", bg: "rgba(168,85,247,0.1)",  border: "rgba(168,85,247,0.2)"  },
+  ready:     { label: "Ready",     color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)"   },
+  served:    { label: "Served",    color: "#94a3b8", bg: "rgba(148,163,184,0.08)", border: "rgba(148,163,184,0.15)" },
+  completed: { label: "Completed", color: "#64748b", bg: "rgba(100,116,139,0.08)", border: "rgba(100,116,139,0.15)" },
+  cancelled: { label: "Cancelled", color: "#ef4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)"   },
 };
 
-const STAT_ICONS = {
-  orders: { icon: "📋", gradient: "from-blue-500 to-blue-400" },
-  revenue: { icon: "💰", gradient: "from-orange-500 to-orange-400" },
-  items: { icon: "🍽️", gradient: "from-purple-500 to-purple-400" },
-  avg: { icon: "📈", gradient: "from-green-500 to-green-400" },
-};
-
-
-function StatCard({ label, value, iconKey, sub }) {
-  const meta = STAT_ICONS[iconKey] ?? STAT_ICONS.orders;
+/* ─── Stat Card ──────────────────────────────────────────────────────────────── */
+function StatCard({ label, value, sub, accentColor, icon }) {
   return (
-    <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 overflow-hidden relative group hover:border-white/15 transition-colors duration-200">
-      {/* Subtle ambient glow */}
+    <div
+      className="relative rounded-2xl p-5 flex flex-col gap-4 overflow-hidden group transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        background: "var(--t-surface)",
+        border: "1px solid var(--t-line)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+      }}
+    >
+      {/* Ambient glow */}
       <div
-        className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.06] group-hover:opacity-[0.1] transition-opacity"
-        style={{ background: "var(--t-accent)" }}
+        className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-[0.07] blur-xl pointer-events-none group-hover:opacity-[0.12] transition-opacity duration-300"
+        style={{ background: accentColor }}
       />
-      {/* Icon */}
+      {/* Top stripe */}
       <div
-        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-4 bg-gradient-to-br ${meta.gradient} bg-opacity-15`}
-        style={{
-          background: `linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))`,
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        {meta.icon}
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
+        style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
+      />
+
+      {/* Icon + sub */}
+      <div className="flex items-center justify-between">
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}25` }}
+        >
+          {icon}
+        </div>
+        {sub && (
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: "var(--t-float)", color: "var(--t-dim)" }}
+          >
+            {sub}
+          </span>
+        )}
       </div>
-      {/* Value */}
-      <p className="text-3xl font-bold text-white tracking-tight relative">{value ?? "—"}</p>
-      {/* Label */}
-      <p className="text-xs text-slate-400 mt-1.5 font-medium">{label}</p>
-      {sub && <p className="text-[11px] text-slate-600 mt-0.5">{sub}</p>}
+
+      {/* Value + label */}
+      <div>
+        <p
+          className="text-2xl font-bold tracking-tight leading-none"
+          style={{ color: "var(--t-text)" }}
+        >
+          {value ?? "—"}
+        </p>
+        <p className="text-[11px] font-medium mt-1.5" style={{ color: "var(--t-dim)" }}>
+          {label}
+        </p>
+      </div>
     </div>
   );
 }
 
+/* ─── Status Bar Chart ───────────────────────────────────────────────────────── */
+function StatusBreakdown({ data }) {
+  const entries = Object.entries(data).filter(([, v]) => v > 0);
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  if (!total) return null;
+
+  return (
+    <div
+      className="rounded-2xl p-5 space-y-4"
+      style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+          Orders by Status
+        </p>
+        <span className="text-xs font-bold" style={{ color: "var(--t-accent)" }}>
+          {total} total
+        </span>
+      </div>
+
+      {/* Stacked bar */}
+      <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
+        {entries.map(([status, count]) => {
+          const cfg = STATUS_CONFIG[status];
+          return (
+            <div
+              key={status}
+              className="rounded-full transition-all duration-500"
+              style={{
+                width: `${(count / total) * 100}%`,
+                background: cfg?.color ?? "#64748b",
+                minWidth: "2px",
+              }}
+              title={`${status}: ${count}`}
+            />
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {entries.map(([status, count]) => {
+          const cfg = STATUS_CONFIG[status];
+          const pct = Math.round((count / total) * 100);
+          return (
+            <div
+              key={status}
+              className="flex items-center gap-2 px-2.5 py-2 rounded-xl"
+              style={{ background: cfg?.bg ?? "rgba(255,255,255,0.04)", border: `1px solid ${cfg?.border ?? "rgba(255,255,255,0.1)"}` }}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: cfg?.color ?? "#64748b" }}
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold capitalize truncate" style={{ color: cfg?.color ?? "#94a3b8" }}>
+                  {cfg?.label ?? status}
+                </p>
+                <p className="text-[10px]" style={{ color: "var(--t-dim)" }}>
+                  {count} · {pct}%
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Orders Table ───────────────────────────────────────────────────────────── */
+function OrdersTable({ orders }) {
+  return (
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+    >
+      {/* Header */}
+      <div
+        className="px-5 py-3.5 flex items-center justify-between"
+        style={{ borderBottom: "1px solid var(--t-line)" }}
+      >
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+            Order Log
+          </p>
+          <span
+            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}
+          >
+            {orders.length}
+          </span>
+        </div>
+        <p className="text-[11px]" style={{ color: "var(--t-dim)" }}>
+          Today's activity
+        </p>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+            style={{ background: "var(--t-float)" }}
+          >
+            📋
+          </div>
+          <p className="text-sm font-medium" style={{ color: "var(--t-dim)" }}>
+            No orders yet today
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--t-line)" }}>
+                {["Order #", "Table", "Items", "Amount", "Status"].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`px-5 py-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap ${i === 3 ? "text-right" : i === 4 ? "text-center" : "text-left"}`}
+                    style={{ color: "var(--t-dim)" }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {orders.slice(0, 50).map((order, idx) => {
+                const cfg = STATUS_CONFIG[order.status];
+                const itemSummary = order.items?.map((i) => i.name).join(", ") || "—";
+                return (
+                  <tr
+                    key={order._id}
+                    className="transition-colors duration-100"
+                    style={{
+                      borderBottom: idx < orders.length - 1 ? "1px solid var(--t-line)" : "none",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    {/* Order # */}
+                    <td className="px-5 py-3 whitespace-nowrap">
+                      <span
+                        className="font-mono text-xs font-semibold"
+                        style={{ color: "var(--t-accent)" }}
+                      >
+                        #{order.order_number}
+                      </span>
+                    </td>
+
+                    {/* Table */}
+                    <td className="px-5 py-3 whitespace-nowrap">
+                      <span
+                        className="text-xs font-semibold px-2 py-1 rounded-lg"
+                        style={{
+                          background: "var(--t-float)",
+                          color: "var(--t-text)",
+                          border: "1px solid var(--t-line)",
+                        }}
+                      >
+                        T{order.table?.table_number ?? order.table_number ?? "—"}
+                      </span>
+                    </td>
+
+                    {/* Items */}
+                    <td className="px-5 py-3 max-w-[200px]">
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: "var(--t-dim)" }}
+                        title={itemSummary}
+                      >
+                        {itemSummary}
+                      </p>
+                    </td>
+
+                    {/* Amount */}
+                    <td className="px-5 py-3 text-right whitespace-nowrap">
+                      <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
+                        ₹{Math.round(order.total_amount || 0).toLocaleString()}
+                      </span>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-5 py-3 text-center">
+                      <span
+                        className="inline-block text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap"
+                        style={{
+                          background: cfg?.bg ?? "rgba(255,255,255,0.06)",
+                          color: cfg?.color ?? "#94a3b8",
+                          border: `1px solid ${cfg?.border ?? "rgba(255,255,255,0.1)"}`,
+                        }}
+                      >
+                        {cfg?.label ?? order.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────────────────── */
 export default function StatsPage() {
   const [range, setRange] = useState("today");
   const [stats, setStats] = useState(null);
@@ -63,12 +288,10 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+    setStats(null);
     Promise.all([
-      apiCaller({
-        method: "GET",
-        endpoint: `/api/restaurant-dash/stats?range=${range}`,
-        useAdmin: true,
-      }),
+      apiCaller({ method: "GET", endpoint: `/api/restaurant-dash/stats?range=${range}`, useAdmin: true }),
       getDashOrders(),
     ])
       .then(([statsData, orderList]) => {
@@ -83,36 +306,43 @@ export default function StatsPage() {
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + (o.items?.reduce((s, i) => s + i.quantity, 0) || 0), 0);
 
+  const revenue = Math.round(stats?.total_revenue ?? 0);
+  const avgOrder = Math.round(stats?.average_order_value ?? 0);
+
   return (
-    <div className="space-y-6">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1
-            className="text-2xl font-bold"
-            style={{
-              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
+            className="text-2xl font-bold text-white"
           >
-            Stats
+            Stats & Reports
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">Performance overview</p>
+          <p className="text-sm mt-0.5" style={{ color: "var(--t-dim)" }}>
+            Performance overview for your restaurant
+          </p>
         </div>
 
         {/* Range selector */}
-        <div className="flex gap-0.5 bg-slate-900 border border-white/10 rounded-xl p-1">
+        <div
+          className="flex gap-1 p-1 rounded-xl self-start sm:self-auto"
+          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+        >
           {RANGES.map((r) => (
             <button
               key={r.value}
               onClick={() => setRange(r.value)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
+              style={
                 range === r.value
-                  ? "text-white shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              }`}
-              style={range === r.value ? { background: "var(--t-accent)" } : {}}
+                  ? {
+                      background: "var(--t-accent)",
+                      color: "#fff",
+                      boxShadow: "0 2px 8px var(--t-accent-20)",
+                    }
+                  : { color: "var(--t-dim)" }
+              }
             >
               {r.label}
             </button>
@@ -120,123 +350,75 @@ export default function StatsPage() {
         </div>
       </div>
 
-      {/* ── Loading ─────────────────────────────────────────────────────────── */}
+      {/* ── Loading ── */}
       {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div
+            className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
+          />
+          <p className="text-sm" style={{ color: "var(--t-dim)" }}>
+            Loading stats…
+          </p>
         </div>
       ) : (
         <>
-          {/* ── Stat cards ─────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ── Stat cards ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               label="Total Orders"
               value={stats?.total_orders ?? 0}
-              iconKey="orders"
               sub={`${stats?.pending_orders ?? 0} pending`}
+              accentColor="#3b82f6"
+              icon={
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="1" />
+                  <path d="M9 12h6M9 16h4" />
+                </svg>
+              }
             />
             <StatCard
               label="Revenue"
-              value={`₹${Math.round(stats?.total_revenue ?? 0).toLocaleString()}`}
-              iconKey="revenue"
+              value={`₹${revenue.toLocaleString()}`}
               sub={`${stats?.paid_orders ?? 0} paid`}
+              accentColor="var(--t-accent)"
+              icon={
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="var(--t-accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                </svg>
+              }
             />
-            <StatCard label="Items Sold" value={itemsTotal} iconKey="items" />
+            <StatCard
+              label="Items Sold"
+              value={itemsTotal}
+              accentColor="#a855f7"
+              icon={
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M3 10h18M12 6v14M9 20h6" />
+                </svg>
+              }
+            />
             <StatCard
               label="Avg Order Value"
-              value={`₹${Math.round(stats?.average_order_value ?? 0)}`}
-              iconKey="avg"
+              value={`₹${avgOrder.toLocaleString()}`}
+              accentColor="#22c55e"
+              icon={
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 20V10M12 20V4M6 20v-6" />
+                </svg>
+              }
             />
           </div>
 
-          {/* ── Orders by status ───────────────────────────────────────────── */}
+          {/* ── Status breakdown ── */}
           {stats?.orders_by_status && Object.keys(stats.orders_by_status).length > 0 && (
-            <div className="bg-slate-900 border border-white/10 rounded-2xl p-5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
-                Orders by Status
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(stats.orders_by_status).map(([status, count]) => (
-                  <span
-                    key={status}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${STATUS_BADGE[status] ?? "bg-white/10 text-white border-white/10"}`}
-                  >
-                    {status} · {count}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <StatusBreakdown data={stats.orders_by_status} />
           )}
 
-
-          {/* ── Orders table ───────────────────────────────────────────────── */}
-          <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-              <p className="text-sm font-semibold text-white">Today's Orders</p>
-              <span className="text-xs text-slate-500">{orders.length} total</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Order #
-                    </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Table
-                    </th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Items
-                    </th>
-                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Total
-                    </th>
-                    <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center text-slate-600 py-12 text-sm">
-                        No orders today.
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.slice(0, 50).map((order) => (
-                      <tr key={order._id} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="px-5 py-3 font-mono text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
-                          {order.order_number}
-                        </td>
-                        <td className="px-5 py-3 text-slate-200 text-sm">
-                          Table {order.table?.table_number ?? order.table_number ?? "—"}
-                        </td>
-                        <td className="px-5 py-3 text-slate-500 max-w-[180px]">
-                          <span className="truncate block text-xs">
-                            {order.items?.map((i) => i.name).join(", ")}
-                          </span>
-                        </td>
-                        <td
-                          className="px-5 py-3 text-right font-semibold text-sm"
-                          style={{ color: "var(--t-accent)" }}
-                        >
-                          ₹{Math.round(order.total_amount || 0)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[order.status] ?? "bg-white/10 text-white border-white/10"}`}
-                          >
-                            {order.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* ── Orders table ── */}
+          <OrdersTable orders={orders} />
         </>
       )}
     </div>

@@ -37,6 +37,7 @@ export const ENDPOINTS = {
   DASH_STATS:      '/api/restaurant-dash/stats',
   DASH_MENU:               '/api/restaurant-dash/menu',
   DASH_MENU_ITEM:          (id) => `/api/restaurant-dash/menu/${id}`,
+  DASH_MENU_ITEM_DELETE:   (id) => `/api/restaurant-dash/menu/${id}`,
   DASH_MENU_TOGGLE:        (id) => `/api/restaurant-dash/menu/${id}/toggle`,
   DASH_MENU_CHEFS_SPECIAL: (id) => `/api/restaurant-dash/menu/${id}/chefs-special`,
   DASH_MENU_FEATURED:      (id) => `/api/restaurant-dash/menu/${id}/featured`,
@@ -45,6 +46,8 @@ export const ENDPOINTS = {
   DASH_TABLES:             '/api/restaurant-dash/tables',
   DASH_TABLE_FREE:         (id) => `/api/restaurant-dash/tables/${id}/free`,
   DASH_CLOSE_SESSION:      (id) => `/api/restaurant-dash/sessions/${id}/close`,
+  DASH_INGREDIENTS:        '/api/restaurant-dash/ingredients',
+  DASH_INGREDIENTS_TOGGLE: '/api/restaurant-dash/ingredients/toggle',
 
   // Customer — special sections
   CART_SUGGESTIONS:   '/api/customer/suggestions',
