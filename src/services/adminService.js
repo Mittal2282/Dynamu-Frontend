@@ -189,6 +189,27 @@ export async function freeTable(tableId) {
 }
 
 /**
+ * Add tables to a floor (new or existing).
+ * @param {{ floor_number, floor_name, table_count, start_number }} floorData
+ */
+export async function toggleTableActive(tableId) {
+  return apiCaller({
+    method:   'PATCH',
+    endpoint: ENDPOINTS.DASH_TABLE_TOGGLE_ACTIVE(tableId),
+    useAdmin: true,
+  });
+}
+
+export async function addTablesToFloor(floorData) {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_TABLES_BULK,
+    payload:  floorData,
+    useAdmin: true,
+  });
+}
+
+/**
  * Manually close a table session (end it so next QR scan starts fresh).
  * @param {string} sessionId
  */

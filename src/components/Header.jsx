@@ -31,7 +31,7 @@ function IconCartBag({ className, style }) {
  * @param {{ onCartClick: () => void, variant?: 'legacy' | 'customer', basePath?: string, aiChatOpen?: boolean, onAIClick?: () => void }} props
  */
 export default function Header({ onCartClick, variant = 'legacy', basePath = '', aiChatOpen = false, onAIClick }) {
-  const { name, tagline, currencySymbol, tableNumber } = restaurantStore();
+  const { name, tagline, currencySymbol, tableNumber, tableFloor, tableFloorName } = restaurantStore();
   const count = useCartCount();
   const total = useCartTotal();
 
@@ -70,7 +70,9 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
                   background: 'var(--t-accent2-10)',
                 }}
               >
-                T·{tableNumber}
+                {tableFloor > 1 || (tableFloor && tableFloorName)
+                  ? `${tableFloorName || `F${tableFloor}`} · T·${tableNumber}`
+                  : `T·${tableNumber}`}
               </span>
             )}
           </div>

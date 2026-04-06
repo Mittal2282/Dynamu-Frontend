@@ -29,20 +29,21 @@ function Toggle({ checked, onChange, disabled }) {
 
 /* ─── Ingredient Card ───────────────────────────────────────────────────────── */
 function IngredientCard({ ingredient, onToggle, saving }) {
-  const { name, is_available, affected_count } = ingredient;
+  const { name, is_available, affected_count, items_using = [] } = ingredient;
   const isSaving = saving === name;
   const initial = name.charAt(0).toUpperCase();
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div
-      className="relative rounded-2xl flex flex-col overflow-hidden transition-all duration-300 group"
+      className="relative rounded-2xl flex flex-col overflow-hidden transition-all duration-300"
       style={{
         background: "var(--t-surface)",
         border: `1px solid ${is_available ? "var(--t-line)" : "rgba(239,68,68,0.3)"}`,
         boxShadow: !is_available ? "0 0 20px rgba(239,68,68,0.07)" : "none",
       }}
     >
-      {/* Top stripe — accent line */}
+      {/* Top stripe */}
       <div
         className="h-0.5 w-full shrink-0"
         style={{
@@ -53,15 +54,12 @@ function IngredientCard({ ingredient, onToggle, saving }) {
       />
 
       <div className="p-4 flex flex-col gap-4 flex-1">
-        {/* Top row — initial + name + status dot */}
+        {/* Top row */}
         <div className="flex items-start gap-3">
-          {/* Initial badge */}
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-bold shrink-0 select-none"
             style={{
-              background: is_available
-                ? "linear-gradient(135deg, var(--t-accent-20), var(--t-accent2-20))"
-                : "rgba(239,68,68,0.12)",
+              background: is_available ? "linear-gradient(135deg, var(--t-accent-20), var(--t-accent2-20))" : "rgba(239,68,68,0.12)",
               color: is_available ? "var(--t-accent)" : "#f87171",
               border: `1px solid ${is_available ? "var(--t-accent-20)" : "rgba(239,68,68,0.2)"}`,
             }}
@@ -70,22 +68,12 @@ function IngredientCard({ ingredient, onToggle, saving }) {
           </div>
 
           <div className="flex-1 min-w-0 pt-0.5">
-            <p
-              className="text-sm font-semibold capitalize truncate leading-tight"
-              style={{ color: "var(--t-text)" }}
-            >
+            <p className="text-sm font-semibold capitalize truncate leading-tight" style={{ color: "var(--t-text)" }}>
               {name}
             </p>
             <div className="flex items-center gap-1.5 mt-1">
-              {/* Colored dot */}
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ background: is_available ? "#22c55e" : "#ef4444" }}
-              />
-              <span
-                className="text-[11px] font-medium"
-                style={{ color: is_available ? "#4ade80" : "#f87171" }}
-              >
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: is_available ? "#22c55e" : "#ef4444" }} />
+              <span className="text-[11px] font-medium" style={{ color: is_available ? "#4ade80" : "#f87171" }}>
                 {is_available ? "In Stock" : "Out of Stock"}
               </span>
             </div>
@@ -95,43 +83,61 @@ function IngredientCard({ ingredient, onToggle, saving }) {
         {/* Divider */}
         <div className="h-px" style={{ background: "var(--t-line)" }} />
 
-        {/* Bottom row — affected count + toggle */}
+        {/* Toggle row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-3.5 h-3.5 shrink-0"
-              style={{ color: "var(--t-dim)" }}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          {/* Dishes count + expand */}
+          <button
+            onClick={() => items_using.length > 0 && setExpanded((v) => !v)}
+            className="flex items-center gap-2 transition-opacity"
+            style={{ opacity: items_using.length > 0 ? 1 : 0.5, cursor: items_using.length > 0 ? "pointer" : "default" }}
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--t-dim)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <span className="text-[11px]" style={{ color: "var(--t-dim)" }}>
-              <span
-                className="font-bold"
-                style={{ color: affected_count > 0 ? "var(--t-text)" : "var(--t-dim)" }}
-              >
+              <span className="font-bold" style={{ color: affected_count > 0 ? "var(--t-text)" : "var(--t-dim)" }}>
                 {affected_count}
-              </span>{" "}
-              {affected_count === 1 ? "dish" : "dishes"}
+              </span>{" "}{affected_count === 1 ? "dish" : "dishes"}
             </span>
-          </div>
+            {items_using.length > 0 && (
+              <svg
+                className="w-3 h-3 transition-transform duration-200"
+                style={{ color: "var(--t-dim)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
+          </button>
 
           {isSaving ? (
             <div className="w-11 h-6 flex items-center justify-center">
               <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
             </div>
           ) : (
-            <Toggle
-              checked={is_available}
-              onChange={() => onToggle(name, !is_available)}
-              disabled={isSaving}
-            />
+            <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} />
           )}
         </div>
+
+        {/* Expandable items list */}
+        {expanded && items_using.length > 0 && (
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+          >
+            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)", borderBottom: "1px solid var(--t-line)" }}>
+              Used in
+            </p>
+            <ul className="divide-y" style={{ borderColor: "var(--t-line)" }}>
+              {items_using.map((dish) => (
+                <li key={dish._id} className="flex items-center gap-2 px-3 py-2">
+                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "var(--t-dim)" }} />
+                  <span className="text-xs truncate" style={{ color: "var(--t-text)" }}>{dish.name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
