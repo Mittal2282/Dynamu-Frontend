@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import {
   getDashMenu,
   updateDashMenuItem,
+  deleteDashMenuItem,
   toggleDashMenuItem,
   toggleChefsSpecial,
   toggleFeatured,
@@ -33,16 +34,22 @@ function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
 }
 
 /* ─── Item Card ──────────────────────────────────────────────────────────────── */
-function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, saving }) {
+function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, saving }) {
   const isSaving = saving === item._id;
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const discount = item.discount_percentage ?? 0;
   const effectivePrice = discount > 0 ? Math.round(item.price * (1 - discount / 100)) : null;
-  const isVeg = item.is_veg !== false; // default to veg if undefined
+  const isVeg = item.is_veg !== false;
+  const blockedByIngredient = item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
+  const isHidden = !item.is_available || blockedByIngredient;
 
   return (
     <div
       className="relative rounded-2xl overflow-hidden border flex flex-col group transition-all duration-200"
-      style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
+      style={{
+        background: "var(--t-surface)",
+        borderColor: blockedByIngredient ? "rgba(251,146,60,0.35)" : "var(--t-line)",
+      }}
     >
       {/* ── Image ── */}
       <div className="relative w-full overflow-hidden" style={{ paddingBottom: "58%" }}>
@@ -62,8 +69,22 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           </div>
         )}
 
-        {/* Unavailable overlay */}
-        {!item.is_available && (
+        {/* Ingredient-blocked overlay */}
+        {blockedByIngredient && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 backdrop-blur-[1px]"
+            style={{ background: "rgba(0,0,0,0.7)" }}>
+            <span className="text-lg">🚫</span>
+            <span
+              className="text-[9px] font-black uppercase tracking-[0.12em] px-2 py-0.5 rounded"
+              style={{ background: "rgba(251,146,60,0.25)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.4)" }}
+            >
+              Ingredient Off
+            </span>
+          </div>
+        )}
+
+        {/* Manually hidden overlay */}
+        {!item.is_available && !blockedByIngredient && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/65 backdrop-blur-[1px]">
             <span
               className="text-[10px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded border"
@@ -138,28 +159,43 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           </div>
         </div>
 
-        {/* Availability — hero toggle */}
-        <div
-          className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl"
-          style={{
-            background: item.is_available ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)",
-            border: `1px solid ${item.is_available ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)"}`,
-          }}
-        >
-          <span
-            className={`text-xs font-semibold ${
-              item.is_available ? "text-green-400" : "text-slate-500"
-            }`}
+        {/* Availability — hero toggle / ingredient block notice */}
+        {blockedByIngredient ? (
+          <div
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
+            style={{
+              background: "rgba(251,146,60,0.07)",
+              border: "1px solid rgba(251,146,60,0.2)",
+            }}
           >
-            {item.is_available ? "Available" : "Hidden"}
-          </span>
-          <Toggle
-            checked={item.is_available}
-            onChange={() => onToggleAvail(item._id)}
-            disabled={isSaving}
-            colorOn="bg-green-500"
-          />
-        </div>
+            <span className="text-sm">🚫</span>
+            <span className="text-[11px] font-semibold text-orange-400 leading-tight">
+              Blocked · ingredient off
+            </span>
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl"
+            style={{
+              background: item.is_available ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${item.is_available ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)"}`,
+            }}
+          >
+            <span
+              className={`text-xs font-semibold ${
+                item.is_available ? "text-green-400" : "text-slate-500"
+              }`}
+            >
+              {item.is_available ? "Available" : "Hidden"}
+            </span>
+            <Toggle
+              checked={item.is_available}
+              onChange={() => onToggleAvail(item._id)}
+              disabled={isSaving}
+              colorOn="bg-green-500"
+            />
+          </div>
+        )}
 
         {/* Secondary actions */}
         <div className="flex items-center gap-1.5">
@@ -208,8 +244,51 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                 d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
             </svg>
           </button>
+
+          {/* Delete */}
+          <button
+            onClick={() => setConfirmDelete(true)}
+            disabled={isSaving}
+            title="Delete item"
+            className="w-8 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 transition-colors disabled:opacity-50 border border-white/6 hover:border-red-500/30"
+            style={{ background: "rgba(255,255,255,0.04)" }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* ── Delete confirmation overlay ── */}
+      {confirmDelete && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl px-4 text-center"
+          style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(4px)" }}>
+          <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-white">Delete item?</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{item.name}</p>
+          </div>
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="flex-1 py-1.5 text-xs font-semibold rounded-lg border border-white/15 text-slate-300 hover:bg-white/10 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => { setConfirmDelete(false); onDelete(item._id); }}
+              className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Saving overlay */}
       {isSaving && (
@@ -279,6 +358,7 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
                 onToggleSpecial={handlers.onToggleSpecial}
                 onToggleFeatured={handlers.onToggleFeatured}
                 onEdit={handlers.onEdit}
+                onDelete={handlers.onDelete}
                 saving={handlers.saving}
               />
             ))}
@@ -411,11 +491,24 @@ export default function MenuManagePage() {
     setBulkModalOpen(false);
   };
 
+  const handleDelete = async (itemId) => {
+    setSaving(itemId);
+    try {
+      await deleteDashMenuItem(itemId);
+      setItems((prev) => prev.filter((i) => i._id !== itemId));
+    } catch {
+      // silently ignore — item stays in list
+    } finally {
+      setSaving(null);
+    }
+  };
+
   const handlers = {
     onToggleAvail: handleToggleAvail,
     onToggleSpecial: handleToggleSpecial,
     onToggleFeatured: handleToggleFeatured,
     onEdit: handleEdit,
+    onDelete: handleDelete,
     saving,
   };
 
