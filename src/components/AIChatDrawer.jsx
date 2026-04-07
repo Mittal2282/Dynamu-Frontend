@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Drawer from "../components/ui/Drawer";
 import { Spinner } from "../components/ui/Spinner";
 import Text from "../components/ui/Text";
-import { getChatHistory, getWelcomeMessage, sendChatMessage } from "../services/chatService";
+import { getChatHistory, getWelcomeMessage, streamChatMessage } from "../services/chatService";
 import { chatStore } from "../store/chatStore";
 import { useCartCount } from "../store/cartStore";
 import { restaurantStore } from "../store/restaurantStore";
@@ -230,8 +230,19 @@ function ChatHeader({ onClose }) {
 export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
   const { currencySymbol } = restaurantStore();
   const cartCount = useCartCount();
-  const { messages, loading, initialized, setMessages, addMessage, setLoading, setInitialized } =
-    chatStore();
+  const {
+    messages,
+    loading,
+    streaming,
+    initialized,
+    setMessages,
+    addMessage,
+    setLoading,
+    setInitialized,
+    startStreamingMessage,
+    appendStreamingText,
+    finalizeStreamingMessage,
+  } = chatStore();
   const [welcomeText, setWelcomeText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -240,7 +251,8 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
   const recognitionRef = useRef(null);
 
   const hasUserMessage = messages.some((m) => m.role === "user");
-  const showWelcomeLayout = messages.length === 0 && !loading;
+  const isBusy = loading || streaming;
+  const showWelcomeLayout = messages.length === 0 && !isBusy;
 
   useEffect(() => {
     if (!isOpen || initialized) return;
@@ -320,37 +332,47 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
       if (text.length > 500) {
         addMessage({
           role: "ai",
-          text: "Your message is a bit long — try a shorter question! 😊",
+          text: "Your message is a bit long — try a shorter question!",
           items: [],
           timestamp: Date.now(),
         });
         return;
       }
       setInputText("");
-
       addMessage({ role: "user", text, items: [], timestamp: Date.now() });
       setLoading(true);
 
-      try {
-        const { reply, recommended_items } = await sendChatMessage(text);
-        addMessage({
-          role: "ai",
-          text: reply,
-          items: recommended_items || [],
-          timestamp: Date.now(),
-        });
-      } catch {
-        addMessage({
-          role: "ai",
-          text: "Sorry, I'm having trouble right now. Please try again in a moment.",
-          items: [],
-          timestamp: Date.now(),
-        });
-      } finally {
-        setLoading(false);
-      }
+      let firstChunk = true;
+
+      await streamChatMessage(text, {
+        onChunk: (chunk) => {
+          if (firstChunk) {
+            firstChunk = false;
+            startStreamingMessage(); // clears loading, adds empty AI message
+          }
+          appendStreamingText(chunk);
+        },
+        onDone: (items) => {
+          finalizeStreamingMessage(items ?? []);
+        },
+        onError: () => {
+          if (firstChunk) {
+            // Stream never started — show error as a regular message
+            setLoading(false);
+            addMessage({
+              role: "ai",
+              text: "Sorry, I'm having trouble right now. Please try again in a moment.",
+              items: [],
+              timestamp: Date.now(),
+            });
+          } else {
+            // Stream started but failed mid-way — finalize whatever we have
+            finalizeStreamingMessage([]);
+          }
+        },
+      });
     },
-    [addMessage, setLoading, inputText],
+    [addMessage, setLoading, inputText, startStreamingMessage, appendStreamingText, finalizeStreamingMessage],
   );
 
   const inputPlaceholder = hasUserMessage ? "Ask follow-up…" : "Ask for suggestions…";
@@ -402,7 +424,15 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
                     {isUser ? (
                       m.text
                     ) : (
-                      <MarkdownMessage text={m.text} />
+                      <>
+                        <MarkdownMessage text={m.text} />
+                        {m.streaming && (
+                          <span
+                            className="inline-block w-[2px] h-[14px] ml-0.5 animate-pulse align-middle"
+                            style={{ background: "var(--t-accent2)" }}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -483,14 +513,14 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
               if (e.key === "Enter") send();
             }}
             placeholder={inputPlaceholder}
-            disabled={loading}
+            disabled={isBusy}
             className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--t-accent)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
           />
           {SpeechRecognitionAvailable && (
             <button
               type="button"
               onClick={isListening ? stopListening : startListening}
-              disabled={loading}
+              disabled={isBusy}
               className={`w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
                 isListening
                   ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse"
@@ -504,7 +534,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
           <button
             type="button"
             onClick={() => send()}
-            disabled={loading}
+            disabled={isBusy}
             className="w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
             style={{ background: "var(--t-accent)" }}
             aria-label="Send"
@@ -523,7 +553,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
               key={chip.label}
               type="button"
               onClick={() => send(chip.text)}
-              disabled={loading}
+              disabled={isBusy}
               className="px-3 py-1.5 bg-transparent border border-white/15 rounded-full text-xs text-white/85 whitespace-nowrap active:scale-95 transition-transform hover:border-white/25 hover:bg-white/5 disabled:opacity-50 shrink-0"
             >
               {chip.label}

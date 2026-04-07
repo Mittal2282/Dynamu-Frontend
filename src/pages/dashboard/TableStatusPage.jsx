@@ -451,13 +451,18 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }) {
     floor_number: '',
     floor_name: '',
     table_count: '5',
-    start_number: '1',
     is_new_floor: true,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (name, value) => setForm(p => ({ ...p, [name]: value }));
+
+  // Infer next start number from the highest table_number across all floors
+  const nextStartNumber = existingFloors.reduce((max, fg) => {
+    const floorMax = fg.tables.reduce((m, t) => Math.max(m, t.table_number ?? 0), 0);
+    return Math.max(max, floorMax);
+  }, 0) + 1;
 
   const handleSubmit = async () => {
     const count = parseInt(form.table_count);
@@ -482,7 +487,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }) {
         floor_number: floorNum,
         floor_name: form.floor_name.trim(),
         table_count: count,
-        start_number: parseInt(form.start_number) || 1,
+        start_number: nextStartNumber,
       });
       onSuccess();
     } catch (err) {
@@ -587,29 +592,20 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }) {
           </div>
         )}
 
-        {/* Table count + start number */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Tables to Add *</label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={form.table_count}
-              onChange={e => handleChange('table_count', e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Starting # </label>
-            <input
-              type="number"
-              min="1"
-              value={form.start_number}
-              onChange={e => handleChange('start_number', e.target.value)}
-              style={inputStyle}
-            />
-          </div>
+        {/* Table count */}
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Tables to Add *</label>
+          <input
+            type="number"
+            min="1"
+            max="100"
+            value={form.table_count}
+            onChange={e => handleChange('table_count', e.target.value)}
+            style={inputStyle}
+          />
+          <p className="text-[10px]" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>
+            Will be numbered T{nextStartNumber} → T{nextStartNumber + Math.max(0, (parseInt(form.table_count) || 1) - 1)}
+          </p>
         </div>
 
         {/* Actions */}
@@ -736,9 +732,9 @@ export default function TableStatusPage() {
 
   // Active floor tab (default to first floor)
   const currentFloor = activeFloor ?? (floorKeys[0] ?? 1);
-  const visibleTables = isMultiFloor
-    ? (floorGroups[currentFloor]?.tables ?? [])
-    : tables;
+  const STATUS_SORT_ORDER = { billing: 0, occupied: 1, free: 2, unserviceable: 3 };
+  const visibleTables = [...(isMultiFloor ? (floorGroups[currentFloor]?.tables ?? []) : tables)]
+    .sort((a, b) => (STATUS_SORT_ORDER[a.display_status] ?? 2) - (STATUS_SORT_ORDER[b.display_status] ?? 2));
 
   const floorSubline = loading
     ? 'Loading…'

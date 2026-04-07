@@ -23,6 +23,7 @@ export const ENDPOINTS = {
 
   // AI Chat
   CHAT:            '/api/ai/chat',
+  CHAT_STREAM:     '/api/ai/chat/stream',
   CHAT_HISTORY:    '/api/ai/chat/history',
   CHAT_WELCOME:    '/api/ai/chat/welcome',
 
@@ -42,6 +43,7 @@ export const ENDPOINTS = {
   DASH_MENU_CHEFS_SPECIAL: (id) => `/api/restaurant-dash/menu/${id}/chefs-special`,
   DASH_MENU_FEATURED:      (id) => `/api/restaurant-dash/menu/${id}/featured`,
   DASH_MENU_BULK:          '/api/restaurant-dash/menu/bulk',
+  DASH_MENU_IMAGE_UPLOAD:  '/api/restaurant-dash/menu/upload-image',
   DASH_CATEGORIES:         '/api/restaurant-dash/categories',
   DASH_TABLES:             '/api/restaurant-dash/tables',
   DASH_TABLES_QR_PDF:      '/api/restaurant-dash/tables/qr-pdf',

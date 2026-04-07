@@ -1,4 +1,5 @@
 import { apiCaller } from '../api/apiCaller';
+import adminApi from '../api/adminAxios';
 import { ENDPOINTS } from '../utils/endpoints';
 import { sleep } from '../utils/helpers';
 
@@ -342,6 +343,18 @@ export async function bulkImportMenuItems(csvText) {
     useAdmin: true,
   });
   return data.data;
+}
+
+/**
+ * Upload a menu item image to ImageKit.
+ * @param {File} file
+ * @returns {Promise<string>} ImageKit public URL
+ */
+export async function uploadMenuItemImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await adminApi.post(ENDPOINTS.DASH_MENU_IMAGE_UPLOAD, formData);
+  return res.data.data.url;
 }
 
 export async function getIngredients() {

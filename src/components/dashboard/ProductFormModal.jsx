@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Modal from '../ui/Modal';
-import { createDashMenuItem, updateDashMenuItem } from '../../services/adminService';
+import { createDashMenuItem, updateDashMenuItem, uploadMenuItemImage } from '../../services/adminService';
 
 const TASTE_OPTIONS = ['Savory', 'Sweet', 'Spicy', 'Tangy', 'Mild', 'Bitter'];
 const GST_OPTIONS = [0, 5, 12, 18, 28];
@@ -79,6 +79,9 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
+  const fileInputRef = useRef(null);
 
   const isEdit = item !== null && item !== undefined;
 
@@ -96,13 +99,30 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
         serves: item.serves ?? '',
         display_order: item.display_order ?? '',
       });
+      setImagePreview(item.image_url || '');
     } else {
       setForm(EMPTY_FORM);
+      setImagePreview('');
     }
     setError('');
   }, [isOpen, item]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleImageFile = async (file) => {
+    if (!file) return;
+    setImageUploading(true);
+    setError('');
+    try {
+      const url = await uploadMenuItemImage(file);
+      set('image_url', url);
+      setImagePreview(url);
+    } catch {
+      setError('Image upload failed. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
 
   const handleFocus = e => { e.target.style.borderColor = 'var(--t-accent)'; };
   const handleBlur = e => { e.target.style.borderColor = ''; };
@@ -412,16 +432,60 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           <SectionLabel>Media & Display</SectionLabel>
           <div className="space-y-3">
             <div>
-              <FieldLabel>Image URL</FieldLabel>
+              <FieldLabel>Image</FieldLabel>
               <input
-                type="text"
-                value={form.image_url}
-                onChange={e => set('image_url', e.target.value)}
-                placeholder="https://..."
-                className={inputCls}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => handleImageFile(e.target.files?.[0])}
               />
+              {imagePreview ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0"
+                  />
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={imageUploading}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-all disabled:opacity-50"
+                    >
+                      {imageUploading ? 'Uploading…' : 'Change image'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { set('image_url', ''); setImagePreview(''); }}
+                      className="text-xs text-slate-600 hover:text-red-400 transition-colors text-left"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={imageUploading}
+                  className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-xl border border-dashed border-white/15 bg-white/3 hover:bg-white/5 hover:border-white/25 transition-all disabled:opacity-50"
+                >
+                  {imageUploading ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="text-xs text-slate-500">Uploading…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl">📷</span>
+                      <span className="text-xs text-slate-400">Click to upload image</span>
+                      <span className="text-[10px] text-slate-600">JPG, PNG, WEBP — max 5 MB</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3 items-end">
               <div>
@@ -479,7 +543,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || imageUploading}
             className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
             style={{ background: 'var(--t-accent)' }}
           >

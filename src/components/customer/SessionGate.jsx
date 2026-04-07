@@ -167,6 +167,9 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     const name = validateName();
     if (!name) return;
     setIsSubmitting(true);
+    // Disconnect the table socket before the HTTP call so we don't receive
+    // our own session:started event and briefly flash the join_or_create screen.
+    disconnectTableSocket();
     try {
       const sessionData = await startSession(
         qrCodeId,
@@ -190,6 +193,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     const name = validateName();
     if (!name) return;
     setIsSubmitting(true);
+    disconnectTableSocket();
     try {
       const sessionData = await startSession(qrCodeId, tableNumber, name, true);
       onSessionReady(sessionData, name);
