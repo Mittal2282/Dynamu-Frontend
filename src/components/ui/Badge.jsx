@@ -5,6 +5,21 @@
  */
 export function VegBadge({ isVeg, size = 'md', className='' }) {
   const dim = size === 'sm' ? 'w-2 h-2' : 'w-3 h-3';
+
+  // Mixed — item has both veg and non-veg variants; show green + red dots side-by-side
+  if (isVeg === 'mixed') {
+    return (
+      <span
+        role="img"
+        aria-label="Contains both veg and non-veg options"
+        className={`flex items-center gap-[2px] shrink-0 ${className}`}
+      >
+        <span className={`block rounded-full ${dim}`} style={{ backgroundColor: '#22c55e' }} />
+        <span className={`block rounded-full ${dim}`} style={{ backgroundColor: '#ef4444' }} />
+      </span>
+    );
+  }
+
   const color =
     isVeg === true  ? '#22c55e' :   // green
     isVeg === false ? '#ef4444' :   // red

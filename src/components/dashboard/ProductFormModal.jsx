@@ -30,7 +30,109 @@ const EMPTY_FORM = {
   display_order: '',
   is_combo: false,
   combo_discount: 0,
+  has_variants: false,
+  variants: [],
 };
+
+const EMPTY_VARIANT = {
+  groupName: '', name: '', price: '', isVeg: true,
+  isDefault: false, isAvailable: true, discount_percentage: 0,
+};
+
+/* ── Variant row ── */
+function VariantRow({ variant, groupName, onChange, onRemove, showGroupName }) {
+  const vColor    = variant.isVeg !== false ? '#22c55e' : '#ef4444';
+  const available = variant.isAvailable !== false;
+  return (
+    <div
+      className="rounded-xl p-2.5 space-y-2"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      <div className="flex items-center gap-2">
+        {/* Availability toggle */}
+        <button
+          type="button"
+          title={available ? 'Mark as unavailable' : 'Mark as available'}
+          onClick={() => onChange({ ...variant, isAvailable: !available })}
+          className="shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
+          style={{
+            borderColor: available ? '#22c55e' : '#475569',
+            background: available ? 'rgba(34,197,94,0.12)' : 'rgba(71,85,105,0.15)',
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full block transition-colors"
+            style={{ background: available ? '#22c55e' : '#475569' }}
+          />
+        </button>
+        {/* Veg/non-veg toggle dot */}
+        <button
+          type="button"
+          title={variant.isVeg !== false ? 'Mark as Non-Veg' : 'Mark as Veg'}
+          onClick={() => onChange({ ...variant, isVeg: !variant.isVeg })}
+          className="shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors"
+          style={{ borderColor: vColor, background: `${vColor}18` }}
+        >
+          <span className="w-2 h-2 rounded-full block" style={{ background: vColor }} />
+        </button>
+        {/* Variant name */}
+        <input
+          type="text"
+          value={variant.name}
+          onChange={e => onChange({ ...variant, name: e.target.value })}
+          placeholder="e.g. Chicken"
+          className={`${inputCls} flex-1`}
+          style={{ padding: '5px 10px', fontSize: '12px' }}
+        />
+        {/* Price */}
+        <input
+          type="number"
+          min="0"
+          value={variant.price}
+          onChange={e => onChange({ ...variant, price: e.target.value })}
+          placeholder="₹"
+          className={`${inputCls} w-20`}
+          style={{ padding: '5px 10px', fontSize: '12px' }}
+        />
+        {/* Discount % */}
+        <div className="relative shrink-0">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={variant.discount_percentage ?? 0}
+            onChange={e => onChange({ ...variant, discount_percentage: Math.min(100, Math.max(0, Number(e.target.value))) })}
+            placeholder="0"
+            title="Discount %"
+            className={`${inputCls} w-14 text-center`}
+            style={{ padding: '5px 6px', fontSize: '12px' }}
+          />
+          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">%</span>
+        </div>
+        {/* Remove */}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      {showGroupName && (
+        <input
+          type="text"
+          value={variant.groupName ?? groupName}
+          onChange={e => onChange({ ...variant, groupName: e.target.value })}
+          placeholder="Group name (e.g. Protein)"
+          className={`${inputCls} w-full`}
+          style={{ padding: '5px 10px', fontSize: '12px' }}
+        />
+      )}
+    </div>
+  );
+}
 
 function arrToStr(val) {
   if (Array.isArray(val)) return val.join(', ');
@@ -98,6 +200,8 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
         preparation_time: item.preparation_time ?? '',
         serves: item.serves ?? '',
         display_order: item.display_order ?? '',
+        has_variants: item.has_variants ?? false,
+        variants: item.variants?.map(v => ({ ...v, price: v.price ?? '' })) ?? [],
       });
       setImagePreview(item.image_url || '');
     } else {
@@ -131,7 +235,13 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
     if (!form.name.trim()) { setError('Item name is required.'); return; }
     if (!form.price || parseFloat(form.price) <= 0) { setError('Price must be greater than 0.'); return; }
     if ((existingCategories ?? []).length > 0 && !form.category) { setError('Please select a category.'); return; }
+    if (form.has_variants) {
+      if (form.variants.length === 0) { setError('Add at least one variant, or disable the Variants toggle.'); return; }
+      const invalid = form.variants.find(v => !v.name.trim() || !v.price || parseFloat(v.price) <= 0);
+      if (invalid) { setError('Each variant must have a name and a price greater than 0.'); return; }
+    }
 
+    const sharedGroupName = form.variants[0]?.groupName?.trim() || '';
     const payload = {
       ...form,
       price: parseFloat(form.price),
@@ -144,6 +254,18 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
       ingredients: form.ingredients.split(',').map(s => s.trim()).filter(Boolean),
       allergens: form.allergens.split(',').map(s => s.trim()).filter(Boolean),
       tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
+      has_variants: form.has_variants,
+      variants: form.has_variants
+        ? form.variants.map(v => ({
+            groupName: v.groupName?.trim() || sharedGroupName,
+            name: v.name.trim(),
+            price: parseFloat(v.price),
+            isVeg: v.isVeg !== false,
+            isDefault: v.isDefault ?? false,
+            isAvailable: v.isAvailable !== false,
+            discount_percentage: Number(v.discount_percentage) || 0,
+          }))
+        : [],
     };
 
     setSaving(true);
@@ -285,6 +407,73 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                 {GST_OPTIONS.map(g => <option key={g} value={g}>{g}%</option>)}
               </select>
             </div>
+          </div>
+        </div>
+
+        <hr className="border-white/5" />
+
+        {/* ── Variants ── */}
+        <div>
+          <SectionLabel>Variants</SectionLabel>
+          <div className="space-y-3">
+            <Toggle
+              checked={form.has_variants}
+              onChange={v => set('has_variants', v)}
+              label="This item has multiple variants (e.g. Veg / Chicken / Prawn)"
+            />
+            {form.has_variants && (
+              <div className="space-y-2">
+                {/* Group name hint (shared across variants) */}
+                <div>
+                  <FieldLabel>Group Name <span className="text-slate-600">(applies to all variants below)</span></FieldLabel>
+                  <input
+                    type="text"
+                    value={form.variants[0]?.groupName ?? ''}
+                    onChange={e => {
+                      const gn = e.target.value;
+                      set('variants', form.variants.length > 0
+                        ? form.variants.map(v => ({ ...v, groupName: gn }))
+                        : [{ ...EMPTY_VARIANT, groupName: gn }]
+                      );
+                    }}
+                    placeholder="e.g. Protein, Size, Sauce"
+                    className={inputCls}
+                    onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
+                    onBlur={e => e.target.style.borderColor = ''}
+                  />
+                  <p className="text-[10px] text-slate-600 mt-1">Shown to customers as "Protein: Chicken", "Size: Large" etc.</p>
+                </div>
+
+                {/* Variant rows */}
+                {form.variants.map((variant, idx) => (
+                  <VariantRow
+                    key={idx}
+                    variant={variant}
+                    groupName={form.variants[0]?.groupName ?? ''}
+                    showGroupName={false}
+                    onChange={updated => {
+                      const next = [...form.variants];
+                      next[idx] = { ...updated, groupName: form.variants[0]?.groupName ?? '' };
+                      set('variants', next);
+                    }}
+                    onRemove={() => set('variants', form.variants.filter((_, i) => i !== idx))}
+                  />
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => set('variants', [...form.variants, { ...EMPTY_VARIANT, groupName: form.variants[0]?.groupName ?? '' }])}
+                  className="w-full py-2 rounded-xl text-xs font-semibold border border-dashed transition-all hover:border-white/20"
+                  style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--t-dim)', background: 'rgba(255,255,255,0.02)' }}
+                >
+                  + Add Variant
+                </button>
+
+                <p className="text-[10px] text-slate-600">
+                  Click the coloured dot on each row to toggle Veg / Non-Veg for that variant.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

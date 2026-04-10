@@ -17,13 +17,21 @@ const TAX_RATE = 0.05; // 5 %
 
 /* ─── Cart item row ────────────────────────────────────────────────────────── */
 function CartItem({ item, currencySymbol }) {
+  // Variant-aware price and veg status
+  const basePrice = item.selectedVariant?.price ?? item.price;
+  const effectivePrice =
+    item.discount_percentage > 0
+      ? basePrice * (1 - item.discount_percentage / 100)
+      : basePrice;
+  const displayIsVeg = item.selectedVariant ? item.selectedVariant.isVeg : item.is_veg;
+
   return (
     <div
       className="rounded-2xl overflow-hidden border mb-3 last:mb-0"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
       <div className="p-3 flex gap-3">
-        {/* Image with VegBadge overlay — matches MenuItemCard */}
+        {/* Image with VegBadge overlay */}
         <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
           <LazyImage
             src={item.image_url}
@@ -35,12 +43,12 @@ function CartItem({ item, currencySymbol }) {
                 className="w-full h-full flex items-center justify-center"
                 style={{ background: "var(--t-float)" }}
               >
-                <span className="text-3xl">{item.is_veg ? "🥗" : "🍗"}</span>
+                <span className="text-3xl">{displayIsVeg ? "🥗" : "🍗"}</span>
               </div>
             }
           />
           <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
-            <VegBadge isVeg={item.is_veg} size="sm" />
+            <VegBadge isVeg={displayIsVeg} size="sm" />
           </div>
         </div>
 
@@ -48,7 +56,15 @@ function CartItem({ item, currencySymbol }) {
           <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
             {item.name}
           </Text>
-          {item.description && (
+          {/* Variant label */}
+          {item.selectedVariant && (
+            <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--t-accent)" }}>
+              {item.selectedVariant.groupName
+                ? `${item.selectedVariant.groupName}: ${item.selectedVariant.name}`
+                : item.selectedVariant.name}
+            </p>
+          )}
+          {!item.selectedVariant && item.description && (
             <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
               {item.description}
             </Text>
@@ -56,10 +72,10 @@ function CartItem({ item, currencySymbol }) {
           {item.discount_percentage > 0 ? (
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <span className="line-through text-slate-500 text-xs">
-                {formatCurrency(item.price, currencySymbol)}
+                {formatCurrency(basePrice, currencySymbol)}
               </span>
               <Text as="span" size="sm" weight="bold" color="brand">
-                {formatCurrency(item.price * (1 - item.discount_percentage / 100), currencySymbol)}
+                {formatCurrency(effectivePrice, currencySymbol)}
               </Text>
               <span className="text-[10px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">
                 {item.discount_percentage}% OFF
@@ -67,12 +83,12 @@ function CartItem({ item, currencySymbol }) {
             </div>
           ) : (
             <Text as="p" size="sm" weight="bold" color="brand" className="mt-1">
-              {formatCurrency(item.price, currencySymbol)}
+              {formatCurrency(basePrice, currencySymbol)}
             </Text>
           )}
         </div>
 
-        <CartControl item={item} showDelete={true} />
+        <CartControl item={item} selectedVariant={item.selectedVariant} showDelete={true} />
       </div>
     </div>
   );
@@ -157,8 +173,9 @@ export default function CartDrawer({
   }, [items.map((i) => i._id).join(",")]);
 
   const subtotal = items.reduce((s, i) => {
+    const basePrice = i.selectedVariant?.price ?? i.price;
     const effectivePrice =
-      i.discount_percentage > 0 ? i.price * (1 - i.discount_percentage / 100) : i.price;
+      i.discount_percentage > 0 ? basePrice * (1 - i.discount_percentage / 100) : basePrice;
     return s + effectivePrice * i.qty;
   }, 0);
   const tax = subtotal * TAX_RATE;
@@ -223,7 +240,7 @@ export default function CartDrawer({
               }}
             >
               {items.map((item) => (
-                <CartItem key={item._id ?? item.id} item={item} currencySymbol={currencySymbol} />
+                <CartItem key={item._cartKey ?? item._id} item={item} currencySymbol={currencySymbol} />
               ))}
             </div>
 

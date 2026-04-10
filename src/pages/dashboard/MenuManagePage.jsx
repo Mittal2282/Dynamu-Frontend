@@ -11,6 +11,7 @@ import {
 import ProductFormModal from "../../components/dashboard/ProductFormModal";
 import BulkUploadModal from "../../components/dashboard/BulkUploadModal";
 import AddCategoryModal from "../../components/dashboard/AddCategoryModal";
+import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
 
 /* ─── Toggle Switch ──────────────────────────────────────────────────────────── */
 function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
@@ -34,20 +35,44 @@ function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
 }
 
 /* ─── Item Card ──────────────────────────────────────────────────────────────── */
-function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, onUpdateDiscount, saving }) {
+function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, onUpdateDiscount, onUpdateVariants, saving }) {
   const isSaving = saving === item._id;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(false);
   const [discountInput, setDiscountInput] = useState(String(item.discount_percentage ?? 0));
+  // Variant inline editing: { idx, field: 'price'|'discount', value }
+  const [variantDraft, setVariantDraft] = useState(null);
   const discount = item.discount_percentage ?? 0;
   const effectivePrice = discount > 0 ? Math.round(item.price * (1 - discount / 100)) : null;
-  const isVeg = item.is_veg !== false;
+  const vegStatus = getItemVegStatus(item);
+  const vegColor = vegStatus === 'veg' ? '#22c55e' : vegStatus === 'nonveg' ? '#ef4444' : '#94a3b8';
+  const hasVariants = item.has_variants && item.variants?.length > 0;
+  const minVariantPrice = hasVariants
+    ? Math.min(...item.variants.map(v => variantEffectivePrice(v)))
+    : null;
+
+  const commitVariant = (idx, field, rawValue) => {
+    const val = Math.min(field === 'discount' ? 100 : Infinity, Math.max(0, parseFloat(rawValue) || 0));
+    setVariantDraft(null);
+    const key = field === 'price' ? 'price' : 'discount_percentage';
+    const current = item.variants[idx][key] ?? 0;
+    if (val === current) return;
+    const updated = item.variants.map((v, i) => i === idx ? { ...v, [key]: val } : v);
+    onUpdateVariants(item._id, updated);
+  };
   const blockedByIngredient = item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
 
   const commitDiscount = () => {
     const val = Math.min(100, Math.max(0, parseInt(discountInput, 10) || 0));
     setEditingDiscount(false);
-    if (val !== discount) onUpdateDiscount(item._id, val);
+    if (val === discount) return;
+    if (hasVariants) {
+      // Apply discount to all variants instead of item-level
+      const updated = item.variants.map(v => ({ ...v, discount_percentage: val }));
+      onUpdateVariants(item._id, updated);
+    } else {
+      onUpdateDiscount(item._id, val);
+    }
   };
 
   return (
@@ -72,7 +97,7 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             className="absolute inset-0 flex items-center justify-center text-5xl"
             style={{ background: "var(--t-float)" }}
           >
-            {isVeg ? "🥗" : "🍗"}
+            {vegStatus !== 'nonveg' ? "🥗" : "🍗"}
           </div>
         )}
 
@@ -109,12 +134,16 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
         >
           <div
             className="w-3 h-3 rounded-sm border-[2px] flex items-center justify-center"
-            style={{ borderColor: isVeg ? "#22c55e" : "#ef4444" }}
+            style={{ borderColor: vegColor }}
           >
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: isVeg ? "#22c55e" : "#ef4444" }}
-            />
+            {vegStatus === 'mixed' ? (
+              <div className="flex items-center gap-[2px]">
+                <div className="w-1 h-1 rounded-full" style={{ background: '#22c55e' }} />
+                <div className="w-1 h-1 rounded-full" style={{ background: '#ef4444' }} />
+              </div>
+            ) : (
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: vegColor }} />
+            )}
           </div>
         </div>
 
@@ -158,11 +187,19 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           </p>
           <div className="flex items-center justify-between gap-1 mt-0.5">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
-                ₹{effectivePrice ?? item.price}
-              </span>
-              {effectivePrice && (
-                <span className="text-xs line-through text-slate-500">₹{item.price}</span>
+              {hasVariants ? (
+                <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
+                  from ₹{minVariantPrice}
+                </span>
+              ) : (
+                <>
+                  <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
+                    ₹{effectivePrice ?? item.price}
+                  </span>
+                  {effectivePrice && (
+                    <span className="text-xs line-through text-slate-500">₹{item.price}</span>
+                  )}
+                </>
               )}
             </div>
 
@@ -200,6 +237,106 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             )}
           </div>
         </div>
+
+        {/* Variants — interactive management */}
+        {hasVariants && (
+          <div
+            className="rounded-xl px-2.5 py-2 space-y-1"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 mb-1.5">
+              {item.variants[0]?.groupName || "Variants"}
+            </p>
+            {item.variants.map((v, idx) => {
+              const vCol = v.isVeg !== false ? "#22c55e" : "#ef4444";
+              const avail = v.isAvailable !== false;
+              const effPrice = variantEffectivePrice(v);
+              const vDisc = v.discount_percentage ?? 0;
+              const isDraftingPrice = variantDraft?.idx === idx && variantDraft.field === 'price';
+              const isDraftingDisc  = variantDraft?.idx === idx && variantDraft.field === 'discount';
+              return (
+                <div key={idx} className="flex items-center gap-1.5" style={{ opacity: avail ? 1 : 0.45 }}>
+                  {/* Availability toggle */}
+                  <button
+                    type="button"
+                    title={avail ? "Mark unavailable" : "Mark available"}
+                    disabled={isSaving}
+                    onClick={() => {
+                      const updated = item.variants.map((vv, i) => i === idx ? { ...vv, isAvailable: !avail } : vv);
+                      onUpdateVariants(item._id, updated);
+                    }}
+                    className="shrink-0 w-2.5 h-2.5 rounded-full border transition-colors"
+                    style={{ borderColor: avail ? '#22c55e' : '#475569', background: avail ? '#22c55e' : 'transparent' }}
+                  />
+                  {/* Veg dot */}
+                  <span
+                    className="w-2 h-2 rounded-[2px] border shrink-0 flex items-center justify-center"
+                    style={{ borderColor: vCol }}
+                  >
+                    <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
+                  </span>
+                  {/* Name */}
+                  <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">{v.name}</span>
+                  {/* Discount inline editor */}
+                  {isDraftingDisc ? (
+                    <input
+                      autoFocus
+                      type="number" min="0" max="100"
+                      value={variantDraft.value}
+                      onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
+                      onBlur={() => commitVariant(idx, 'discount', variantDraft.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'discount', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                      className="w-10 text-center text-[10px] font-bold rounded py-0.5 focus:outline-none"
+                      style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSaving}
+                      title={vDisc > 0 ? "Edit discount" : "Add discount"}
+                      onClick={() => setVariantDraft({ idx, field: 'discount', value: String(vDisc) })}
+                      className="text-[10px] font-semibold shrink-0 px-1 py-0.5 rounded transition-colors"
+                      style={vDisc > 0
+                        ? { color: '#fbbf24', background: 'rgba(245,158,11,0.1)' }
+                        : { color: 'var(--t-dim)', background: 'transparent' }}
+                    >
+                      {vDisc > 0 ? `−${vDisc}%` : '+ disc'}
+                    </button>
+                  )}
+                  {/* Price inline editor */}
+                  {isDraftingPrice ? (
+                    <input
+                      autoFocus
+                      type="number" min="0"
+                      value={variantDraft.value}
+                      onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
+                      onBlur={() => commitVariant(idx, 'price', variantDraft.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'price', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                      className="w-14 text-center text-[11px] font-bold rounded py-0.5 focus:outline-none"
+                      style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSaving}
+                      title="Edit price"
+                      onClick={() => setVariantDraft({ idx, field: 'price', value: String(v.price) })}
+                      className="text-[11px] font-semibold shrink-0 transition-colors"
+                      style={{ color: "var(--t-accent)" }}
+                    >
+                      {vDisc > 0 ? (
+                        <span className="flex items-baseline gap-1">
+                          <span>₹{effPrice}</span>
+                          <span className="line-through text-[9px] opacity-50">₹{v.price}</span>
+                        </span>
+                      ) : `₹${v.price}`}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Availability — hero toggle / ingredient block notice */}
         {blockedByIngredient ? (
@@ -402,6 +539,7 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
                 onEdit={handlers.onEdit}
                 onDelete={handlers.onDelete}
                 onUpdateDiscount={handlers.onUpdateDiscount}
+                onUpdateVariants={handlers.onUpdateVariants}
                 saving={handlers.saving}
               />
             ))}
@@ -546,6 +684,18 @@ export default function MenuManagePage() {
     }
   };
 
+  const handleUpdateVariants = async (itemId, updatedVariants) => {
+    setSaving(itemId);
+    try {
+      const updated = await updateDashMenuItem(itemId, { variants: updatedVariants });
+      setItems((prev) => prev.map((i) => (i._id === itemId ? { ...i, ...updated } : i)));
+    } catch {
+      // silently ignore
+    } finally {
+      setSaving(null);
+    }
+  };
+
   const handleDelete = async (itemId) => {
     setSaving(itemId);
     try {
@@ -565,6 +715,7 @@ export default function MenuManagePage() {
     onEdit: handleEdit,
     onDelete: handleDelete,
     onUpdateDiscount: handleUpdateDiscount,
+    onUpdateVariants: handleUpdateVariants,
     saving,
   };
 

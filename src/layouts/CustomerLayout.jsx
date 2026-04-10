@@ -21,7 +21,7 @@ import {
 } from "../services/customerService";
 import { connectSocket, disconnectSocket, getSocket } from "../services/socketService";
 import { authStore } from "../store/authStore";
-import { cartStore, useCartCount, useCartItems, useCartTotal } from "../store/cartStore";
+import { cartStore, loadVariantCache, useCartCount, useCartItems, useCartTotal } from "../store/cartStore";
 import { chatStore } from "../store/chatStore";
 import { restaurantStore } from "../store/restaurantStore";
 
@@ -88,25 +88,49 @@ export default function CustomerLayout() {
         }),
       ]).finally(() => setSectionsLoading(false));
 
-      // Restore server-side cart
+      // Restore server-side cart. The server now stores variant_name / variant_group /
+      // variant_price per cart item, so we can reconstruct the full selectedVariant here.
+      // Fall back to sessionStorage cache for items added before this fix.
       try {
         const cartData = await getCart();
         const apiItems = cartData?.items;
         if (Array.isArray(apiItems) && apiItems.length > 0) {
-          const cartMap = {};
-          apiItems.forEach(({ menu_item, quantity }) => {
-            cartMap[menu_item._id] = {
-              _id: menu_item._id,
+          const variantCache = loadVariantCache();
+          const mergedCart = {};
+          apiItems.forEach(({ menu_item, quantity, variant_name, variant_group, variant_price, variant_is_veg }) => {
+            const baseId = menu_item._id;
+            const baseItem = {
+              _id: baseId,
               name: menu_item.name,
               price: menu_item.price,
               discount_percentage: menu_item.discount_percentage || 0,
               is_veg: menu_item.is_veg,
               description: menu_item.description,
               image_url: menu_item.image_url,
-              qty: quantity,
             };
+
+            if (variant_name) {
+              // Server has variant info — build selectedVariant directly
+              const cKey = `${baseId}__${variant_name}`;
+              const selectedVariant = {
+                name: variant_name,
+                groupName: variant_group || undefined,
+                price: variant_price ?? menu_item.price,
+                isVeg: variant_is_veg != null ? variant_is_veg : menu_item.is_veg,
+              };
+              mergedCart[cKey] = { ...baseItem, _cartKey: cKey, selectedVariant, qty: quantity };
+            } else {
+              // No variant on server — check sessionStorage cache as fallback
+              const cachedKeys = Object.keys(variantCache).filter(k => k.startsWith(`${baseId}__`));
+              if (cachedKeys.length === 1) {
+                const cKey = cachedKeys[0];
+                mergedCart[cKey] = { ...baseItem, _cartKey: cKey, selectedVariant: variantCache[cKey], qty: quantity };
+              } else {
+                mergedCart[baseId] = { ...baseItem, _cartKey: baseId, qty: quantity };
+              }
+            }
           });
-          setCart(cartMap);
+          setCart(mergedCart);
         }
       } catch {
         /* keep existing cart */
@@ -135,22 +159,51 @@ export default function CustomerLayout() {
 
     const onCartUpdated = (serverCart) => {
       isRemoteCartUpdate.current = true;
-      const cartMap = {};
-      (serverCart.items || []).forEach(({ menu_item, quantity }) => {
-        if (menu_item?._id) {
-          cartMap[menu_item._id] = {
-            _id: menu_item._id,
-            name: menu_item.name,
-            price: menu_item.price,
-            discount_percentage: menu_item.discount_percentage || 0,
-            is_veg: menu_item.is_veg,
-            description: menu_item.description,
-            image_url: menu_item.image_url,
-            qty: quantity,
+      const localCart = cartStore.getState().cart;
+      const newCartMap = {};
+      (serverCart.items || []).forEach(({ menu_item, quantity, variant_name, variant_group, variant_price, variant_is_veg }) => {
+        if (!menu_item?._id) return;
+        const baseId = menu_item._id;
+        const baseItem = {
+          _id: baseId,
+          name: menu_item.name,
+          price: menu_item.price,
+          discount_percentage: menu_item.discount_percentage || 0,
+          is_veg: menu_item.is_veg,
+          description: menu_item.description,
+          image_url: menu_item.image_url,
+        };
+
+        if (variant_name) {
+          // Server has variant info — reconstruct directly (most reliable path)
+          const cKey = `${baseId}__${variant_name}`;
+          const selectedVariant = {
+            name: variant_name,
+            groupName: variant_group || undefined,
+            price: variant_price ?? menu_item.price,
+            isVeg: variant_is_veg != null ? variant_is_veg : menu_item.is_veg,
           };
+          // Merge: prefer existing local item (may have richer variant data like isVeg per variant)
+          const existing = localCart[cKey];
+          newCartMap[cKey] = existing
+            ? { ...existing, qty: quantity }
+            : { ...baseItem, _cartKey: cKey, selectedVariant, qty: quantity };
+        } else {
+          // No variant info on server — merge with local state
+          const localEntries = Object.entries(localCart).filter(
+            ([k]) => k === baseId || k.startsWith(`${baseId}__`)
+          );
+          if (localEntries.length === 0) {
+            newCartMap[baseId] = { ...baseItem, _cartKey: baseId, qty: quantity };
+          } else if (localEntries.length === 1) {
+            const [localKey, localItem] = localEntries[0];
+            newCartMap[localKey] = { ...localItem, qty: quantity };
+          } else {
+            localEntries.forEach(([k, v]) => { newCartMap[k] = v; });
+          }
         }
       });
-      cartStore.getState().setCart(cartMap);
+      cartStore.getState().setCart(newCartMap);
       setTimeout(() => {
         isRemoteCartUpdate.current = false;
       }, 100);

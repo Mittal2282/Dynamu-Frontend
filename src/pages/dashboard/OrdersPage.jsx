@@ -32,48 +32,64 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/* ─── Veg / Non-veg dot badge ────────────────────────────────────────────────── */
-function VegDot({ isVeg }) {
+/* ─── Inline veg/non-veg badge ──────────────────────────────────────────────── */
+function VegBadgeInline({ isVeg }) {
   const color = isVeg ? '#22c55e' : '#ef4444';
+  const label = isVeg ? 'Veg' : 'Non-Veg';
   return (
-    <div className="absolute top-1 left-1 p-[2px] rounded-sm shadow" style={{ background: 'rgba(255,255,255,0.9)' }}>
-      <div
-        className="w-2 h-2 rounded-sm border-2 flex items-center justify-center"
+    <span className="inline-flex items-center gap-1 shrink-0">
+      <span
+        className="w-2.5 h-2.5 rounded-sm border-[1.5px] flex items-center justify-center shrink-0"
         style={{ borderColor: color }}
       >
-        <div className="w-1 h-1 rounded-full" style={{ background: color }} />
-      </div>
-    </div>
+        <span className="w-1 h-1 rounded-full block" style={{ background: color }} />
+      </span>
+      <span className="text-[10px] font-semibold" style={{ color }}>{label}</span>
+    </span>
   );
 }
 
 /* ─── Single item row: image + name + qty/price ──────────────────────────────── */
 function OrderItemRow({ item }) {
-  const imageUrl = item.image_url ?? item.menu_item?.image_url;
-  const isVeg    = item.is_veg    ?? item.menu_item?.is_veg;
+  const imageUrl  = item.image_url ?? item.menu_item?.image_url;
+  const isVeg     = item.is_veg    ?? item.menu_item?.is_veg;
+  const vegColor  = isVeg === false ? '#ef4444' : '#22c55e';
   const unitPrice = item.unit_price ?? 0;
-  const total = Math.round(unitPrice * (item.quantity ?? 1));
+  const total     = Math.round(unitPrice * (item.quantity ?? 1));
 
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div
+      className="flex items-center gap-3 py-2 px-3 rounded-xl"
+      style={{
+        borderLeft: `2.5px solid ${vegColor}`,
+        background: isVeg === false ? 'rgba(239,68,68,0.04)' : 'rgba(34,197,94,0.04)',
+      }}
+    >
       {/* Image */}
       <div
-        className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0"
+        className="w-10 h-10 rounded-lg overflow-hidden shrink-0"
         style={{ background: 'var(--t-float)' }}
       >
         {imageUrl ? (
           <img src={imageUrl} alt={item.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xl">
+          <div className="w-full h-full flex items-center justify-center text-base">
             {isVeg === false ? '🍗' : '🥗'}
           </div>
         )}
-        {isVeg !== undefined && isVeg !== null && <VegDot isVeg={isVeg} />}
       </div>
 
-      {/* Name + instructions */}
+      {/* Name + variant + instructions */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white line-clamp-1">{item.name}</p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-sm font-semibold text-white leading-snug line-clamp-1">{item.name}</p>
+          {isVeg !== undefined && isVeg !== null && <VegBadgeInline isVeg={isVeg} />}
+        </div>
+        {item.variant_name && (
+          <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--t-accent)' }}>
+            {item.variant_group ? `${item.variant_group}: ` : ''}{item.variant_name}
+          </p>
+        )}
         {item.special_instructions && (
           <p className="text-[11px] font-medium mt-1 px-2 py-1 rounded-md leading-snug"
             style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }}>
@@ -139,17 +155,37 @@ function OrderBatch({ order, sessionOrders, onStatusChange, updating }) {
         </span>
       </div>
 
-      {/* Item rows */}
-      <div className="divide-y divide-white/[0.04] rounded-xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="px-3">
-          {order.items?.map((item, i) => (
-            <div key={i} className={i > 0 ? 'border-t border-white/5' : ''}>
-              <OrderItemRow item={item} />
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Item rows — veg first, with section divider if mixed */}
+      {(() => {
+        const rawItems = order.items ?? [];
+        const vegItems    = rawItems.filter(it => (it.is_veg ?? it.menu_item?.is_veg) !== false);
+        const nonVegItems = rawItems.filter(it => (it.is_veg ?? it.menu_item?.is_veg) === false);
+        const hasBoth = vegItems.length > 0 && nonVegItems.length > 0;
+        const sorted = [...vegItems, ...nonVegItems];
+        return (
+          <div className="space-y-1.5">
+            {sorted.map((item, i) => {
+              const isVeg = (item.is_veg ?? item.menu_item?.is_veg) !== false;
+              const showDivider = hasBoth && i === vegItems.length;
+              return (
+                <div key={i}>
+                  {showDivider && (
+                    <div className="flex items-center gap-2 my-1.5">
+                      <div className="flex-1 h-px" style={{ background: 'rgba(239,68,68,0.2)' }} />
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                        style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)' }}>
+                        Non-Veg
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: 'rgba(239,68,68,0.2)' }} />
+                    </div>
+                  )}
+                  <OrderItemRow item={item} />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Notes */}
       {order.notes && (

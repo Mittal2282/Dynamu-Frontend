@@ -8,6 +8,7 @@ import {
   useCartItems,
   useCartCount,
 } from "../../store/cartStore";
+import { syncCart } from "../../services/customerService";
 import { restaurantStore } from "../../store/restaurantStore";
 import { formatCurrency } from "../../utils/formatters";
 
@@ -16,11 +17,16 @@ const TAX_RATE = 0.05;
 
 // ── Cart item row ─────────────────────────────────────────────────────────────
 function CartItem({ item, currencySymbol }) {
+  // Use selectedVariant price if present (variant items), else base price
+  const basePrice = item.selectedVariant?.price ?? item.price;
   const effectivePrice =
     item.discount_percentage > 0
-      ? item.price * (1 - item.discount_percentage / 100)
-      : item.price;
+      ? basePrice * (1 - item.discount_percentage / 100)
+      : basePrice;
   const lineTotal = effectivePrice * item.qty;
+
+  // Veg badge reflects selected variant's veg status
+  const displayIsVeg = item.selectedVariant ? item.selectedVariant.isVeg : item.is_veg;
 
   const [instructionOpen, setInstructionOpen] = useState(false);
   const [draft, setDraft] = useState(item.instruction || "");
@@ -29,9 +35,16 @@ function CartItem({ item, currencySymbol }) {
     setDraft(item.instruction || "");
   }, [item.instruction]);
 
-  const handleSave = () => {
-    cartStore.getState().setInstruction(item._id ?? item.id, draft.trim());
+  // Use the composite cart key (_cartKey) so variant items update correctly
+  const itemKey = item._cartKey ?? item._id ?? item.id;
+
+  const handleSave = async () => {
+    cartStore.getState().setInstruction(itemKey, draft.trim());
     setInstructionOpen(false);
+    // Sync to server so instruction is included when order is placed
+    try {
+      await syncCart(Object.values(cartStore.getState().cart));
+    } catch { /* ignore — layout retries on next interaction */ }
   };
 
   const handleCancel = () => {
@@ -57,13 +70,19 @@ function CartItem({ item, currencySymbol }) {
           }
         />
         <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
-          <VegBadge isVeg={item.is_veg} size="sm" />
+          <VegBadge isVeg={displayIsVeg} size="sm" />
         </div>
       </div>
 
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm md:text-base text-white leading-snug">{item.name}</p>
-        {item.description && (
+        {/* Variant label */}
+        {item.selectedVariant && (
+          <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--t-accent)" }}>
+            {item.selectedVariant.groupName}: {item.selectedVariant.name}
+          </p>
+        )}
+        {!item.selectedVariant && item.description && (
           <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "rgba(245,246,250,0.55)" }}>
             {item.description}
           </p>
@@ -76,7 +95,7 @@ function CartItem({ item, currencySymbol }) {
                 {formatCurrency(effectivePrice, currencySymbol)}
               </span>
               <span className="line-through text-xs" style={{ color: "var(--t-dim)" }}>
-                {formatCurrency(item.price, currencySymbol)}
+                {formatCurrency(basePrice, currencySymbol)}
               </span>
               <span className="text-[10px] font-semibold bg-green-500/15 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">
                 {item.discount_percentage}% OFF
@@ -84,7 +103,7 @@ function CartItem({ item, currencySymbol }) {
             </>
           ) : (
             <span className="font-bold text-sm" style={{ color: "var(--t-accent)" }}>
-              {formatCurrency(item.price, currencySymbol)}
+              {formatCurrency(basePrice, currencySymbol)}
             </span>
           )}
         </div>
@@ -141,7 +160,7 @@ function CartItem({ item, currencySymbol }) {
       </div>
 
       <div className="shrink-0 flex flex-col items-end gap-2">
-        <CartControl item={item} />
+        <CartControl item={item} selectedVariant={item.selectedVariant} />
         <span className="text-xs font-semibold" style={{ color: "var(--t-dim)" }}>
           = {formatCurrency(lineTotal, currencySymbol)}
         </span>
@@ -179,10 +198,11 @@ export default function CustomerCartPage() {
   const { currencySymbol, name } = restaurantStore();
 
   const subtotal = items.reduce((s, i) => {
+    const basePrice = i.selectedVariant?.price ?? i.price;
     const p =
       i.discount_percentage > 0
-        ? i.price * (1 - i.discount_percentage / 100)
-        : i.price;
+        ? basePrice * (1 - i.discount_percentage / 100)
+        : basePrice;
     return s + p * i.qty;
   }, 0);
   const tax = subtotal * TAX_RATE;
@@ -259,7 +279,7 @@ export default function CustomerCartPage() {
               </p>
               {items.map((item) => (
                 <CartItem
-                  key={item._id ?? item.id}
+                  key={item._cartKey ?? item._id}
                   item={item}
                   currencySymbol={currencySymbol}
                 />

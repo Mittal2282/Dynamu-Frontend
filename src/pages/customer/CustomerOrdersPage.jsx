@@ -303,73 +303,107 @@ export default function CustomerOrdersPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {order.items?.map((item, i) => {
-              const note = item.special_instructions ?? item.instruction ?? item.note ?? "";
-              const imageUrl = item.image_url ?? item.menu_item?.image_url;
-              const isVeg = item.is_veg ?? item.menu_item?.is_veg;
-              const unitPrice = item.unit_price ?? item.price ?? 0;
-              const effectiveTotal = item.total_price ?? (item.quantity ?? 1) * unitPrice;
-              return (
-                <div
-                  key={i}
-                  className="rounded-2xl overflow-hidden border flex flex-col"
-                  style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
-                >
-                  {/* Image */}
-                  <div className="relative w-full h-[70px] overflow-hidden">
-                    <LazyImage
-                      src={imageUrl}
-                      alt={item.name}
-                      containerClassName="w-full h-full"
-                      imgClassName="w-full h-full object-cover"
-                      placeholder={
-                        <div
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ background: "var(--t-float)" }}
-                        >
-                          <span className="text-4xl">{isVeg ? "🥗" : "🍗"}</span>
+          {(() => {
+            const rawItems = order.items ?? [];
+            // Sort: veg items first, non-veg after
+            const sortedItems = [...rawItems].sort((a, b) => {
+              const aVeg = a.is_veg ?? a.menu_item?.is_veg ?? true;
+              const bVeg = b.is_veg ?? b.menu_item?.is_veg ?? true;
+              return bVeg - aVeg;
+            });
+            const hasVeg    = sortedItems.some(it => (it.is_veg ?? it.menu_item?.is_veg) !== false);
+            const hasNonVeg = sortedItems.some(it => (it.is_veg ?? it.menu_item?.is_veg) === false);
+            const mixed = hasVeg && hasNonVeg;
+
+            return (
+              <div className="grid grid-cols-3 gap-2">
+                {sortedItems.map((item, i) => {
+                  const note = item.special_instructions ?? item.instruction ?? item.note ?? "";
+                  const imageUrl = item.image_url ?? item.menu_item?.image_url;
+                  const isVeg = item.is_veg ?? item.menu_item?.is_veg ?? true;
+                  const vegColor = isVeg ? "#22c55e" : "#ef4444";
+                  const unitPrice = item.unit_price ?? item.price ?? 0;
+                  const effectiveTotal = item.total_price ?? (item.quantity ?? 1) * unitPrice;
+
+                  // Section label for first non-veg item when order has both types
+                  const showNonVegDivider = mixed && !isVeg &&
+                    (i === 0 || (sortedItems[i - 1].is_veg ?? sortedItems[i - 1].menu_item?.is_veg ?? true) !== false);
+
+                  return (
+                    <div key={i} className="contents">
+                      {showNonVegDivider && (
+                        <div className="col-span-3 flex items-center gap-2 my-0.5">
+                          <div className="flex-1 h-px" style={{ background: "rgba(239,68,68,0.2)" }} />
+                          <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#ef4444" }}>
+                            Non-Veg
+                          </span>
+                          <div className="flex-1 h-px" style={{ background: "rgba(239,68,68,0.2)" }} />
                         </div>
-                      }
-                    />
-                    {/* Veg badge overlay */}
-                    <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+                      )}
                       <div
-                        className="w-2.5 h-2.5 rounded-sm border-2 flex items-center justify-center"
-                        style={{ borderColor: isVeg ? "#22c55e" : "#ef4444" }}
+                        className="rounded-xl overflow-hidden flex flex-col"
+                        style={{
+                          background: "var(--t-surface)",
+                          border: `1px solid var(--t-line)`,
+                          borderTop: `2.5px solid ${vegColor}`,
+                        }}
                       >
-                        <div
-                          className="w-1 h-1 rounded-full"
-                          style={{ background: isVeg ? "#22c55e" : "#ef4444" }}
-                        />
+                        {/* Image */}
+                        <div className="relative w-full h-[60px] overflow-hidden">
+                          <LazyImage
+                            src={imageUrl}
+                            alt={item.name}
+                            containerClassName="w-full h-full"
+                            imgClassName="w-full h-full object-cover"
+                            placeholder={
+                              <div className="w-full h-full flex items-center justify-center"
+                                style={{ background: "var(--t-float)" }}>
+                                <span className="text-3xl">{isVeg ? "🥗" : "🍗"}</span>
+                              </div>
+                            }
+                          />
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-1.5 flex flex-col gap-0.5 flex-1">
+                          {/* Veg indicator */}
+                          <div className="flex items-center gap-1">
+                            <div className="w-2.5 h-2.5 rounded-sm border-2 shrink-0 flex items-center justify-center"
+                              style={{ borderColor: vegColor }}>
+                              <div className="w-1 h-1 rounded-full" style={{ background: vegColor }} />
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wide leading-none"
+                              style={{ color: vegColor }}>
+                              {isVeg ? "Veg" : "Non-Veg"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] font-bold leading-snug line-clamp-2" style={{ color: "#ffffff" }}>
+                            {item.name}
+                          </p>
+                          {item.variant_name && (
+                            <p className="text-[9px] font-semibold leading-none" style={{ color: "var(--t-accent)" }}>
+                              {item.variant_group ? `${item.variant_group}: ` : ""}{item.variant_name}
+                            </p>
+                          )}
+                          <p className="text-[10px] tabular-nums" style={{ color: "var(--t-nav-muted)" }}>
+                            {item.quantity ?? 1} × {formatCurrency(unitPrice, currencySymbol)}
+                          </p>
+                          <p className="text-[11px] font-bold tabular-nums" style={{ color: "var(--t-accent)" }}>
+                            {formatCurrency(effectiveTotal, currencySymbol)}
+                          </p>
+                          {note ? (
+                            <p className="text-[9px] italic mt-0.5 line-clamp-2" style={{ color: "var(--t-nav-muted)" }}>
+                              "{note}"
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-2 flex flex-col gap-0.5 flex-1">
-                    <p
-                      className="text-xs font-bold leading-snug line-clamp-2"
-                      style={{ color: "#ffffff" }}
-                    >
-                      {item.name}
-                    </p>
-                    <p className="text-[10px] tabular-nums leading-relaxed" style={{ color: "var(--t-nav-muted)" }}>
-                      {item.quantity ?? 1} × {formatCurrency(unitPrice, currencySymbol)}
-                    </p>
-                    <p className="text-xs font-bold tabular-nums" style={{ color: "var(--t-accent)" }}>
-                      = {formatCurrency(effectiveTotal, currencySymbol)}
-                    </p>
-                    {note ? (
-                      <p className="text-[10px] italic mt-0.5 line-clamp-2" style={{ color: "var(--t-nav-muted)" }}>
-                        "{note}"
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           <div className="flex items-center justify-between pt-1 gap-3 border-t border-white/[0.06]">
             <div className="flex items-center gap-2.5 min-w-0">

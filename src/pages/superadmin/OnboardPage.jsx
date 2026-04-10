@@ -172,13 +172,15 @@ function Step1({ form, onChange, onNext, loading, error }) {
 /* ─── Step 2: Import Menu ────────────────────────────────────────────────── */
 function Step2({ restaurantId, onNext, onSkip }) {
   const fileInputRef = useRef(null);
-  const [csvText, setCsvText]       = useState('');
-  const [fileName, setFileName]     = useState('');
-  const [preview, setPreview]       = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [parsing, setParsing]       = useState(false);
-  const [error, setError]           = useState('');
-  const [showSample, setShowSample] = useState(false);
+  const [csvText, setCsvText]         = useState('');
+  const [menuRows, setMenuRows]       = useState([]);   // 2-sheet XLSX: Menu Items rows
+  const [variantRows, setVariantRows] = useState([]);   // 2-sheet XLSX: Item Variants rows
+  const [fileName, setFileName]       = useState('');
+  const [preview, setPreview]         = useState([]);
+  const [loading, setLoading]         = useState(false);
+  const [parsing, setParsing]         = useState(false);
+  const [error, setError]             = useState('');
+  const [showSample, setShowSample]   = useState(false);
 
   const parseCSVLine = (line) => {
     // RFC4180-ish parsing so quoted commas don't break column indexing.
@@ -239,21 +241,44 @@ function Step2({ restaurantId, onNext, onSkip }) {
     setParsing(true);
     setPreview([]);
     setCsvText('');
+    setMenuRows([]);
+    setVariantRows([]);
     try {
       const ext = file.name.split('.').pop().toLowerCase();
       const isXLSX = ext === 'xlsx' || ext === 'xls';
-      let csvResult = '';
       if (isXLSX) {
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        csvResult = XLSX.utils.sheet_to_csv(firstSheet);
+        const hasVariantsSheet = workbook.SheetNames.includes('Item Variants');
+        if (hasVariantsSheet) {
+          // New 2-sheet variant-aware format
+          const mRows = XLSX.utils.sheet_to_json(workbook.Sheets['Menu Items'] || workbook.Sheets[workbook.SheetNames[0]]);
+          const vRows = XLSX.utils.sheet_to_json(workbook.Sheets['Item Variants']);
+          setMenuRows(mRows);
+          setVariantRows(vRows);
+          setFileName(`${file.name} · XLSX (variants) · ${(file.size / 1024).toFixed(1)} KB`);
+          // Build preview from menu rows
+          const prev = mRows.slice(0, 5).map(r => ({
+            category:  (r['Category']   || '').trim(),
+            name:      (r['Item Name']  || '').trim(),
+            price:     r['Has Variants?'] === 'Yes' ? 'See variants' : String(r['Price (₹)'] ?? ''),
+            meal_tag:  (r['Meal Tag']   || '').trim(),
+            vegNonVeg: r['Has Variants?'] === 'Yes' ? 'Mixed' : (r['Veg / Non-Veg'] || 'Veg'),
+          })).filter(r => r.name);
+          setPreview(prev);
+        } else {
+          // Single-sheet XLSX → convert to CSV (legacy path)
+          const csvResult = XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
+          setCsvText(csvResult);
+          setFileName(`${file.name} · XLSX · ${(file.size / 1024).toFixed(1)} KB`);
+          setPreview(buildPreview(csvResult));
+        }
       } else {
-        csvResult = await file.text();
+        const csvResult = await file.text();
+        setCsvText(csvResult);
+        setFileName(`${file.name} · CSV · ${(file.size / 1024).toFixed(1)} KB`);
+        setPreview(buildPreview(csvResult));
       }
-      setFileName(`${file.name} · ${isXLSX ? 'XLSX' : 'CSV'} · ${(file.size / 1024).toFixed(1)} KB`);
-      setCsvText(csvResult);
-      setPreview(buildPreview(csvResult));
     } catch {
       setError('Could not read the file. Make sure it is a valid CSV or XLSX.');
     } finally {
@@ -261,12 +286,18 @@ function Step2({ restaurantId, onNext, onSkip }) {
     }
   };
 
+  const hasData = menuRows.length > 0 || csvText.trim().length > 0;
+
   const handleImport = async () => {
-    if (!csvText.trim()) { setError('Please upload a file first.'); return; }
+    if (!hasData) { setError('Please upload a file first.'); return; }
     setError('');
     setLoading(true);
     try {
-      await importMenu(restaurantId, csvText);
+      if (menuRows.length > 0) {
+        await importMenu(restaurantId, null, menuRows, variantRows);
+      } else {
+        await importMenu(restaurantId, csvText);
+      }
       onNext();
     } catch (err) {
       setError(err.response?.data?.message || 'Import failed.');
@@ -379,7 +410,7 @@ function Step2({ restaurantId, onNext, onSkip }) {
         </button>
         <button
           onClick={handleImport}
-          disabled={loading || parsing || !csvText}
+          disabled={loading || parsing || !hasData}
           className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
           style={{ background: 'var(--t-accent)' }}
         >

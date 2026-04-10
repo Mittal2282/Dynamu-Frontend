@@ -91,23 +91,29 @@ function downloadCategoriesCSV(categories) {
 }
 
 export default function BulkUploadModal({ isOpen, onClose, onImport, categories = [] }) {
-  const [csvText, setCsvText] = useState('');
-  const [fileName, setFileName] = useState('');
-  const [preview, setPreview] = useState([]);
-  const [rowCount, setRowCount] = useState(0);
-  const [fileError, setFileError] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [csvText, setCsvText]         = useState('');
+  const [menuRows, setMenuRows]       = useState([]);   // 2-sheet: Menu Items rows
+  const [variantRows, setVariantRows] = useState([]);   // 2-sheet: Item Variants rows
+  const [fileName, setFileName]       = useState('');
+  const [preview, setPreview]         = useState([]);
+  const [rowCount, setRowCount]       = useState(0);
+  const [fileError, setFileError]     = useState('');
+  const [importing, setImporting]     = useState(false);
+  const [result, setResult]           = useState(null);
+  const [dragOver, setDragOver]       = useState(false);
+  const [isTwoSheet, setIsTwoSheet]   = useState(false);
   const fileInputRef = useRef(null);
 
   const reset = () => {
     setCsvText('');
+    setMenuRows([]);
+    setVariantRows([]);
     setFileName('');
     setPreview([]);
     setRowCount(0);
     setFileError('');
     setResult(null);
+    setIsTwoSheet(false);
   };
 
   const handleClose = () => {
@@ -126,46 +132,70 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
 
     setFileError('');
     setResult(null);
-    let text = '';
 
     try {
       if (ext === 'xlsx' || ext === 'xls') {
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        text = XLSX.utils.sheet_to_csv(sheet);
+        const hasVariantsSheet = workbook.SheetNames.includes('Item Variants');
+
+        if (hasVariantsSheet) {
+          // New 2-sheet variant-aware format
+          const mRows = XLSX.utils.sheet_to_json(workbook.Sheets['Menu Items'] || workbook.Sheets[workbook.SheetNames[0]]);
+          const vRows = XLSX.utils.sheet_to_json(workbook.Sheets['Item Variants']);
+          if (mRows.length === 0) {
+            setFileError('No items found in the "Menu Items" sheet.');
+            return;
+          }
+          setMenuRows(mRows);
+          setVariantRows(vRows);
+          setIsTwoSheet(true);
+          setFileName(file.name);
+          setRowCount(mRows.length);
+          const prev = mRows.slice(0, 3).map(r => ({
+            name:     (r['Item Name'] || '').trim(),
+            category: (r['Category']  || '').trim(),
+            price:    r['Has Variants?'] === 'Yes' ? 'Variants' : String(r['Price (₹)'] ?? ''),
+            is_veg:   r['Has Variants?'] === 'Yes' ? 'mixed' : '',
+          }));
+          setPreview(prev);
+          return;
+        }
+
+        // Single-sheet XLSX → CSV path
+        const text = XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
+        setCsvText(text);
+        setFileName(file.name);
+        const { rows } = parseCSV(text);
+        setRowCount(rows.length);
+        setPreview(rows.slice(0, 3));
       } else {
-        text = await file.text();
+        const text = await file.text();
+        const { rows } = parseCSV(text);
+        if (rows.length === 0) {
+          setFileError('No data rows found. Make sure the file has at least one row below the header.');
+          return;
+        }
+        // Validate categories if a restricted list exists
+        if (categories.length > 0) {
+          const validSet = new Set(categories.map(c => c.toLowerCase().trim()));
+          const badRows = rows
+            .map((r, i) => ({ row: i + 2, cat: r.category ?? '' }))
+            .filter(({ cat }) => cat && !validSet.has(cat.toLowerCase().trim()));
+          if (badRows.length > 0) {
+            const sample = badRows.slice(0, 3).map(b => `row ${b.row} ("${b.cat}")`).join(', ');
+            setFileError(`Invalid category in ${badRows.length} row${badRows.length > 1 ? 's' : ''}: ${sample}. Use "Download Categories" to see valid values.`);
+            return;
+          }
+        }
+        setCsvText(text);
+        setFileName(file.name);
+        setRowCount(rows.length);
+        setPreview(rows.slice(0, 3));
       }
     } catch {
       setFileError('Could not read the file. Please check it is not corrupted.');
-      return;
     }
-
-    const { rows } = parseCSV(text);
-
-    if (rows.length === 0) {
-      setFileError('No data rows found. Make sure the file has at least one row below the header.');
-      return;
-    }
-
-    // Validate categories if a restricted list exists
-    if (categories.length > 0) {
-      const validSet = new Set(categories.map(c => c.toLowerCase().trim()));
-      const badRows = rows
-        .map((r, i) => ({ row: i + 2, cat: r.category ?? '' }))
-        .filter(({ cat }) => cat && !validSet.has(cat.toLowerCase().trim()));
-      if (badRows.length > 0) {
-        const sample = badRows.slice(0, 3).map(b => `row ${b.row} ("${b.cat}")`).join(', ');
-        setFileError(`Invalid category in ${badRows.length} row${badRows.length > 1 ? 's' : ''}: ${sample}. Use "Download Categories" to see valid values.`);
-        return;
-      }
-    }
-
-    setCsvText(text);
-    setFileName(file.name);
-    setRowCount(rows.length);
-    setPreview(rows.slice(0, 3));
   };
 
   const handleFileChange = (e) => {
@@ -181,11 +211,15 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
     processFile(e.dataTransfer.files?.[0]);
   };
 
+  const canImport = isTwoSheet ? menuRows.length > 0 : !!csvText;
+
   const handleImport = async () => {
-    if (!csvText) return;
+    if (!canImport) return;
     setImporting(true);
     try {
-      const res = await bulkImportMenuItems(csvText);
+      const res = isTwoSheet
+        ? await bulkImportMenuItems(null, menuRows, variantRows)
+        : await bulkImportMenuItems(csvText);
       setResult(res);
       if (res.imported > 0) {
         onImport();
@@ -351,9 +385,9 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
                     <tr key={i} className={i < preview.length - 1 ? 'border-b border-white/5' : ''}>
                       <td className="px-3 py-2 text-white">{row.name || '—'}</td>
                       <td className="px-3 py-2 text-slate-400">{row.category || '—'}</td>
-                      <td className="px-3 py-2 text-slate-400">{row.price ? `₹${row.price}` : '—'}</td>
+                      <td className="px-3 py-2 text-slate-400">{row.price ? (row.price === 'Variants' ? row.price : `₹${row.price}`) : '—'}</td>
                       <td className="px-3 py-2">
-                        {row.is_veg === 'true' ? '🟢' : row.is_veg === 'false' ? '🔴' : '⚪'}
+                        {row.is_veg === 'mixed' ? '🟡' : row.is_veg === 'true' ? '🟢' : row.is_veg === 'false' ? '🔴' : '⚪'}
                       </td>
                     </tr>
                   ))}
@@ -396,7 +430,7 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
             <button
               type="button"
               onClick={handleImport}
-              disabled={!csvText || importing}
+              disabled={!canImport || importing}
               className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ background: 'var(--t-accent)' }}
             >

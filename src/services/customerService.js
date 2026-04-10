@@ -71,9 +71,14 @@ export async function getCart() {
  */
 export async function syncCart(items) {
   const formattedItems = items.map(item => ({
-    _id: item._id,       // sessionService reads item._id
+    _id: item._id,
     quantity: item.qty,
     instruction: item.instruction,
+    // Variant fields — server stores and returns these so variant info survives page refresh
+    variant_name:   item.selectedVariant?.name      || undefined,
+    variant_group:  item.selectedVariant?.groupName || undefined,
+    variant_price:  item.selectedVariant?.price     ?? undefined,
+    variant_is_veg: item.selectedVariant != null ? (item.selectedVariant.isVeg ?? undefined) : undefined,
   }));
   return apiCaller({
     method:   'PUT',

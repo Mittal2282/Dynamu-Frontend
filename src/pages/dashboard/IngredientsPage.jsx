@@ -2,21 +2,22 @@ import { useEffect, useState } from "react";
 import { getIngredients, toggleIngredient } from "../../services/adminService";
 
 /* ─── Toggle ────────────────────────────────────────────────────────────────── */
-function Toggle({ checked, onChange, disabled }) {
+function Toggle({ checked, onChange, disabled, isNonVeg = false }) {
   return (
     <button
       onClick={onChange}
       disabled={disabled}
       role="switch"
       aria-checked={checked}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
-        checked ? "bg-green-500" : "bg-red-500/70"
-      }`}
-      style={
-        checked
-          ? { boxShadow: "0 0 10px rgba(34,197,94,0.4)" }
-          : { boxShadow: "0 0 8px rgba(239,68,68,0.25)" }
-      }
+      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+      style={{
+        background: checked
+          ? (isNonVeg ? "#ef4444" : "#22c55e")
+          : "rgba(239,68,68,0.7)",
+        boxShadow: checked
+          ? (isNonVeg ? "0 0 10px rgba(239,68,68,0.4)" : "0 0 10px rgba(34,197,94,0.4)")
+          : "0 0 8px rgba(239,68,68,0.25)",
+      }}
     >
       <span
         className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${
@@ -28,7 +29,7 @@ function Toggle({ checked, onChange, disabled }) {
 }
 
 /* ─── Ingredient Card ───────────────────────────────────────────────────────── */
-function IngredientCard({ ingredient, onToggle, saving }) {
+function IngredientCard({ ingredient, onToggle, saving, isNonVeg = false }) {
   const { name, is_available, affected_count, items_using = [] } = ingredient;
   const isSaving = saving === name;
   const initial = name.charAt(0).toUpperCase();
@@ -72,8 +73,8 @@ function IngredientCard({ ingredient, onToggle, saving }) {
               {name}
             </p>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: is_available ? "#22c55e" : "#ef4444" }} />
-              <span className="text-[11px] font-medium" style={{ color: is_available ? "#4ade80" : "#f87171" }}>
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: is_available ? (isNonVeg ? "#ef4444" : "#22c55e") : "#ef4444" }} />
+              <span className="text-[11px] font-medium" style={{ color: is_available ? (isNonVeg ? "#f87171" : "#4ade80") : "#f87171" }}>
                 {is_available ? "In Stock" : "Out of Stock"}
               </span>
             </div>
@@ -115,7 +116,7 @@ function IngredientCard({ ingredient, onToggle, saving }) {
               <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
             </div>
           ) : (
-            <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} />
+            <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} isNonVeg={isNonVeg} />
           )}
         </div>
 
@@ -131,8 +132,24 @@ function IngredientCard({ ingredient, onToggle, saving }) {
             <ul className="divide-y" style={{ borderColor: "var(--t-line)" }}>
               {items_using.map((dish) => (
                 <li key={dish._id} className="flex items-center gap-2 px-3 py-2">
-                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "var(--t-dim)" }} />
-                  <span className="text-xs truncate" style={{ color: "var(--t-text)" }}>{dish.name}</span>
+                  {/* Thumbnail */}
+                  <div
+                    className="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center text-base"
+                    style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+                  >
+                    {dish.image_url
+                      ? <img src={dish.image_url} alt={dish.name} className="w-full h-full object-cover" />
+                      : <span>{dish.is_veg ? "🥗" : "🍗"}</span>
+                    }
+                  </div>
+                  {/* Name */}
+                  <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>{dish.name}</span>
+                  {/* Price */}
+                  {dish.price != null && (
+                    <span className="text-[10px] font-bold shrink-0" style={{ color: "var(--t-accent)" }}>
+                      ₹{dish.price}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -156,6 +173,70 @@ function StatChip({ label, value, color }) {
       <p className="text-[11px] font-medium truncate" style={{ color: "var(--t-dim)" }}>
         {label}
       </p>
+    </div>
+  );
+}
+
+/* ─── Veg/Non-veg section header ────────────────────────────────────────────── */
+function VegSectionHeader({ type }) {
+  const isVeg = type === "veg";
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-2">
+        <span
+          className="w-2.5 h-2.5 rounded-full shrink-0"
+          style={{ background: isVeg ? "#22c55e" : "#ef4444" }}
+        />
+        <span
+          className="text-xs font-bold uppercase tracking-widest"
+          style={{ color: isVeg ? "#4ade80" : "#f87171" }}
+        >
+          {isVeg ? "Veg Ingredients" : "Non-Veg Ingredients"}
+        </span>
+      </div>
+      <div className="flex-1 h-px" style={{ background: isVeg ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)" }} />
+    </div>
+  );
+}
+
+/* ─── Segregated grid (veg section + non-veg section) ───────────────────────── */
+function VegSegregatedGrid({ displayed, onToggle, saving }) {
+  // Classify: if ANY dish using this ingredient is non-veg → non-veg; otherwise veg
+  const vegIngredients    = displayed.filter(ing => !ing.items_using?.some(d => d.is_veg === false));
+  const nonVegIngredients = displayed.filter(ing =>  ing.items_using?.some(d => d.is_veg === false));
+
+  const renderGrid = (items, isNonVeg = false) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {items.map((ing) => (
+        <IngredientCard
+          key={ing.name}
+          ingredient={ing}
+          onToggle={onToggle}
+          saving={saving}
+          isNonVeg={isNonVeg}
+        />
+      ))}
+    </div>
+  );
+
+  // If all in one bucket (no mixed data), just render flat without section headers
+  if (nonVegIngredients.length === 0) return renderGrid(vegIngredients, false);
+  if (vegIngredients.length    === 0) return renderGrid(nonVegIngredients, true);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {vegIngredients.length > 0 && (
+        <div>
+          <VegSectionHeader type="veg" />
+          {renderGrid(vegIngredients, false)}
+        </div>
+      )}
+      {nonVegIngredients.length > 0 && (
+        <div>
+          <VegSectionHeader type="nonveg" />
+          {renderGrid(nonVegIngredients, true)}
+        </div>
+      )}
     </div>
   );
 }
@@ -214,7 +295,7 @@ export default function IngredientsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
 
       {/* ── Page header ── */}
       <div className="flex items-start justify-between gap-4">
@@ -440,16 +521,11 @@ export default function IngredientsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {displayed.map((ing) => (
-            <IngredientCard
-              key={ing.name}
-              ingredient={ing}
-              onToggle={handleToggle}
-              saving={saving}
-            />
-          ))}
-        </div>
+        <VegSegregatedGrid
+          displayed={displayed}
+          onToggle={handleToggle}
+          saving={saving}
+        />
       )}
     </div>
   );

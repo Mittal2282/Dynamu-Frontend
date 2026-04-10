@@ -126,11 +126,14 @@ export async function createTables(restaurantId, payload) {
  * @param {string} restaurantId
  * @param {string} csvText
  */
-export async function importMenu(restaurantId, csvText) {
+export async function importMenu(restaurantId, csvText, menuRows, variantRows) {
+  const payload = (menuRows && menuRows.length)
+    ? { menuRows, variantRows: variantRows ?? [] }
+    : { csvText };
   return apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.SA_MENU(restaurantId),
-    payload:  { csvText },
+    payload,
     useAdmin: true,
   });
 }
@@ -335,11 +338,14 @@ export async function createDashMenuItem(payload) {
  * @param {string} csvText
  * @returns {Promise<{ imported: number, errors: string[] }>}
  */
-export async function bulkImportMenuItems(csvText) {
+export async function bulkImportMenuItems(csvText, menuRows, variantRows) {
+  const payload = (menuRows && menuRows.length)
+    ? { menuRows, variantRows: variantRows ?? [] }
+    : { csvText };
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.DASH_MENU_BULK,
-    payload:  { csvText },
+    payload,
     useAdmin: true,
   });
   return data.data;

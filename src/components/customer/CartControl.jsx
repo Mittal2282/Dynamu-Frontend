@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { syncCart } from "../../services/customerService";
-import { cartStore } from "../../store/cartStore";
+import { cartStore, cartKey } from "../../store/cartStore";
 
 function TrashIcon() {
   return (
@@ -29,12 +29,17 @@ function TrashIcon() {
  * qty = 0  →  accent "Add to Cart" button
  * qty ≥ 1  →  3-cell stepper [ 🗑/− | qty | + ]
  *
+ * For variant items, pass selectedVariant so the correct cart key is used.
  * Each interaction optimistically updates the store, then awaits syncCart.
- * Both stepper cells are disabled for the duration of the API call.
  */
-export default function CartControl({ item, showDelete = false }) {
+export default function CartControl({ item, selectedVariant, showDelete = false }) {
   const [loading, setLoading] = useState(false);
-  const q = cartStore((s) => s.cart[item._id]?.qty ?? 0);
+
+  // Build the item object that carries the variant (if any)
+  const itemWithVariant = selectedVariant ? { ...item, selectedVariant } : item;
+  const key = cartKey(itemWithVariant);
+
+  const q = cartStore((s) => s.cart[key]?.qty ?? 0);
 
   const sync = async () => {
     setLoading(true);
@@ -49,13 +54,13 @@ export default function CartControl({ item, showDelete = false }) {
 
   const handleAdd = async () => {
     if (loading) return;
-    cartStore.getState().add(item);
+    cartStore.getState().add(itemWithVariant);
     await sync();
   };
 
   const handleRemove = async () => {
     if (loading) return;
-    cartStore.getState().remove(item);
+    cartStore.getState().remove(itemWithVariant);
     await sync();
   };
 
