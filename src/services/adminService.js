@@ -1,6 +1,5 @@
-import { apiCaller } from '../api/apiCaller';
-import { ENDPOINTS } from '../utils/endpoints';
-import { sleep } from '../utils/helpers';
+import { apiCaller } from "../api/apiCaller";
+import { ENDPOINTS } from "../utils/endpoints";
 
 /**
  * Admin API services (all requests use the admin axios instance).
@@ -15,7 +14,7 @@ import { sleep } from '../utils/helpers';
  */
 export async function adminLogin(payload) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.ADMIN_LOGIN,
     payload,
     useAdmin: true,
@@ -29,9 +28,9 @@ export async function adminLogin(payload) {
  */
 export async function adminLogout(refreshToken) {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.ADMIN_LOGOUT,
-    payload:  { refresh_token: refreshToken },
+    payload: { refresh_token: refreshToken },
     useAdmin: true,
   });
 }
@@ -44,7 +43,7 @@ export async function adminLogout(refreshToken) {
  */
 export async function getDashProfile() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_PROFILE,
     useAdmin: true,
   });
@@ -57,7 +56,7 @@ export async function getDashProfile() {
  */
 export async function getDashOrders() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_ORDERS,
     useAdmin: true,
   });
@@ -70,7 +69,7 @@ export async function getDashOrders() {
  */
 export async function getDashStats() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_STATS,
     useAdmin: true,
   });
@@ -85,7 +84,7 @@ export async function getDashStats() {
  */
 export async function getRestaurants() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.SA_RESTAURANTS,
     useAdmin: true,
   });
@@ -98,7 +97,7 @@ export async function getRestaurants() {
  */
 export async function createRestaurant(payload) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.SA_RESTAURANTS,
     payload,
     useAdmin: true,
@@ -113,7 +112,7 @@ export async function createRestaurant(payload) {
  */
 export async function createTables(restaurantId, payload) {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.SA_TABLES(restaurantId),
     payload,
     useAdmin: true,
@@ -127,9 +126,9 @@ export async function createTables(restaurantId, payload) {
  */
 export async function importMenu(restaurantId, csvText) {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.SA_MENU(restaurantId),
-    payload:  { csvText },
+    payload: { csvText },
     useAdmin: true,
   });
 }
@@ -141,7 +140,7 @@ export async function importMenu(restaurantId, csvText) {
  */
 export async function getDashMenu() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_MENU,
     useAdmin: true,
   });
@@ -155,7 +154,7 @@ export async function getDashMenu() {
  */
 export async function updateDashMenuItem(id, payload) {
   const data = await apiCaller({
-    method:   'PUT',
+    method: "PUT",
     endpoint: ENDPOINTS.DASH_MENU_ITEM(id),
     payload,
     useAdmin: true,
@@ -169,7 +168,7 @@ export async function updateDashMenuItem(id, payload) {
  */
 export async function getDashTables() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_TABLES,
     useAdmin: true,
   });
@@ -182,7 +181,7 @@ export async function getDashTables() {
  */
 export async function freeTable(tableId) {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_TABLE_FREE(tableId),
     useAdmin: true,
   });
@@ -194,7 +193,7 @@ export async function freeTable(tableId) {
  */
 export async function toggleTableActive(tableId) {
   return apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_TABLE_TOGGLE_ACTIVE(tableId),
     useAdmin: true,
   });
@@ -202,9 +201,9 @@ export async function toggleTableActive(tableId) {
 
 export async function addTablesToFloor(floorData) {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_TABLES_BULK,
-    payload:  floorData,
+    payload: floorData,
     useAdmin: true,
   });
 }
@@ -215,7 +214,7 @@ export async function addTablesToFloor(floorData) {
  */
 export async function closeTableSession(sessionId) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_CLOSE_SESSION(sessionId),
     useAdmin: true,
   });
@@ -228,7 +227,7 @@ export async function closeTableSession(sessionId) {
  */
 export async function toggleDashMenuItem(id) {
   const data = await apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_TOGGLE(id),
     useAdmin: true,
   });
@@ -241,7 +240,7 @@ export async function toggleDashMenuItem(id) {
  */
 export async function toggleChefsSpecial(id) {
   const data = await apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_CHEFS_SPECIAL(id),
     useAdmin: true,
   });
@@ -254,7 +253,7 @@ export async function toggleChefsSpecial(id) {
  */
 export async function deleteDashMenuItem(id) {
   const data = await apiCaller({
-    method:   'DELETE',
+    method: "DELETE",
     endpoint: ENDPOINTS.DASH_MENU_ITEM_DELETE(id),
     useAdmin: true,
   });
@@ -263,7 +262,7 @@ export async function deleteDashMenuItem(id) {
 
 export async function toggleFeatured(id) {
   const data = await apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_FEATURED(id),
     useAdmin: true,
   });
@@ -276,7 +275,7 @@ export async function toggleFeatured(id) {
  */
 export async function getRestaurantOrders(restaurantId) {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.SA_REST_ORDERS(restaurantId),
     useAdmin: true,
   });
@@ -291,7 +290,7 @@ export async function getRestaurantOrders(restaurantId) {
  */
 export async function getDashCategories() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_CATEGORIES,
     useAdmin: true,
   });
@@ -305,9 +304,9 @@ export async function getDashCategories() {
  */
 export async function createDashCategory(name) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_CATEGORIES,
-    payload:  { name },
+    payload: { name },
     useAdmin: true,
   });
   return data.data;
@@ -321,7 +320,7 @@ export async function createDashCategory(name) {
  */
 export async function createDashMenuItem(payload) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_MENU,
     payload,
     useAdmin: true,
@@ -336,9 +335,9 @@ export async function createDashMenuItem(payload) {
  */
 export async function bulkImportMenuItems(csvText) {
   const data = await apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_MENU_BULK,
-    payload:  { csvText },
+    payload: { csvText },
     useAdmin: true,
   });
   return data.data;
@@ -346,7 +345,7 @@ export async function bulkImportMenuItems(csvText) {
 
 export async function getIngredients() {
   const data = await apiCaller({
-    method:   'GET',
+    method: "GET",
     endpoint: ENDPOINTS.DASH_INGREDIENTS,
     useAdmin: true,
   });
@@ -355,9 +354,9 @@ export async function getIngredients() {
 
 export async function toggleIngredient(name, isAvailable) {
   const data = await apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_INGREDIENTS_TOGGLE,
-    payload:  { name, is_available: isAvailable },
+    payload: { name, is_available: isAvailable },
     useAdmin: true,
   });
   return data.data;
