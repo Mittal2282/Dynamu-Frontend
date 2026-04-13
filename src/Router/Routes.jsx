@@ -15,6 +15,7 @@ import CustomerOrdersPage from "../pages/customer/CustomerOrdersPage";
 // Auth
 import ProtectedRoute from "../components/ProtectedRoute";
 import LoginPage from "../pages/auth/LoginPage";
+import LandingPage from "../pages/LandingPage";
 
 // Admin layouts
 import DashLayout from "../layouts/DashLayout";
@@ -87,8 +88,8 @@ export default function Routes() {
         <Route path="ingredients" element={<IngredientsPage />} />
       </Route>
 
-      {/* Root → Login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Root → Landing */}
+      <Route path="/" element={<LandingPage />} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />

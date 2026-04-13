@@ -62,13 +62,16 @@ const NAV_SECONDARY = [
   },
 ];
 
-function NavItem({ item }) {
+function NavItem({ item, collapsed }) {
   return (
     <NavLink
       to={item.to}
       end={item.end}
+      title={item.label}
       className={({ isActive }) =>
-        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group/nav ${
+        `relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group/nav ${
+          collapsed ? 'lg:justify-center lg:gap-0 lg:px-2 lg:py-2.5' : 'px-3 py-2.5'
+        } ${
           isActive
             ? 'text-white'
             : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
@@ -85,46 +88,65 @@ function NavItem({ item }) {
     >
       {({ isActive }) => (
         <>
-          {/* Left accent bar */}
           {isActive && (
             <span
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
+              className={`absolute top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full ${
+                collapsed ? 'lg:left-0.5 left-0' : 'left-0'
+              }`}
               style={{ background: 'var(--t-accent)' }}
             />
           )}
-          {/* Icon */}
           <span
             className="shrink-0 transition-colors duration-150"
             style={{ color: isActive ? 'var(--t-accent)' : 'inherit' }}
           >
             {item.icon}
           </span>
-          {/* Label */}
-          <span className="truncate">{item.label}</span>
+          <span className={`truncate ${collapsed ? 'lg:sr-only' : ''}`}>{item.label}</span>
         </>
       )}
     </NavLink>
   );
 }
 
+const SIDEBAR_COLLAPSED_KEY = 'dynamu-dash-sidebar-collapsed';
+
 export default function DashLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   const [restaurantName, setRestaurantName] = useState('');
   const { adminName, adminRole, resetAuth } = authStore();
   const name = adminName || 'Owner';
-
-  // Page title derived from route
-  const pageTitle = [...NAV_MAIN, ...NAV_SECONDARY].find(
-    (n) => n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
-  )?.label ?? 'Dashboard';
 
   useEffect(() => {
     getDashProfile()
       .then(data => setRestaurantName(data?.name || ''))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const logout = () => {
     resetAuth();
@@ -148,32 +170,67 @@ export default function DashLayout() {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-60 flex flex-col transition-transform duration-300 ease-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed lg:static inset-y-0 left-0 z-30 flex flex-col transition-all duration-300 ease-out w-60
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'lg:w-[4.25rem]' : 'lg:w-60'}`}
         style={{
           background: 'var(--t-surface, #111318)',
           borderRight: '1px solid var(--t-line, rgba(255,255,255,0.07))',
         }}
       >
-        {/* Top accent line */}
         <div
           className="h-[2px] w-full shrink-0"
           style={{ background: 'linear-gradient(90deg, var(--t-accent), var(--t-accent2, #fb923c))' }}
         />
 
-        {/* Brand */}
-        <div className="px-4 py-3 shrink-0">
-          <div className="flex items-center gap-3">
+        {/* Mobile drawer header */}
+        <div className="flex items-center justify-between px-3 py-2 shrink-0 lg:hidden border-b border-white/[0.06]">
+          <span className="text-xs font-semibold truncate pr-2" style={{ color: 'var(--t-text)' }}>
+            {restaurantName || 'Menu'}
+          </span>
+          <button
+            type="button"
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+            style={{ color: 'var(--t-dim)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--t-dim)';
+              e.currentTarget.style.background = 'transparent';
+            }}
+            onClick={closeSidebar}
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Brand + desktop collapse */}
+        <div
+          className={`px-3 py-3 shrink-0 ${sidebarCollapsed ? 'lg:px-2 lg:py-3' : 'lg:px-4'}`}
+        >
+          <div
+            className={`flex items-center gap-3 ${sidebarCollapsed ? 'lg:flex-col lg:gap-2' : ''}`}
+          >
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 select-none shadow-lg"
+              className="relative w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 select-none shadow-lg"
               style={{
                 background: 'linear-gradient(135deg, var(--t-accent), var(--t-accent2, #fb923c))',
                 boxShadow: '0 4px 12px var(--t-accent-20, rgba(249,115,22,0.2))',
               }}
             >
               {restaurantName?.charAt(0)?.toUpperCase() || 'D'}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400 border-2 animate-pulse"
+                style={{ borderColor: 'var(--t-surface, #111318)' }}
+                title="Live"
+              />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className={`min-w-0 flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
               <p
                 className="text-sm font-bold truncate leading-tight"
                 style={{
@@ -191,50 +248,87 @@ export default function DashLayout() {
                 {adminRole === 'restaurant_owner' ? 'Owner' : 'Staff'}
               </p>
             </div>
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              className={`hidden lg:flex w-8 h-8 rounded-lg items-center justify-center shrink-0 transition-colors ml-auto ${
+                sidebarCollapsed ? 'lg:ml-0' : ''
+              }`}
+              style={{ color: 'var(--t-dim)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--t-dim)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mx-4 shrink-0" style={{ height: '1px', background: 'var(--t-line)' }} />
+        <div
+          className={`mx-4 shrink-0 lg:mx-3 ${sidebarCollapsed ? 'lg:mx-2' : ''}`}
+          style={{ height: '1px', background: 'var(--t-line)' }}
+        />
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-5 overflow-y-auto">
-          {/* Main */}
+        <nav
+          className={`flex-1 py-4 flex flex-col gap-5 overflow-y-auto min-h-0 px-3 ${
+            sidebarCollapsed ? 'lg:px-2' : ''
+          }`}
+        >
           <div className="space-y-0.5">
             <p
-              className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+              className={`px-3 mb-2 text-[10px] font-bold uppercase tracking-widest ${
+                sidebarCollapsed ? 'lg:hidden' : ''
+              }`}
               style={{ color: 'var(--t-dim, rgba(255,255,255,0.3))' }}
             >
               Operations
             </p>
             {NAV_MAIN.map((item) => (
-              <NavItem key={item.to} item={item} />
+              <NavItem key={item.to} item={item} collapsed={sidebarCollapsed} />
             ))}
           </div>
 
-          {/* Secondary */}
           <div className="space-y-0.5">
             <p
-              className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+              className={`px-3 mb-2 text-[10px] font-bold uppercase tracking-widest ${
+                sidebarCollapsed ? 'lg:hidden' : ''
+              }`}
               style={{ color: 'var(--t-dim, rgba(255,255,255,0.3))' }}
             >
               Insights
             </p>
             {NAV_SECONDARY.map((item) => (
-              <NavItem key={item.to} item={item} />
+              <NavItem key={item.to} item={item} collapsed={sidebarCollapsed} />
             ))}
           </div>
         </nav>
 
-        {/* Divider */}
-        <div className="mx-4 shrink-0" style={{ height: '1px', background: 'var(--t-line)' }} />
+        <div
+          className={`mx-4 shrink-0 lg:mx-3 ${sidebarCollapsed ? 'lg:mx-2' : ''}`}
+          style={{ height: '1px', background: 'var(--t-line)' }}
+        />
 
-        {/* Footer — user + logout */}
-        <div className="px-3 py-4 shrink-0 space-y-1">
-          {/* User chip */}
+        <div className={`px-3 py-4 shrink-0 space-y-1 ${sidebarCollapsed ? 'lg:px-2' : ''}`}>
           <div
-            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+            className={`flex items-center gap-2.5 rounded-xl ${
+              sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2' : 'px-3 py-2.5'
+            }`}
             style={{ background: 'var(--t-float, rgba(255,255,255,0.04))' }}
+            title={name}
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
@@ -245,7 +339,7 @@ export default function DashLayout() {
             >
               {name.charAt(0).toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className={`min-w-0 flex-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
               <p className="text-xs font-semibold truncate" style={{ color: 'var(--t-text)' }}>
                 {name}
               </p>
@@ -255,97 +349,58 @@ export default function DashLayout() {
             </div>
           </div>
 
-          {/* Logout */}
           <button
+            type="button"
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group/logout"
+            title="Sign out"
+            className={`w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-150 group/logout ${
+              sidebarCollapsed ? 'lg:justify-center lg:px-2 lg:py-2.5' : 'px-3 py-2.5'
+            }`}
             style={{ color: 'var(--t-dim)' }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#f87171'; e.currentTarget.style.background = 'rgba(239,68,68,0.07)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--t-dim)'; e.currentTarget.style.background = 'transparent'; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#f87171';
+              e.currentTarget.style.background = 'rgba(239,68,68,0.07)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--t-dim)';
+              e.currentTarget.style.background = 'transparent';
+            }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
-            <span className="font-medium">Sign Out</span>
+            <span className={`font-medium ${sidebarCollapsed ? 'lg:sr-only' : ''}`}>Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* ── Main ────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar */}
-        <header
-          className="shrink-0 px-4 md:px-6 py-3.5 flex items-center justify-between gap-4"
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <button
+          type="button"
+          className="lg:hidden fixed top-3 left-3 z-10 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-colors"
           style={{
             background: 'var(--t-surface)',
-            borderBottom: '1px solid var(--t-line)',
+            border: '1px solid var(--t-line)',
+            color: 'var(--t-dim)',
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--t-dim)';
+            e.currentTarget.style.background = 'var(--t-surface)';
+          }}
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Mobile hamburger */}
-            <button
-              className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: 'var(--t-dim)' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--t-dim)'; e.currentTarget.style.background = 'transparent'; }}
-              onClick={() => setSidebarOpen(true)}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
 
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs hidden sm:block" style={{ color: 'var(--t-dim)' }}>
-                {restaurantName}
-              </span>
-              <span className="text-xs hidden sm:block" style={{ color: 'var(--t-line)' }}>
-                /
-              </span>
-              <span className="text-sm font-semibold truncate" style={{ color: 'var(--t-text)' }}>
-                {pageTitle}
-              </span>
-            </div>
-          </div>
-
-          {/* Right */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Live pulse */}
-            <div
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
-              style={{
-                background: 'rgba(34,197,94,0.08)',
-                border: '1px solid rgba(34,197,94,0.15)',
-                color: '#4ade80',
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Live
-            </div>
-
-            {/* User chip */}
-            <div
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
-              style={{
-                background: 'var(--t-float)',
-                border: '1px solid var(--t-line)',
-              }}
-            >
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                style={{ background: 'linear-gradient(135deg, var(--t-accent), var(--t-accent2, #fb923c))' }}
-              >
-                {name.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-xs font-medium hidden sm:block" style={{ color: 'var(--t-text)' }}>
-                {name}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-4 md:p-6 pt-14 lg:pt-6 overflow-auto min-h-0">
           <Outlet />
         </main>
       </div>

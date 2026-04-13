@@ -46,6 +46,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
+        {/* Back to home */}
+        <div className="text-center mb-4">
+          <button
+            onClick={() => navigate('/')}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            ← Back to home
+          </button>
+        </div>
+
         {/* Logo / heading */}
         <div className="text-center mb-10">
           <Text

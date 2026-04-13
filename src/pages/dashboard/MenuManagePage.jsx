@@ -67,7 +67,6 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
     setEditingDiscount(false);
     if (val === discount) return;
     if (hasVariants) {
-      // Apply discount to all variants instead of item-level
       const updated = item.variants.map(v => ({ ...v, discount_percentage: val }));
       onUpdateVariants(item._id, updated);
     } else {
@@ -186,7 +185,7 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             {item.name}
           </p>
           <div className="flex items-center justify-between gap-1 mt-0.5">
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-1.5 min-w-0">
               {hasVariants ? (
                 <span className="text-sm font-bold" style={{ color: "var(--t-accent)" }}>
                   from ₹{minVariantPrice}
@@ -203,7 +202,7 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               )}
             </div>
 
-            {/* Inline discount editor */}
+            {/* Discount chip — with ✏ affordance */}
             {editingDiscount ? (
               <div className="flex items-center gap-1">
                 <input
@@ -224,121 +223,159 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               <button
                 onClick={() => { setDiscountInput(String(discount)); setEditingDiscount(true); }}
                 disabled={isSaving}
-                title="Set discount"
-                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all duration-150 disabled:opacity-40"
+                title="Click to set discount"
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all duration-150 disabled:opacity-40"
                 style={
                   discount > 0
                     ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }
                     : { background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }
                 }
               >
-                {discount > 0 ? `−${discount}%` : "Add Discount"}
+                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                </svg>
+                {discount > 0 ? `−${discount}%` : "Discount"}
               </button>
             )}
           </div>
         </div>
 
-        {/* Variants — interactive management */}
+        {/* Variants — quick edit panel */}
         {hasVariants && (
           <div
-            className="rounded-xl px-2.5 py-2 space-y-1"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="rounded-xl overflow-hidden"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
           >
-            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 mb-1.5">
-              {item.variants[0]?.groupName || "Variants"}
-            </p>
-            {item.variants.map((v, idx) => {
-              const vCol = v.isVeg !== false ? "#22c55e" : "#ef4444";
-              const avail = v.isAvailable !== false;
-              const effPrice = variantEffectivePrice(v);
-              const vDisc = v.discount_percentage ?? 0;
-              const isDraftingPrice = variantDraft?.idx === idx && variantDraft.field === 'price';
-              const isDraftingDisc  = variantDraft?.idx === idx && variantDraft.field === 'discount';
-              return (
-                <div key={idx} className="flex items-center gap-1.5" style={{ opacity: avail ? 1 : 0.45 }}>
-                  {/* Availability toggle */}
-                  <button
-                    type="button"
-                    title={avail ? "Mark unavailable" : "Mark available"}
-                    disabled={isSaving}
-                    onClick={() => {
-                      const updated = item.variants.map((vv, i) => i === idx ? { ...vv, isAvailable: !avail } : vv);
-                      onUpdateVariants(item._id, updated);
+            {/* Section header */}
+            <div
+              className="flex items-center justify-between px-2.5 py-1.5"
+              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+                {item.variants[0]?.groupName || "Variants"}
+              </span>
+              <span className="text-[9px]" style={{ color: "#475569" }}>tap to edit</span>
+            </div>
+            {/* Variant rows — 2-line layout for responsiveness */}
+            <div>
+              {item.variants.map((v, idx) => {
+                const vCol = v.isVeg !== false ? "#22c55e" : "#ef4444";
+                const avail = v.isAvailable !== false;
+                const effPrice = variantEffectivePrice(v);
+                const vDisc = v.discount_percentage ?? 0;
+                const isDraftingPrice = variantDraft?.idx === idx && variantDraft.field === 'price';
+                const isDraftingDisc  = variantDraft?.idx === idx && variantDraft.field === 'discount';
+                return (
+                  <div
+                    key={idx}
+                    className="px-2.5 py-2"
+                    style={{
+                      opacity: avail ? 1 : 0.5,
+                      background: "rgba(255,255,255,0.01)",
+                      borderBottom: idx < item.variants.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
                     }}
-                    className="shrink-0 w-2.5 h-2.5 rounded-full border transition-colors"
-                    style={{ borderColor: avail ? '#22c55e' : '#475569', background: avail ? '#22c55e' : 'transparent' }}
-                  />
-                  {/* Veg dot */}
-                  <span
-                    className="w-2 h-2 rounded-[2px] border shrink-0 flex items-center justify-center"
-                    style={{ borderColor: vCol }}
                   >
-                    <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
-                  </span>
-                  {/* Name */}
-                  <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">{v.name}</span>
-                  {/* Discount inline editor */}
-                  {isDraftingDisc ? (
-                    <input
-                      autoFocus
-                      type="number" min="0" max="100"
-                      value={variantDraft.value}
-                      onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
-                      onBlur={() => commitVariant(idx, 'discount', variantDraft.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'discount', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
-                      className="w-10 text-center text-[10px] font-bold rounded py-0.5 focus:outline-none"
-                      style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isSaving}
-                      title={vDisc > 0 ? "Edit discount" : "Add discount"}
-                      onClick={() => setVariantDraft({ idx, field: 'discount', value: String(vDisc) })}
-                      className="text-[10px] font-semibold shrink-0 px-1 py-0.5 rounded transition-colors"
-                      style={vDisc > 0
-                        ? { color: '#fbbf24', background: 'rgba(245,158,11,0.1)' }
-                        : { color: 'var(--t-dim)', background: 'transparent' }}
-                    >
-                      {vDisc > 0 ? `−${vDisc}%` : '+ disc'}
-                    </button>
-                  )}
-                  {/* Price inline editor */}
-                  {isDraftingPrice ? (
-                    <input
-                      autoFocus
-                      type="number" min="0"
-                      value={variantDraft.value}
-                      onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
-                      onBlur={() => commitVariant(idx, 'price', variantDraft.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'price', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
-                      className="w-14 text-center text-[11px] font-bold rounded py-0.5 focus:outline-none"
-                      style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={isSaving}
-                      title="Edit price"
-                      onClick={() => setVariantDraft({ idx, field: 'price', value: String(v.price) })}
-                      className="text-[11px] font-semibold shrink-0 transition-colors"
-                      style={{ color: "var(--t-accent)" }}
-                    >
-                      {vDisc > 0 ? (
-                        <span className="flex items-baseline gap-1">
-                          <span>₹{effPrice}</span>
-                          <span className="line-through text-[9px] opacity-50">₹{v.price}</span>
-                        </span>
-                      ) : `₹${v.price}`}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                    {/* Line 1: availability pill + veg dot + name */}
+                    <div className="flex items-center gap-1.5 mb-1">
+                      {/* Availability toggle — labeled pill */}
+                      <button
+                        type="button"
+                        title={avail ? "Tap to mark unavailable" : "Tap to mark available"}
+                        disabled={isSaving}
+                        onClick={() => {
+                          const updated = item.variants.map((vv, i) => i === idx ? { ...vv, isAvailable: !avail } : vv);
+                          onUpdateVariants(item._id, updated);
+                        }}
+                        className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-150 disabled:opacity-40"
+                        style={
+                          avail
+                            ? { background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }
+                            : { background: 'rgba(71,85,105,0.2)', color: '#64748b', border: '1px solid rgba(71,85,105,0.3)' }
+                        }
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: avail ? '#22c55e' : '#475569' }} />
+                        {avail ? 'On' : 'Off'}
+                      </button>
+                      {/* Veg dot */}
+                      <span
+                        className="w-2 h-2 rounded-[2px] border shrink-0 flex items-center justify-center"
+                        style={{ borderColor: vCol }}
+                      >
+                        <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
+                      </span>
+                      {/* Name */}
+                      <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">{v.name}</span>
+                    </div>
+
+                    {/* Line 2: discount + price — right-aligned */}
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Discount inline editor */}
+                      {isDraftingDisc ? (
+                        <input
+                          autoFocus
+                          type="number" min="0" max="100"
+                          value={variantDraft.value}
+                          onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
+                          onBlur={() => commitVariant(idx, 'discount', variantDraft.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'discount', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                          className="w-10 text-center text-[10px] font-bold rounded py-0.5 focus:outline-none"
+                          style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          title={vDisc > 0 ? "Click to edit discount" : "Click to add discount"}
+                          onClick={() => setVariantDraft({ idx, field: 'discount', value: String(vDisc) })}
+                          className="text-[10px] font-semibold shrink-0 px-1 py-0.5 rounded transition-colors"
+                          style={vDisc > 0
+                            ? { color: '#fbbf24', background: 'rgba(245,158,11,0.1)' }
+                            : { color: 'var(--t-dim)', background: 'transparent' }}
+                        >
+                          {vDisc > 0 ? `−${vDisc}%` : '+ disc'}
+                        </button>
+                      )}
+                      {/* Price inline editor — with ✏ hint */}
+                      {isDraftingPrice ? (
+                        <input
+                          autoFocus
+                          type="number" min="0"
+                          value={variantDraft.value}
+                          onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
+                          onBlur={() => commitVariant(idx, 'price', variantDraft.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'price', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                          className="w-14 text-center text-[11px] font-bold rounded py-0.5 focus:outline-none"
+                          style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          title="Click to edit price"
+                          onClick={() => setVariantDraft({ idx, field: 'price', value: String(v.price) })}
+                          className="flex items-center gap-0.5 text-[11px] font-semibold shrink-0 transition-colors group/vp"
+                          style={{ color: "var(--t-accent)" }}
+                        >
+                          {vDisc > 0 ? (
+                            <span className="flex items-baseline gap-1">
+                              <span>₹{effPrice}</span>
+                              <span className="line-through text-[9px] opacity-50">₹{v.price}</span>
+                            </span>
+                          ) : `₹${v.price}`}
+                          <svg className="w-2.5 h-2.5 ml-0.5 opacity-30 group-hover/vp:opacity-80 transition-opacity shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* Availability — hero toggle / ingredient block notice */}
+        {/* ── Availability row (redesigned) ── */}
         {blockedByIngredient ? (
           <div
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl"
@@ -354,19 +391,24 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           </div>
         ) : (
           <div
-            className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl"
+            className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl"
             style={{
-              background: item.is_available ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)",
-              border: `1px solid ${item.is_available ? "rgba(34,197,94,0.18)" : "rgba(255,255,255,0.06)"}`,
+              background: item.is_available ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${item.is_available ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`,
             }}
           >
-            <span
-              className={`text-xs font-semibold ${
-                item.is_available ? "text-green-400" : "text-slate-500"
-              }`}
-            >
-              {item.is_available ? "Available" : "Hidden"}
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: item.is_available ? "#22c55e" : "#475569" }}
+              />
+              <span
+                className="text-xs font-semibold truncate"
+                style={{ color: item.is_available ? "#4ade80" : "#64748b" }}
+              >
+                {item.is_available ? "Visible to customers" : "Hidden from menu"}
+              </span>
+            </div>
             <Toggle
               checked={item.is_available}
               onChange={() => onToggleAvail(item._id)}
@@ -376,67 +418,67 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
           </div>
         )}
 
-        {/* Secondary actions */}
-        <div className="flex items-center gap-1.5">
-          {/* Chef's Special */}
-          <button
-            onClick={() => onToggleSpecial(item._id)}
-            disabled={isSaving}
-            title="Toggle Chef's Special"
-            className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-1.5 rounded-lg transition-all duration-150 border disabled:opacity-50 ${
-              item.is_chefs_special
-                ? "text-amber-400 border-amber-500/25"
-                : "text-slate-500 border-white/6 hover:text-amber-400 hover:border-amber-500/20"
-            }`}
-            style={{ background: item.is_chefs_special ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.03)" }}
-          >
-            <span>🔥</span>
-            <span>Special</span>
-          </button>
+        {/* ── Action strip (redesigned 2×2 grid) ── */}
+        <div className="flex flex-col gap-1.5">
+          {/* Row 1: Special + Featured toggles */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => onToggleSpecial(item._id)}
+              disabled={isSaving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
+              style={
+                item.is_chefs_special
+                  ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.35)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }
+              }
+            >
+              <span>🔥</span>
+              <span className="whitespace-nowrap">Special</span>
+            </button>
 
-          {/* Featured */}
-          <button
-            onClick={() => onToggleFeatured(item._id)}
-            disabled={isSaving}
-            title="Toggle Featured"
-            className={`flex-1 flex items-center justify-center gap-1 text-[11px] font-semibold py-1.5 rounded-lg transition-all duration-150 border disabled:opacity-50 ${
-              item.is_featured
-                ? "text-blue-400 border-blue-500/25"
-                : "text-slate-500 border-white/6 hover:text-blue-400 hover:border-blue-500/20"
-            }`}
-            style={{ background: item.is_featured ? "rgba(96,165,250,0.08)" : "rgba(255,255,255,0.03)" }}
-          >
-            <span>⭐</span>
-            <span>Featured</span>
-          </button>
+            <button
+              onClick={() => onToggleFeatured(item._id)}
+              disabled={isSaving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
+              style={
+                item.is_featured
+                  ? { background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }
+              }
+            >
+              <span>⭐</span>
+              <span className="whitespace-nowrap">Featured</span>
+            </button>
+          </div>
 
-          {/* Edit */}
-          <button
-            onClick={() => onEdit(item)}
-            disabled={isSaving}
-            title="Edit item"
-            className="w-8 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition-colors disabled:opacity-50 border border-white/6 hover:border-white/15"
-            style={{ background: "rgba(255,255,255,0.04)" }}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
-            </svg>
-          </button>
+          {/* Row 2: Edit + Delete */}
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => onEdit(item)}
+              disabled={isSaving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-white disabled:opacity-50"
+              style={{ background: "rgba(255,255,255,0.04)", color: "var(--t-text)", border: "1px solid rgba(255,255,255,0.09)" }}
+            >
+              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+              </svg>
+              Edit Item
+            </button>
 
-          {/* Delete */}
-          <button
-            onClick={() => setConfirmDelete(true)}
-            disabled={isSaving}
-            title="Delete item"
-            className="w-8 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-red-400 transition-colors disabled:opacity-50 border border-white/6 hover:border-red-500/30"
-            style={{ background: "rgba(255,255,255,0.04)" }}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              disabled={isSaving}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-red-400 hover:border-red-500/30 disabled:opacity-50"
+              style={{ background: "rgba(255,255,255,0.04)", color: "#64748b", border: "1px solid rgba(255,255,255,0.09)" }}
+            >
+              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
@@ -528,7 +570,7 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
             <p className="text-slate-600 text-xs">No items in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {items.map((item) => (
               <MenuItemCard
                 key={item._id}

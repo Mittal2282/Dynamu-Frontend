@@ -58,7 +58,15 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
   useEffect(() => {
     async function check() {
       try {
-        const existingToken = authStore.getState().sessionToken;
+        let existingToken = authStore.getState().sessionToken;
+        // Zustand v5 persist hydrates asynchronously — fall back to localStorage
+        // directly so a page refresh doesn't lose the token before hydration completes.
+        if (!existingToken) {
+          try {
+            const stored = JSON.parse(localStorage.getItem('AuthStore') || '{}');
+            existingToken = stored?.state?.sessionToken ?? null;
+          } catch { /* ignore parse errors */ }
+        }
         const result = await checkSession(qrCodeId, existingToken);
 
         if (!result.has_session) {

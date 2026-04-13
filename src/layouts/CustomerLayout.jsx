@@ -257,12 +257,12 @@ export default function CustomerLayout() {
   }, [itemsStr, loading]);
 
   // ── Place order ────────────────────────────────────────────────────────────
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (orderNote = "") => {
     if (ordering || items.length === 0) return;
     setOrdering(true);
     try {
       await syncCart(items);
-      await placeOrder();
+      await placeOrder(orderNote ? { notes: orderNote } : {});
       clear();
       setDrawerOpen(false);
       navigate(`${basePath}/orders`);

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getIngredients, toggleIngredient } from "../../services/adminService";
 
 /* ─── Toggle ────────────────────────────────────────────────────────────────── */
-function Toggle({ checked, onChange, disabled, isNonVeg = false }) {
+function Toggle({ checked, onChange, disabled }) {
   return (
     <button
       onClick={onChange}
@@ -11,11 +11,9 @@ function Toggle({ checked, onChange, disabled, isNonVeg = false }) {
       aria-checked={checked}
       className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
       style={{
-        background: checked
-          ? (isNonVeg ? "#ef4444" : "#22c55e")
-          : "rgba(239,68,68,0.7)",
+        background: checked ? "#22c55e" : "rgba(239,68,68,0.7)",
         boxShadow: checked
-          ? (isNonVeg ? "0 0 10px rgba(239,68,68,0.4)" : "0 0 10px rgba(34,197,94,0.4)")
+          ? "0 0 10px rgba(34,197,94,0.4)"
           : "0 0 8px rgba(239,68,68,0.25)",
       }}
     >
@@ -28,134 +26,205 @@ function Toggle({ checked, onChange, disabled, isNonVeg = false }) {
   );
 }
 
-/* ─── Ingredient Card ───────────────────────────────────────────────────────── */
-function IngredientCard({ ingredient, onToggle, saving, isNonVeg = false }) {
+/* ─── VegDot ─────────────────────────────────────────────────────────────────
+   Classic Indian restaurant dot-in-square symbol.
+   type: "veg" | "nonveg" | "mixed"
+────────────────────────────────────────────────────────────────────────────── */
+function VegDot({ type = "veg", size = "sm" }) {
+  const cfg = {
+    veg:    { border: "#22c55e", dot: "#22c55e" },
+    nonveg: { border: "#b45309", dot: "#ef4444" },
+    mixed:  { border: "#d97706", dot: "#f59e0b" },
+  };
+  const { border, dot } = cfg[type] || cfg.veg;
+  const boxSize = size === "lg" ? 18 : 14;
+  const dotSize = size === "lg" ? 8  : 6;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: boxSize,
+        height: boxSize,
+        borderRadius: 3,
+        border: `1.5px solid ${border}`,
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          width: dotSize,
+          height: dotSize,
+          borderRadius: "50%",
+          background: dot,
+        }}
+      />
+    </span>
+  );
+}
+
+const VEG_LABELS = { veg: "Veg", nonveg: "Non-Veg", mixed: "Mixed" };
+const VEG_COLORS = { veg: "#4ade80", nonveg: "#f87171", mixed: "#fbbf24" };
+
+function getVegType(items_using = []) {
+  const hasVeg    = items_using.some((d) => d.is_veg === true);
+  const hasNonVeg = items_using.some((d) => d.is_veg === false);
+  if (hasVeg && hasNonVeg) return "mixed";
+  if (hasNonVeg) return "nonveg";
+  return "veg";
+}
+
+/* ─── Ingredient Row ─────────────────────────────────────────────────────────
+   Full-width horizontal row with expandable dishes list beneath.
+────────────────────────────────────────────────────────────────────────────── */
+function IngredientCard({ ingredient, onToggle, saving }) {
   const { name, is_available, affected_count, items_using = [] } = ingredient;
-  const isSaving = saving === name;
-  const initial = name.charAt(0).toUpperCase();
+  const isSaving  = saving === name;
+  const initial   = name.charAt(0).toUpperCase();
+  const vegType   = getVegType(items_using);
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className="relative rounded-2xl flex flex-col overflow-hidden transition-all duration-300"
-      style={{
-        background: "var(--t-surface)",
-        border: `1px solid ${is_available ? "var(--t-line)" : "rgba(239,68,68,0.3)"}`,
-        boxShadow: !is_available ? "0 0 20px rgba(239,68,68,0.07)" : "none",
-      }}
-    >
-      {/* Top stripe */}
-      <div
-        className="h-0.5 w-full shrink-0"
-        style={{
-          background: is_available
-            ? "linear-gradient(90deg, var(--t-accent), var(--t-accent2))"
-            : "linear-gradient(90deg, #ef4444, #f97316)",
-        }}
-      />
+    <div>
+      {/* Main row */}
+      <div className="flex items-center gap-3 px-4 py-3">
 
-      <div className="p-4 flex flex-col gap-4 flex-1">
-        {/* Top row */}
-        <div className="flex items-start gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-base font-bold shrink-0 select-none"
-            style={{
-              background: is_available ? "linear-gradient(135deg, var(--t-accent-20), var(--t-accent2-20))" : "rgba(239,68,68,0.12)",
-              color: is_available ? "var(--t-accent)" : "#f87171",
-              border: `1px solid ${is_available ? "var(--t-accent-20)" : "rgba(239,68,68,0.2)"}`,
-            }}
-          >
-            {initial}
-          </div>
-
-          <div className="flex-1 min-w-0 pt-0.5">
-            <p className="text-sm font-semibold capitalize truncate leading-tight" style={{ color: "var(--t-text)" }}>
-              {name}
-            </p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: is_available ? (isNonVeg ? "#ef4444" : "#22c55e") : "#ef4444" }} />
-              <span className="text-[11px] font-medium" style={{ color: is_available ? (isNonVeg ? "#f87171" : "#4ade80") : "#f87171" }}>
-                {is_available ? "In Stock" : "Out of Stock"}
-              </span>
-            </div>
-          </div>
+        {/* Avatar */}
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 select-none"
+          style={{
+            background: is_available
+              ? "linear-gradient(135deg, var(--t-accent-20), var(--t-accent2-20))"
+              : "rgba(239,68,68,0.12)",
+            color: is_available ? "var(--t-accent)" : "#f87171",
+            border: `1px solid ${is_available ? "var(--t-accent-20)" : "rgba(239,68,68,0.2)"}`,
+          }}
+        >
+          {initial}
         </div>
 
-        {/* Divider */}
-        <div className="h-px" style={{ background: "var(--t-line)" }} />
-
-        {/* Toggle row */}
-        <div className="flex items-center justify-between">
-          {/* Dishes count + expand */}
-          <button
-            onClick={() => items_using.length > 0 && setExpanded((v) => !v)}
-            className="flex items-center gap-2 transition-opacity"
-            style={{ opacity: items_using.length > 0 ? 1 : 0.5, cursor: items_using.length > 0 ? "pointer" : "default" }}
+        {/* Name + veg indicator */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <p
+            className="text-sm font-semibold capitalize truncate leading-tight"
+            style={{ color: "var(--t-text)" }}
           >
-            <svg className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--t-dim)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            {name}
+          </p>
+          <VegDot type={vegType} />
+          <span
+            className="text-[11px] font-medium shrink-0 hidden sm:block"
+            style={{ color: VEG_COLORS[vegType] }}
+          >
+            {VEG_LABELS[vegType]}
+          </span>
+        </div>
+
+        {/* Stock pill */}
+        <span
+          className="px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 hidden xs:block"
+          style={
+            is_available
+              ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
+              : { background: "rgba(239,68,68,0.12)", color: "#f87171" }
+          }
+        >
+          {is_available ? "In Stock" : "Out of Stock"}
+        </span>
+
+        {/* Dishes count + expand chevron */}
+        <button
+          onClick={() => items_using.length > 0 && setExpanded((v) => !v)}
+          className="flex items-center gap-1.5 shrink-0 transition-opacity"
+          style={{
+            opacity: items_using.length > 0 ? 1 : 0.45,
+            cursor: items_using.length > 0 ? "pointer" : "default",
+          }}
+        >
+          <span className="text-[11px]" style={{ color: "var(--t-dim)" }}>
+            <span
+              className="font-bold"
+              style={{ color: affected_count > 0 ? "var(--t-text)" : "var(--t-dim)" }}
+            >
+              {affected_count}
+            </span>{" "}
+            {affected_count === 1 ? "dish" : "dishes"}
+          </span>
+          {items_using.length > 0 && (
+            <svg
+              className="w-3 h-3 transition-transform duration-200"
+              style={{
+                color: "var(--t-dim)",
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
-            <span className="text-[11px]" style={{ color: "var(--t-dim)" }}>
-              <span className="font-bold" style={{ color: affected_count > 0 ? "var(--t-text)" : "var(--t-dim)" }}>
-                {affected_count}
-              </span>{" "}{affected_count === 1 ? "dish" : "dishes"}
-            </span>
-            {items_using.length > 0 && (
-              <svg
-                className="w-3 h-3 transition-transform duration-200"
-                style={{ color: "var(--t-dim)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
-          </button>
-
-          {isSaving ? (
-            <div className="w-11 h-6 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
-            </div>
-          ) : (
-            <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} isNonVeg={isNonVeg} />
           )}
-        </div>
+        </button>
 
-        {/* Expandable items list */}
-        {expanded && items_using.length > 0 && (
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
-          >
-            <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)", borderBottom: "1px solid var(--t-line)" }}>
-              Used in
-            </p>
-            <ul className="divide-y" style={{ borderColor: "var(--t-line)" }}>
-              {items_using.map((dish) => (
-                <li key={dish._id} className="flex items-center gap-2 px-3 py-2">
-                  {/* Thumbnail */}
-                  <div
-                    className="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center text-base"
-                    style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
-                  >
-                    {dish.image_url
-                      ? <img src={dish.image_url} alt={dish.name} className="w-full h-full object-cover" />
-                      : <span>{dish.is_veg ? "🥗" : "🍗"}</span>
-                    }
-                  </div>
-                  {/* Name */}
-                  <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>{dish.name}</span>
-                  {/* Price */}
-                  {dish.price != null && (
-                    <span className="text-[10px] font-bold shrink-0" style={{ color: "var(--t-accent)" }}>
-                      ₹{dish.price}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+        {/* Toggle / spinner */}
+        {isSaving ? (
+          <div className="w-11 h-6 flex items-center justify-center shrink-0">
+            <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
           </div>
+        ) : (
+          <Toggle
+            checked={is_available}
+            onChange={() => onToggle(name, !is_available)}
+            disabled={isSaving}
+          />
         )}
       </div>
+
+      {/* Expandable dishes list */}
+      {expanded && items_using.length > 0 && (
+        <div
+          className="mx-4 mb-3 rounded-xl overflow-hidden"
+          style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+        >
+          <p
+            className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: "var(--t-dim)", borderBottom: "1px solid var(--t-line)" }}
+          >
+            Used in
+          </p>
+          <ul className="divide-y" style={{ borderColor: "var(--t-line)" }}>
+            {items_using.map((dish) => (
+              <li key={dish._id} className="flex items-center gap-2.5 px-3 py-2">
+                {/* Dish thumbnail */}
+                <div
+                  className="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center"
+                  style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+                >
+                  {dish.image_url ? (
+                    <img src={dish.image_url} alt={dish.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <VegDot type={dish.is_veg ? "veg" : "nonveg"} />
+                  )}
+                </div>
+                {/* Dish veg indicator */}
+                <VegDot type={dish.is_veg ? "veg" : "nonveg"} />
+                {/* Dish name */}
+                <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>
+                  {dish.name}
+                </span>
+                {/* Price */}
+                {dish.price != null && (
+                  <span className="text-[10px] font-bold shrink-0" style={{ color: "var(--t-accent)" }}>
+                    ₹{dish.price}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -177,77 +246,13 @@ function StatChip({ label, value, color }) {
   );
 }
 
-/* ─── Veg/Non-veg section header ────────────────────────────────────────────── */
-function VegSectionHeader({ type }) {
-  const isVeg = type === "veg";
-  return (
-    <div className="flex items-center gap-3 mb-3">
-      <div className="flex items-center gap-2">
-        <span
-          className="w-2.5 h-2.5 rounded-full shrink-0"
-          style={{ background: isVeg ? "#22c55e" : "#ef4444" }}
-        />
-        <span
-          className="text-xs font-bold uppercase tracking-widest"
-          style={{ color: isVeg ? "#4ade80" : "#f87171" }}
-        >
-          {isVeg ? "Veg Ingredients" : "Non-Veg Ingredients"}
-        </span>
-      </div>
-      <div className="flex-1 h-px" style={{ background: isVeg ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)" }} />
-    </div>
-  );
-}
-
-/* ─── Segregated grid (veg section + non-veg section) ───────────────────────── */
-function VegSegregatedGrid({ displayed, onToggle, saving }) {
-  // Classify: if ANY dish using this ingredient is non-veg → non-veg; otherwise veg
-  const vegIngredients    = displayed.filter(ing => !ing.items_using?.some(d => d.is_veg === false));
-  const nonVegIngredients = displayed.filter(ing =>  ing.items_using?.some(d => d.is_veg === false));
-
-  const renderGrid = (items, isNonVeg = false) => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-      {items.map((ing) => (
-        <IngredientCard
-          key={ing.name}
-          ingredient={ing}
-          onToggle={onToggle}
-          saving={saving}
-          isNonVeg={isNonVeg}
-        />
-      ))}
-    </div>
-  );
-
-  // If all in one bucket (no mixed data), just render flat without section headers
-  if (nonVegIngredients.length === 0) return renderGrid(vegIngredients, false);
-  if (vegIngredients.length    === 0) return renderGrid(nonVegIngredients, true);
-
-  return (
-    <div className="flex flex-col gap-6">
-      {vegIngredients.length > 0 && (
-        <div>
-          <VegSectionHeader type="veg" />
-          {renderGrid(vegIngredients, false)}
-        </div>
-      )}
-      {nonVegIngredients.length > 0 && (
-        <div>
-          <VegSectionHeader type="nonveg" />
-          {renderGrid(nonVegIngredients, true)}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ─── Main Page ─────────────────────────────────────────────────────────────── */
 export default function IngredientsPage() {
   const [ingredients, setIngredients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [saving, setSaving] = useState(null);
-  const [search, setSearch] = useState("");
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
+  const [saving, setSaving]           = useState(null);
+  const [search, setSearch]           = useState("");
   const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'out' | 'in'
 
   useEffect(() => {
@@ -274,9 +279,9 @@ export default function IngredientsPage() {
     }
   };
 
-  const outOfStockAll = ingredients.filter((i) => !i.is_available);
-  const inStockAll = ingredients.filter((i) => i.is_available);
-  const totalAffected = outOfStockAll.reduce((sum, i) => sum + i.affected_count, 0);
+  const outOfStockAll  = ingredients.filter((i) => !i.is_available);
+  const inStockAll     = ingredients.filter((i) => i.is_available);
+  const totalAffected  = outOfStockAll.reduce((sum, i) => sum + i.affected_count, 0);
 
   const searchFiltered = ingredients.filter((ing) =>
     ing.name.toLowerCase().includes(search.toLowerCase())
@@ -289,9 +294,9 @@ export default function IngredientsPage() {
       : searchFiltered;
 
   const FILTERS = [
-    { key: "all", label: "All", count: ingredients.length },
+    { key: "all", label: "All",          count: ingredients.length },
     { key: "out", label: "Out of Stock", count: outOfStockAll.length },
-    { key: "in", label: "In Stock", count: inStockAll.length },
+    { key: "in",  label: "In Stock",     count: inStockAll.length },
   ];
 
   return (
@@ -314,7 +319,6 @@ export default function IngredientsPage() {
             Mark ingredients as out of stock to instantly hide all dishes that use them.
           </p>
         </div>
-        {/* Live indicator */}
         {!loading && ingredients.length > 0 && (
           <div
             className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
@@ -353,10 +357,7 @@ export default function IngredientsPage() {
               {totalAffected} {totalAffected === 1 ? "dish is" : "dishes are"} currently hidden from customers
             </p>
           </div>
-          <div
-            className="shrink-0 text-2xl font-bold tabular-nums"
-            style={{ color: "#f87171" }}
-          >
+          <div className="shrink-0 text-2xl font-bold tabular-nums" style={{ color: "#f87171" }}>
             {outOfStockAll.length}
           </div>
         </div>
@@ -365,16 +366,8 @@ export default function IngredientsPage() {
       {/* ── Stat chips ── */}
       {!loading && ingredients.length > 0 && (
         <div className="flex gap-3">
-          <StatChip
-            label="Total Ingredients"
-            value={ingredients.length}
-            color="var(--t-accent)"
-          />
-          <StatChip
-            label="In Stock"
-            value={inStockAll.length}
-            color="#4ade80"
-          />
+          <StatChip label="Total Ingredients" value={ingredients.length} color="var(--t-accent)" />
+          <StatChip label="In Stock"           value={inStockAll.length}  color="#4ade80" />
           <StatChip
             label="Out of Stock"
             value={outOfStockAll.length}
@@ -386,7 +379,6 @@ export default function IngredientsPage() {
       {/* ── Search + Filter bar ── */}
       {!loading && ingredients.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1">
             <svg
               className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
@@ -413,7 +405,6 @@ export default function IngredientsPage() {
             />
           </div>
 
-          {/* Filter pills */}
           <div
             className="flex items-center gap-1 p-1 rounded-xl shrink-0"
             style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
@@ -438,10 +429,8 @@ export default function IngredientsPage() {
                 <span
                   className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   style={{
-                    background:
-                      activeFilter === f.key ? "var(--t-accent-20)" : "var(--t-line)",
-                    color:
-                      activeFilter === f.key ? "var(--t-accent)" : "var(--t-dim)",
+                    background: activeFilter === f.key ? "var(--t-accent-20)" : "var(--t-line)",
+                    color:      activeFilter === f.key ? "var(--t-accent)"    : "var(--t-dim)",
                   }}
                 >
                   {f.count}
@@ -455,15 +444,11 @@ export default function IngredientsPage() {
       {/* ── Content ── */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="relative">
-            <div
-              className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
-            />
-          </div>
-          <p className="text-sm" style={{ color: "var(--t-dim)" }}>
-            Loading ingredients…
-          </p>
+          <div
+            className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
+          />
+          <p className="text-sm" style={{ color: "var(--t-dim)" }}>Loading ingredients…</p>
         </div>
       ) : error ? (
         <div
@@ -471,9 +456,7 @@ export default function IngredientsPage() {
           style={{ background: "var(--t-surface)", border: "1px solid rgba(239,68,68,0.2)" }}
         >
           <span className="text-4xl mb-3">⚠️</span>
-          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
-            {error}
-          </p>
+          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>{error}</p>
           <button
             onClick={() => {
               setLoading(true);
@@ -503,9 +486,7 @@ export default function IngredientsPage() {
           >
             🌿
           </div>
-          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
-            No ingredients found
-          </p>
+          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>No ingredients found</p>
           <p className="text-xs mt-2 text-center max-w-xs" style={{ color: "var(--t-dim)" }}>
             Add ingredients to your menu items and they'll appear here for stock management.
           </p>
@@ -513,19 +494,25 @@ export default function IngredientsPage() {
       ) : displayed.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <span className="text-3xl">🔍</span>
-          <p className="text-sm font-medium" style={{ color: "var(--t-text)" }}>
-            No matches
-          </p>
+          <p className="text-sm font-medium" style={{ color: "var(--t-text)" }}>No matches</p>
           <p className="text-xs" style={{ color: "var(--t-dim)" }}>
             {search ? `Nothing matches "${search}"` : "No ingredients in this filter"}
           </p>
         </div>
       ) : (
-        <VegSegregatedGrid
-          displayed={displayed}
-          onToggle={handleToggle}
-          saving={saving}
-        />
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ border: "1px solid var(--t-line)", background: "var(--t-surface)" }}
+        >
+          {displayed.map((ing, i) => (
+            <div key={ing.name}>
+              <IngredientCard ingredient={ing} onToggle={handleToggle} saving={saving} />
+              {i < displayed.length - 1 && (
+                <div className="h-px mx-4" style={{ background: "var(--t-line)" }} />
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

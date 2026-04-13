@@ -40,61 +40,47 @@ const EMPTY_VARIANT = {
 };
 
 /* ── Variant row ── */
-function VariantRow({ variant, groupName, onChange, onRemove, showGroupName }) {
-  const vColor    = variant.isVeg !== false ? '#22c55e' : '#ef4444';
+function VariantRow({ variant, index, groupName, onChange, onRemove, onSetDefault, isDefault }) {
+  const isVeg    = variant.isVeg !== false;
   const available = variant.isAvailable !== false;
   return (
     <div
-      className="rounded-xl p-2.5 space-y-2"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+      className="rounded-xl overflow-hidden"
+      style={{ border: `1px solid ${isDefault ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}` }}
     >
-      <div className="flex items-center gap-2">
-        {/* Availability toggle */}
-        <button
-          type="button"
-          title={available ? 'Mark as unavailable' : 'Mark as available'}
-          onClick={() => onChange({ ...variant, isAvailable: !available })}
-          className="shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-          style={{
-            borderColor: available ? '#22c55e' : '#475569',
-            background: available ? 'rgba(34,197,94,0.12)' : 'rgba(71,85,105,0.15)',
-          }}
+      {/* ── Part 1: data inputs ── */}
+      <div className="flex items-center gap-2 p-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+        {/* Row index badge */}
+        <span
+          className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--t-dim)' }}
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full block transition-colors"
-            style={{ background: available ? '#22c55e' : '#475569' }}
-          />
-        </button>
-        {/* Veg/non-veg toggle dot */}
-        <button
-          type="button"
-          title={variant.isVeg !== false ? 'Mark as Non-Veg' : 'Mark as Veg'}
-          onClick={() => onChange({ ...variant, isVeg: !variant.isVeg })}
-          className="shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors"
-          style={{ borderColor: vColor, background: `${vColor}18` }}
-        >
-          <span className="w-2 h-2 rounded-full block" style={{ background: vColor }} />
-        </button>
-        {/* Variant name */}
+          {index + 1}
+        </span>
+        {/* Name */}
         <input
           type="text"
           value={variant.name}
           onChange={e => onChange({ ...variant, name: e.target.value })}
-          placeholder="e.g. Chicken"
-          className={`${inputCls} flex-1`}
+          placeholder="e.g. Chicken, Large, Spicy…"
+          className={`${inputCls} flex-1 min-w-0`}
           style={{ padding: '5px 10px', fontSize: '12px' }}
         />
-        {/* Price */}
-        <input
-          type="number"
-          min="0"
-          value={variant.price}
-          onChange={e => onChange({ ...variant, price: e.target.value })}
-          placeholder="₹"
-          className={`${inputCls} w-20`}
-          style={{ padding: '5px 10px', fontSize: '12px' }}
-        />
-        {/* Discount % */}
+        {/* Price with ₹ prefix */}
+        <div className="relative shrink-0">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-500 pointer-events-none select-none">₹</span>
+          <input
+            type="number"
+            min="0"
+            value={variant.price}
+            onChange={e => onChange({ ...variant, price: e.target.value })}
+            placeholder="0"
+            title="Price for this variant"
+            className={`${inputCls} w-20 text-right`}
+            style={{ padding: '5px 8px 5px 18px', fontSize: '12px' }}
+          />
+        </div>
+        {/* Discount % with suffix */}
         <div className="relative shrink-0">
           <input
             type="number"
@@ -103,33 +89,94 @@ function VariantRow({ variant, groupName, onChange, onRemove, showGroupName }) {
             value={variant.discount_percentage ?? 0}
             onChange={e => onChange({ ...variant, discount_percentage: Math.min(100, Math.max(0, Number(e.target.value))) })}
             placeholder="0"
-            title="Discount %"
-            className={`${inputCls} w-14 text-center`}
-            style={{ padding: '5px 6px', fontSize: '12px' }}
+            title="Discount percentage for this variant"
+            className={`${inputCls} w-16 text-center`}
+            style={{ padding: '5px 18px 5px 6px', fontSize: '12px' }}
           />
-          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">%</span>
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">%</span>
         </div>
         {/* Remove */}
         <button
           type="button"
           onClick={onRemove}
-          className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-slate-600 hover:text-red-400 transition-colors"
+          title="Remove this variant"
+          className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg transition-colors"
+          style={{ color: '#475569' }}
+          onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
-      {showGroupName && (
-        <input
-          type="text"
-          value={variant.groupName ?? groupName}
-          onChange={e => onChange({ ...variant, groupName: e.target.value })}
-          placeholder="Group name (e.g. Protein)"
-          className={`${inputCls} w-full`}
-          style={{ padding: '5px 10px', fontSize: '12px' }}
-        />
-      )}
+
+      {/* ── Part 2: labeled toggle controls ── */}
+      <div
+        className="flex items-center gap-2 px-3 py-2 flex-wrap"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.015)' }}
+      >
+        {/* Veg / Non-Veg labeled pill */}
+        <button
+          type="button"
+          onClick={() => onChange({ ...variant, isVeg: !isVeg })}
+          title="Toggle Vegetarian / Non-Vegetarian"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-150 shrink-0"
+          style={
+            isVeg
+              ? { background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }
+              : { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }
+          }
+        >
+          {/* Classic dot-in-square indicator */}
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 12, height: 12, borderRadius: 2,
+            border: `1.5px solid ${isVeg ? '#22c55e' : '#b45309'}`,
+            flexShrink: 0,
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: isVeg ? '#22c55e' : '#ef4444' }} />
+          </span>
+          {isVeg ? 'Vegetarian' : 'Non-Veg'}
+        </button>
+
+        <div className="h-3 w-px shrink-0" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+        {/* Available / Unavailable labeled pill */}
+        <button
+          type="button"
+          onClick={() => onChange({ ...variant, isAvailable: !available })}
+          title={available ? 'Mark as unavailable' : 'Mark as available'}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-150 shrink-0"
+          style={
+            available
+              ? { background: 'rgba(34,197,94,0.08)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }
+              : { background: 'rgba(71,85,105,0.15)', color: '#64748b', border: '1px solid rgba(71,85,105,0.25)' }
+          }
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ background: available ? '#22c55e' : '#475569' }}
+          />
+          {available ? 'Available' : 'Unavailable'}
+        </button>
+
+        {/* Default variant button — right-aligned */}
+        <button
+          type="button"
+          onClick={onSetDefault}
+          title={isDefault ? 'This is the default variant shown to customers' : 'Set as default variant'}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all duration-150 shrink-0 ml-auto"
+          style={
+            isDefault
+              ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }
+              : { background: 'transparent', color: '#475569', border: '1px solid rgba(255,255,255,0.07)' }
+          }
+        >
+          <span>{isDefault ? '★' : '☆'}</span>
+          {isDefault ? 'Default' : 'Set Default'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -422,10 +469,10 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
               label="This item has multiple variants (e.g. Veg / Chicken / Prawn)"
             />
             {form.has_variants && (
-              <div className="space-y-2">
-                {/* Group name hint (shared across variants) */}
+              <div className="space-y-3">
+                {/* Group name */}
                 <div>
-                  <FieldLabel>Group Name <span className="text-slate-600">(applies to all variants below)</span></FieldLabel>
+                  <FieldLabel>Group Name <span className="text-slate-600">(applies to all variants)</span></FieldLabel>
                   <input
                     type="text"
                     value={form.variants[0]?.groupName ?? ''}
@@ -444,19 +491,32 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                   <p className="text-[10px] text-slate-600 mt-1">Shown to customers as "Protein: Chicken", "Size: Large" etc.</p>
                 </div>
 
+                {/* Column headers */}
+                {form.variants.length > 0 && (
+                  <div className="flex items-center gap-2 px-2 select-none">
+                    <span className="w-5 shrink-0" />
+                    <span className="flex-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Variant Name</span>
+                    <span className="w-20 text-[10px] font-semibold uppercase tracking-widest text-slate-600 text-right shrink-0">Price</span>
+                    <span className="w-16 text-[10px] font-semibold uppercase tracking-widest text-slate-600 text-center shrink-0">Discount</span>
+                    <span className="w-6 shrink-0" />
+                  </div>
+                )}
+
                 {/* Variant rows */}
                 {form.variants.map((variant, idx) => (
                   <VariantRow
                     key={idx}
+                    index={idx}
                     variant={variant}
                     groupName={form.variants[0]?.groupName ?? ''}
-                    showGroupName={false}
+                    isDefault={variant.isDefault === true}
                     onChange={updated => {
                       const next = [...form.variants];
                       next[idx] = { ...updated, groupName: form.variants[0]?.groupName ?? '' };
                       set('variants', next);
                     }}
                     onRemove={() => set('variants', form.variants.filter((_, i) => i !== idx))}
+                    onSetDefault={() => set('variants', form.variants.map((v, i) => ({ ...v, isDefault: i === idx })))}
                   />
                 ))}
 
@@ -468,10 +528,6 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                 >
                   + Add Variant
                 </button>
-
-                <p className="text-[10px] text-slate-600">
-                  Click the coloured dot on each row to toggle Veg / Non-Veg for that variant.
-                </p>
               </div>
             )}
           </div>

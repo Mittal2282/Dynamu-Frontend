@@ -405,6 +405,16 @@ export default function CustomerOrdersPage() {
             );
           })()}
 
+          {order.notes && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <span className="text-[13px] shrink-0" aria-hidden>📝</span>
+              <p className="text-[11px] italic leading-snug" style={{ color: "var(--t-nav-muted)" }}>
+                {order.notes}
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between pt-1 gap-3 border-t border-white/[0.06]">
             <div className="flex items-center gap-2.5 min-w-0">
               <phaseInfo.Icon className="w-4 h-4 shrink-0" style={{ color: phaseInfo.color }} />
