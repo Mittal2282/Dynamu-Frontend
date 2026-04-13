@@ -3,48 +3,189 @@ import { useNavigate } from 'react-router-dom';
 import { apiCaller } from '../../api/apiCaller';
 import { getRestaurants } from '../../services/adminService';
 
-const ICON_MAP = {
-  total:   { icon: '🏪', gradient: 'from-blue-500 to-blue-400' },
-  active:  { icon: '✅', gradient: 'from-green-500 to-green-400' },
-  orders:  { icon: '📋', gradient: 'from-purple-500 to-purple-400' },
-  revenue: { icon: '💰', gradient: 'from-orange-500 to-orange-400' },
+/* ─── Status config ──────────────────────────────────────────────────────────── */
+const SUB_CONFIG = {
+  active:    { label: 'Active',    color: '#22c55e', bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.2)'   },
+  trial:     { label: 'Trial',     color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)'  },
+  suspended: { label: 'Suspended', color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.2)'   },
+  cancelled: { label: 'Cancelled', color: '#64748b', bg: 'rgba(100,116,139,0.08)', border: 'rgba(100,116,139,0.15)' },
 };
 
-function StatCard({ label, value, iconKey }) {
-  const meta = ICON_MAP[iconKey] ?? ICON_MAP.total;
+/* ─── Metric Card ────────────────────────────────────────────────────────────── */
+function MetricCard({ label, value, sub, accentColor, icon }) {
   return (
-    <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 overflow-hidden relative group hover:border-white/15 transition-colors duration-200">
+    <div className="relative rounded-2xl p-5 flex flex-col gap-3 overflow-hidden group transition-all duration-200 hover:-translate-y-0.5 bg-slate-900 border border-white/10 hover:border-white/15">
+      {/* Top accent bar */}
       <div
-        className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-[0.06] group-hover:opacity-[0.1] transition-opacity"
-        style={{ background: 'var(--t-accent)' }}
+        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
+        style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
       />
+      {/* Ambient glow */}
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-4"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+        className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-xl pointer-events-none opacity-[0.08] group-hover:opacity-[0.14] transition-opacity duration-300"
+        style={{ background: accentColor }}
+      />
+      {/* Icon */}
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}25` }}
       >
-        {meta.icon}
+        {icon}
       </div>
-      <p className="text-3xl font-bold text-white tracking-tight">{value ?? '—'}</p>
-      <p className="text-xs text-slate-400 mt-1.5 font-medium">{label}</p>
+      {/* Value + label */}
+      <div>
+        <p className="text-2xl font-bold tracking-tight leading-none text-white">{value ?? '—'}</p>
+        <p className="text-[11px] font-medium mt-1.5 text-slate-400">{label}</p>
+      </div>
+      {/* Sub-label */}
+      {sub && (
+        <p className="text-[11px] font-semibold px-2 py-0.5 rounded-full self-start bg-white/5 text-slate-400">
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
 
-const STATUS_BADGE = {
-  trial:     'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
-  active:    'bg-green-500/15 text-green-400 border-green-500/20',
-  suspended: 'bg-red-500/15 text-red-400 border-red-500/20',
-  cancelled: 'bg-slate-500/15 text-slate-400 border-slate-500/20',
-};
-
+/* ─── Status Badge ───────────────────────────────────────────────────────────── */
 function StatusBadge({ status }) {
+  const cfg = SUB_CONFIG[status] ?? SUB_CONFIG.trial;
   return (
-    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[status] ?? STATUS_BADGE.trial}`}>
-      {status}
+    <span
+      className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border"
+      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+    >
+      {cfg.label}
     </span>
   );
 }
 
+/* ─── Subscription Health ────────────────────────────────────────────────────── */
+function SubscriptionHealth({ restaurants }) {
+  const counts = {
+    active:    restaurants.filter(r => r.subscription_status === 'active').length,
+    trial:     restaurants.filter(r => r.subscription_status === 'trial').length,
+    suspended: restaurants.filter(r => r.subscription_status === 'suspended').length,
+    cancelled: restaurants.filter(r => r.subscription_status === 'cancelled').length,
+  };
+  const total = restaurants.length;
+  const entries = Object.entries(counts).filter(([, v]) => v > 0);
+
+  return (
+    <div className="rounded-2xl p-5 flex flex-col gap-4 bg-slate-900 border border-white/10 h-full">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">Subscription Health</p>
+        <span className="text-xs font-bold text-slate-400">{total} total</span>
+      </div>
+
+      {total === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">No restaurants yet</div>
+      ) : (
+        <>
+          {/* Stacked bar */}
+          <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5">
+            {entries.map(([status, count]) => {
+              const cfg = SUB_CONFIG[status];
+              return (
+                <div
+                  key={status}
+                  className="rounded-full transition-all duration-500"
+                  style={{ width: `${(count / total) * 100}%`, background: cfg.color, minWidth: '2px' }}
+                  title={`${cfg.label}: ${count}`}
+                />
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(counts).map(([status, count]) => {
+              const cfg = SUB_CONFIG[status];
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+              return (
+                <div
+                  key={status}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl"
+                  style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cfg.color }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold" style={{ color: cfg.color }}>{cfg.label}</p>
+                    <p className="text-[10px] text-slate-500">{count} · {pct}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── Top Restaurants ────────────────────────────────────────────────────────── */
+function TopRestaurants({ restaurants }) {
+  const top = [...restaurants]
+    .sort((a, b) => (b.orders_today ?? 0) - (a.orders_today ?? 0))
+    .slice(0, 5);
+  const maxOrders = top[0]?.orders_today ?? 0;
+
+  return (
+    <div className="rounded-2xl p-5 flex flex-col gap-4 bg-slate-900 border border-white/10 h-full">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">Most Active Today</p>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">By orders</span>
+      </div>
+
+      {maxOrders === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 py-4">
+          <span className="text-2xl">📋</span>
+          <p className="text-sm text-slate-500">No orders placed today yet</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {top.map((r, idx) => {
+            const orders = r.orders_today ?? 0;
+            const barPct = maxOrders > 0 ? (orders / maxOrders) * 100 : 0;
+            const rankColors = ['#f59e0b', '#94a3b8', '#b45309', '#64748b', '#64748b'];
+            return (
+              <div key={r._id} className="flex items-center gap-3">
+                {/* Rank */}
+                <span
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+                  style={{
+                    background: `${rankColors[idx]}15`,
+                    color: rankColors[idx],
+                    border: `1px solid ${rankColors[idx]}30`,
+                  }}
+                >
+                  {idx + 1}
+                </span>
+                {/* Name + bar */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1 gap-2">
+                    <span className="text-xs font-semibold text-white truncate">{r.name}</span>
+                    <span className="text-xs font-bold text-slate-300 shrink-0">{orders}</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${barPct}%`, background: rankColors[idx] }}
+                    />
+                  </div>
+                </div>
+                {/* Badge */}
+                <StatusBadge status={r.subscription_status} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main Page ──────────────────────────────────────────────────────────────── */
 export default function RestaurantsPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -70,6 +211,15 @@ export default function RestaurantsPage() {
     r.slug.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Derived metrics
+  const restaurantsActiveToday = restaurants.filter(r => (r.orders_today ?? 0) > 0).length;
+  const avgOrdersPerRestaurant = (stats?.active_restaurants ?? 0) > 0
+    ? ((stats?.orders_today ?? 0) / stats.active_restaurants).toFixed(1)
+    : '—';
+  const avgRevenuePerRestaurant = (stats?.active_restaurants ?? 0) > 0
+    ? `₹${Math.round((stats?.revenue_today ?? 0) / stats.active_restaurants).toLocaleString()}`
+    : '—';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 gap-3">
@@ -80,7 +230,7 @@ export default function RestaurantsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -88,101 +238,183 @@ export default function RestaurantsPage() {
             className="text-2xl font-bold"
             style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
           >
-            Restaurants
+            Platform Overview
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">Manage all onboarded restaurants</p>
+          <p className="text-slate-500 text-sm mt-0.5">Business stats & all onboarded restaurants</p>
         </div>
         <button
           onClick={() => navigate('/superadmin/onboard')}
           className="inline-flex items-center gap-2 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 text-sm shrink-0 active:scale-95"
-          style={{ background: 'var(--t-accent)' }}
+          style={{ background: 'var(--t-accent)', boxShadow: '0 4px 14px rgba(0,0,0,0.3)' }}
         >
-          ➕ Onboard Restaurant
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Onboard Restaurant
         </button>
       </div>
 
-      {/* ── Stat cards ─────────────────────────────────────────────────────── */}
+      {/* ── Platform Metric Cards ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Restaurants" value={stats?.total_restaurants}                                     iconKey="total" />
-        <StatCard label="Active"            value={stats?.active_restaurants}                                    iconKey="active" />
-        <StatCard label="Orders Today"      value={stats?.orders_today}                                          iconKey="orders" />
-        <StatCard label="Revenue Today"     value={stats?.revenue_today ? `₹${Math.round(stats.revenue_today)}` : '₹0'} iconKey="revenue" />
-      </div>
-
-      {/* ── Search ─────────────────────────────────────────────────────────── */}
-      <div className="relative max-w-sm">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by name or slug…"
-          className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
-          onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
-          onBlur={e => e.target.style.borderColor = ''}
+        <MetricCard
+          label="Total Restaurants"
+          value={stats?.total_restaurants ?? 0}
+          sub={`${stats?.active_restaurants ?? 0} marked active`}
+          accentColor="#3b82f6"
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          }
         />
-        {search && (
-          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
-            ✕
-          </button>
-        )}
+        <MetricCard
+          label="Active Today"
+          value={restaurantsActiveToday}
+          sub="Restaurants with orders"
+          accentColor="#22c55e"
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Orders Today"
+          value={stats?.orders_today ?? 0}
+          sub={`${avgOrdersPerRestaurant} avg / restaurant`}
+          accentColor="#a855f7"
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 12h6M9 16h4" />
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Revenue Today"
+          value={stats?.revenue_today ? `₹${Math.round(stats.revenue_today).toLocaleString()}` : '₹0'}
+          sub={`${avgRevenuePerRestaurant} avg / restaurant`}
+          accentColor="#f59e0b"
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+          }
+        />
       </div>
 
-      {/* ── Table ──────────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-          <p className="text-sm font-semibold text-white">All Restaurants</p>
-          {search && (
-            <span className="text-xs text-slate-500">{filtered.length} of {restaurants.length}</span>
-          )}
+      {/* ── Business Insights ────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SubscriptionHealth restaurants={restaurants} />
+        <TopRestaurants restaurants={restaurants} />
+      </div>
+
+      {/* ── Restaurant Table ─────────────────────────────────────────────────── */}
+      <div className="rounded-2xl overflow-hidden bg-slate-900 border border-white/10">
+        {/* Table header with search */}
+        <div className="px-5 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div className="flex items-center gap-3">
+            <p className="text-sm font-semibold text-white">All Restaurants</p>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-400">
+              {search ? `${filtered.length} / ${restaurants.length}` : restaurants.length}
+            </span>
+          </div>
+          {/* Search */}
+          <div className="relative sm:w-64">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or slug…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
+                ✕
+              </button>
+            )}
+          </div>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Restaurant</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Owner</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tables</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Orders Today</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 w-10"></th>
+                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Restaurant</th>
+                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Owner</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Tables</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Orders Today</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Onboarded</th>
+                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Status</th>
+                <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-white/[0.04]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-16">
+                  <td colSpan={7} className="text-center py-16">
                     <p className="text-3xl mb-3">{search ? '🔍' : '🏪'}</p>
                     <p className="text-slate-500 text-sm">
                       {search ? 'No restaurants match your search.' : 'No restaurants yet. Onboard your first one!'}
                     </p>
                   </td>
                 </tr>
-              ) : filtered.map(r => (
-                <tr key={r._id} className="hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-5 py-4">
-                    <div className="font-semibold text-white group-hover:text-orange-400/90 transition-colors">{r.name}</div>
-                    <div className="text-slate-500 text-xs mt-0.5 font-mono">/{r.slug}</div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="text-slate-200">{r.owner?.name || '—'}</div>
-                    <div className="text-slate-500 text-xs mt-0.5">{r.owner?.email}</div>
-                  </td>
-                  <td className="px-4 py-4 text-center text-slate-300">{r.table_count ?? 0}</td>
-                  <td className="px-4 py-4 text-center text-slate-300">{r.orders_today ?? 0}</td>
-                  <td className="px-4 py-4 text-center">
-                    <StatusBadge status={r.subscription_status} />
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <button
-                      onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
-                      className="text-xs font-semibold text-slate-400 hover:text-orange-400 transition-colors whitespace-nowrap"
-                    >
-                      View Orders →
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              ) : filtered.map(r => {
+                const isActiveToday = (r.orders_today ?? 0) > 0;
+                const onboarded = r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : '—';
+                return (
+                  <tr
+                    key={r._id}
+                    className="hover:bg-white/[0.02] transition-colors group"
+                  >
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        {/* Activity dot */}
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ background: isActiveToday ? '#22c55e' : 'rgba(255,255,255,0.1)' }}
+                          title={isActiveToday ? 'Has orders today' : 'No orders today'}
+                        />
+                        <div>
+                          <div className="font-semibold text-white group-hover:text-orange-400/90 transition-colors text-sm">{r.name}</div>
+                          <div className="text-slate-500 text-xs mt-0.5 font-mono">/{r.slug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="text-slate-200 text-sm">{r.owner?.name || '—'}</div>
+                      <div className="text-slate-500 text-xs mt-0.5">{r.owner?.email}</div>
+                    </td>
+                    <td className="px-4 py-4 text-center text-slate-300 text-sm">{r.table_count ?? 0}</td>
+                    <td className="px-4 py-4 text-center">
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: isActiveToday ? '#22c55e' : '#475569' }}
+                      >
+                        {r.orders_today ?? 0}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-slate-400 text-xs">{onboarded}</td>
+                    <td className="px-4 py-4 text-center">
+                      <StatusBadge status={r.subscription_status} />
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <button
+                        onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
+                        className="text-xs font-semibold text-slate-500 hover:text-orange-400 transition-colors whitespace-nowrap"
+                      >
+                        View Orders →
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

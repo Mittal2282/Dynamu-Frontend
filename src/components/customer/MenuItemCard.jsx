@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import CartControl from "./CartControl";
 import VariantDrawer from "./VariantDrawer";
+import MenuItemDetailDrawer from "./MenuItemDetailDrawer";
 import { VegBadge } from "../ui/Badge";
 import LazyImage from "../ui/LazyImage";
 import { formatCurrency } from "../../utils/formatters";
@@ -106,6 +107,7 @@ function VariantQtyRow({ cartItem, currencySymbol }) {
 export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
   const isSmall = size === "sm";
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // Only available variants are shown to the customer
   const availableVariants = item.has_variants
@@ -173,8 +175,9 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99] h-full flex flex-col"
+      className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99] h-full flex flex-col cursor-pointer"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
+      onClick={() => setDetailOpen(true)}
     >
       <div className={`${isSmall ? "p-2.5" : "p-3"} flex gap-3 flex-1`}>
         {/* ── Image + Price ──────────────────────────────────────────────── */}
@@ -287,7 +290,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
           )}
 
           {/* ── Cart / Variant controls ───────────────────────────────────── */}
-          <div className="mt-auto pt-2">
+          <div className="mt-auto pt-2" onClick={(e) => e.stopPropagation()}>
             {!item.has_variants ? (
               /* Non-variant item: standard CartControl */
               <div className="flex items-center justify-end">
@@ -383,6 +386,14 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }) {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           currencySymbol={currencySymbol}
+        />
+      )}
+
+      {/* Detail drawer (portal) */}
+      {detailOpen && (
+        <MenuItemDetailDrawer
+          item={item}
+          onClose={() => setDetailOpen(false)}
         />
       )}
     </div>

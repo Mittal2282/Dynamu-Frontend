@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import { getDashOrders } from "../../services/adminService";
 import { apiCaller } from "../../api/apiCaller";
 
@@ -144,8 +145,199 @@ function StatusBreakdown({ data }) {
   );
 }
 
+/* ─── Order Detail Panel (right slide-over) ──────────────────────────────────── */
+function OrderDetailPanel({ order, onClose }) {
+  const open = !!order;
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  const cfg = order ? STATUS_CONFIG[order.status] : null;
+  const tableNum = order?.table?.table_number ?? order?.table_number;
+  const dateStr = order?.createdAt
+    ? new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
+    : "—";
+
+  return ReactDOM.createPortal(
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40"
+        style={{
+          background: "rgba(0,0,0,0.55)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.3s",
+        }}
+        onClick={onClose}
+      />
+
+      {/* Slide-over panel */}
+      <div
+        className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md flex flex-col"
+        style={{
+          background: "var(--t-bg)",
+          borderLeft: "1px solid var(--t-line)",
+          transform: open ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.3s ease-out",
+          pointerEvents: open ? "auto" : "none",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{ borderBottom: "1px solid var(--t-line)" }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-lg font-bold" style={{ color: "var(--t-accent)" }}>
+              #{order?.order_number}
+            </span>
+            {cfg && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full"
+                style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+              >
+                {cfg.label}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer transition-colors"
+            style={{ color: "var(--t-dim)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-float)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Meta row */}
+        <div
+          className="px-5 py-3 flex items-center gap-3 shrink-0"
+          style={{ borderBottom: "1px solid var(--t-line)" }}
+        >
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-lg"
+            style={{ background: "var(--t-float)", color: "var(--t-text)", border: "1px solid var(--t-line)" }}
+          >
+            {tableNum != null ? `T${tableNum}` : "Take-away"}
+          </span>
+          <span className="text-xs" style={{ color: "var(--t-dim)" }}>{dateStr}</span>
+        </div>
+
+        {/* Items list */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+            Items ({order?.items?.length ?? 0})
+          </p>
+
+          {order?.items?.map((item, i) => {
+            const isVeg = item.menu_item?.is_veg ?? item.is_veg;
+            const imageUrl = item.menu_item?.image_url;
+            const variantLabel = item.variant_name
+              ? (item.variant_group ? `${item.variant_group} · ${item.variant_name}` : item.variant_name)
+              : null;
+            return (
+              <div
+                key={i}
+                className="flex items-start gap-3 py-2.5 px-3 rounded-xl"
+                style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+              >
+                {/* Thumbnail with veg/non-veg dot overlay */}
+                <div className="relative shrink-0" style={{ width: 52, height: 52 }}>
+                  {imageUrl && (
+                    <img
+                      src={imageUrl}
+                      alt={item.name}
+                      className="w-full h-full object-cover rounded-xl"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  )}
+                  {!imageUrl && (
+                    <div
+                      className="w-full h-full rounded-xl flex items-center justify-center text-2xl"
+                      style={{ background: "var(--t-float)" }}
+                    >
+                      {isVeg ? "🥗" : "🍗"}
+                    </div>
+                  )}
+                  <span
+                    className="absolute bottom-0.5 left-0.5 w-2.5 h-2.5 rounded-full border-2"
+                    style={{
+                      background: isVeg ? "#22c55e" : "#ef4444",
+                      borderColor: "var(--t-bg)",
+                    }}
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white leading-snug">{item.name}</p>
+                      {variantLabel && (
+                        <p className="text-[11px]" style={{ color: "var(--t-dim)" }}>{variantLabel}</p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
+                        ₹{Math.round((item.unit_price ?? 0) * item.quantity).toLocaleString()}
+                      </p>
+                      <p className="text-[10px]" style={{ color: "var(--t-dim)" }}>
+                        {item.quantity} × ₹{Math.round(item.unit_price ?? 0)}
+                      </p>
+                    </div>
+                  </div>
+                  {item.special_instructions && (
+                    <p
+                      className="mt-1 text-[11px] px-2 py-1 rounded-lg"
+                      style={{ background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}
+                    >
+                      {item.special_instructions}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Order notes */}
+          {order?.notes && (
+            <div
+              className="px-3 py-2.5 rounded-xl"
+              style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--t-dim)" }}>
+                Order Note
+              </p>
+              <p className="text-xs italic" style={{ color: "var(--t-dim)" }}>{order.notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Total footer */}
+        <div
+          className="px-5 py-4 flex items-center justify-between shrink-0"
+          style={{ borderTop: "1px solid var(--t-line)" }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "var(--t-dim)" }}>Total</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--t-text)" }}>
+            ₹{Math.round(order?.total_amount ?? 0).toLocaleString()}
+          </p>
+        </div>
+      </div>
+    </>,
+    document.body
+  );
+}
+
 /* ─── Orders Table ───────────────────────────────────────────────────────────── */
-function OrdersTable({ orders }) {
+function OrdersTable({ orders, onOrderClick }) {
   return (
     <div
       className="rounded-2xl overflow-hidden"
@@ -207,11 +399,12 @@ function OrdersTable({ orders }) {
                 return (
                   <tr
                     key={order._id}
-                    className="transition-colors duration-100"
+                    className="transition-colors duration-100 cursor-pointer"
                     style={{
                       borderBottom: idx < orders.length - 1 ? "1px solid var(--t-line)" : "none",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.02)"}
+                    onClick={() => onOrderClick(order)}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >
                     {/* Order # */}
@@ -286,6 +479,7 @@ export default function StatsPage() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -418,9 +612,12 @@ export default function StatsPage() {
           )}
 
           {/* ── Orders table ── */}
-          <OrdersTable orders={orders} />
+          <OrdersTable orders={orders} onOrderClick={setSelectedOrder} />
         </>
       )}
+
+      {/* ── Order detail slide-over ── */}
+      <OrderDetailPanel order={selectedOrder} onClose={() => setSelectedOrder(null)} />
     </div>
   );
 }
