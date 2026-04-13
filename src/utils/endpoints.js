@@ -53,6 +53,8 @@ export const ENDPOINTS = {
   DASH_CLOSE_SESSION:      (id) => `/api/restaurant-dash/sessions/${id}/close`,
   DASH_INGREDIENTS:        '/api/restaurant-dash/ingredients',
   DASH_INGREDIENTS_TOGGLE: '/api/restaurant-dash/ingredients/toggle',
+  DASH_ORDERS_MANUAL:      '/api/restaurant-dash/orders/manual',
+  DASH_ORDERS_BULK_MANUAL: '/api/restaurant-dash/orders/bulk-manual',
 
   // Customer — special sections
   CART_SUGGESTIONS:   '/api/customer/suggestions',

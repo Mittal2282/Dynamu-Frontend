@@ -78,6 +78,60 @@ export async function getDashStats() {
   return data.data;
 }
 
+/**
+ * Fetch completed/served orders with optional date range.
+ * @param {{ dateFrom?: string, dateTo?: string }} options  ISO date strings (YYYY-MM-DD)
+ * @returns {Promise<Array>}
+ */
+export async function getCompletedOrders({ dateFrom, dateTo } = {}) {
+  const params = new URLSearchParams({ statuses: 'completed,served' });
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) {
+    // Include the full 'to' day by extending to end-of-day
+    const toDate = new Date(dateTo);
+    toDate.setDate(toDate.getDate() + 1);
+    params.append('date_to', toDate.toISOString().split('T')[0]);
+  }
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: `${ENDPOINTS.DASH_ORDERS}?${params.toString()}`,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+/**
+ * Create a single manual (offline) order in completed state.
+ * @param {object} payload  — { items, customer_name, notes, order_date, table_id }
+ * @returns {Promise<object>}
+ */
+export async function createManualOrder(payload) {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_ORDERS_MANUAL,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
+ * Bulk-create orders from parsed Excel rows.
+ * @param {Array}  rows       — Parsed sheet rows (each row = one item)
+ * @param {string} orderDate  — ISO date string (YYYY-MM-DD)
+ * @param {string} [source]   — 'bulk'
+ * @returns {Promise<{ created: number, failed: Array }>}
+ */
+export async function createBulkOrders(rows, orderDate, source = 'bulk') {
+  const data = await apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_ORDERS_BULK_MANUAL,
+    payload:  { rows, order_date: orderDate, source },
+    useAdmin: true,
+  });
+  return data.data;
+}
+
 // ─── Superadmin ───────────────────────────────────────────────────────────────
 
 /**

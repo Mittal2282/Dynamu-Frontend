@@ -27,6 +27,7 @@ import RestaurantOrdersPage from "../pages/superadmin/RestaurantOrdersPage";
 import RestaurantsPage from "../pages/superadmin/RestaurantsPage";
 
 // Restaurant dashboard pages
+import CompletedOrdersPage from "../pages/dashboard/CompletedOrdersPage";
 import IngredientsPage from "../pages/dashboard/IngredientsPage";
 import MenuManagePage from "../pages/dashboard/MenuManagePage";
 import OrdersPage from "../pages/dashboard/OrdersPage";
@@ -86,6 +87,7 @@ export default function Routes() {
         <Route path="tables" element={<TableStatusPage />} />
         <Route path="menu" element={<MenuManagePage />} />
         <Route path="ingredients" element={<IngredientsPage />} />
+        <Route path="completed-orders" element={<CompletedOrdersPage />} />
       </Route>
 
       {/* Root → Landing */}
