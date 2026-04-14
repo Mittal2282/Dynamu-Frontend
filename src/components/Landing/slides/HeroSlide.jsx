@@ -28,7 +28,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }) {
 
       <div className="relative z-10 h-16 w-full shrink-0 pointer-events-none" aria-hidden />
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center px-6 pb-20 min-h-0 w-full max-w-5xl mx-auto rounded-3xl sm:bg-black/20 sm:backdrop-blur-[2px] sm:px-8 sm:py-6">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center px-6 py-20 w-full max-w-5xl mx-auto rounded-3xl sm:bg-black/20 sm:backdrop-blur-[2px] sm:px-8 sm:py-6">
         <h1 className="hero-title text-5xl sm:text-6xl lg:text-[76px] font-black leading-[1.03] tracking-tight mb-7 max-w-4xl">
           <span className="text-white" style={{ textShadow: HERO_TEXT_SHADOW }}>
             The AI Revenue

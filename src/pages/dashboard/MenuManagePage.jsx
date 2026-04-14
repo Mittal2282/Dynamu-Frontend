@@ -35,7 +35,17 @@ function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
 }
 
 /* ─── Item Card ──────────────────────────────────────────────────────────────── */
-function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, onEdit, onDelete, onUpdateDiscount, onUpdateVariants, saving }) {
+function MenuItemCard({
+  item,
+  onToggleAvail,
+  onToggleSpecial,
+  onToggleFeatured,
+  onEdit,
+  onDelete,
+  onUpdateDiscount,
+  onUpdateVariants,
+  saving,
+}) {
   const isSaving = saving === item._id;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(false);
@@ -45,29 +55,33 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
   const discount = item.discount_percentage ?? 0;
   const effectivePrice = discount > 0 ? Math.round(item.price * (1 - discount / 100)) : null;
   const vegStatus = getItemVegStatus(item);
-  const vegColor = vegStatus === 'veg' ? '#22c55e' : vegStatus === 'nonveg' ? '#ef4444' : '#94a3b8';
+  const vegColor = vegStatus === "veg" ? "#22c55e" : vegStatus === "nonveg" ? "#ef4444" : "#94a3b8";
   const hasVariants = item.has_variants && item.variants?.length > 0;
   const minVariantPrice = hasVariants
-    ? Math.min(...item.variants.map(v => variantEffectivePrice(v)))
+    ? Math.min(...item.variants.map((v) => variantEffectivePrice(v)))
     : null;
 
   const commitVariant = (idx, field, rawValue) => {
-    const val = Math.min(field === 'discount' ? 100 : Infinity, Math.max(0, parseFloat(rawValue) || 0));
+    const val = Math.min(
+      field === "discount" ? 100 : Infinity,
+      Math.max(0, parseFloat(rawValue) || 0),
+    );
     setVariantDraft(null);
-    const key = field === 'price' ? 'price' : 'discount_percentage';
+    const key = field === "price" ? "price" : "discount_percentage";
     const current = item.variants[idx][key] ?? 0;
     if (val === current) return;
-    const updated = item.variants.map((v, i) => i === idx ? { ...v, [key]: val } : v);
+    const updated = item.variants.map((v, i) => (i === idx ? { ...v, [key]: val } : v));
     onUpdateVariants(item._id, updated);
   };
-  const blockedByIngredient = item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
+  const blockedByIngredient =
+    item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
 
   const commitDiscount = () => {
     const val = Math.min(100, Math.max(0, parseInt(discountInput, 10) || 0));
     setEditingDiscount(false);
     if (val === discount) return;
     if (hasVariants) {
-      const updated = item.variants.map(v => ({ ...v, discount_percentage: val }));
+      const updated = item.variants.map((v) => ({ ...v, discount_percentage: val }));
       onUpdateVariants(item._id, updated);
     } else {
       onUpdateDiscount(item._id, val);
@@ -96,18 +110,24 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             className="absolute inset-0 flex items-center justify-center text-5xl"
             style={{ background: "var(--t-float)" }}
           >
-            {vegStatus !== 'nonveg' ? "🥗" : "🍗"}
+            {vegStatus !== "nonveg" ? "🥗" : "🍗"}
           </div>
         )}
 
         {/* Ingredient-blocked overlay */}
         {blockedByIngredient && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 backdrop-blur-[1px]"
-            style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 backdrop-blur-[1px]"
+            style={{ background: "rgba(0,0,0,0.7)" }}
+          >
             <span className="text-lg">🚫</span>
             <span
               className="text-[9px] font-black uppercase tracking-[0.12em] px-2 py-0.5 rounded"
-              style={{ background: "rgba(251,146,60,0.25)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.4)" }}
+              style={{
+                background: "rgba(251,146,60,0.25)",
+                color: "#fb923c",
+                border: "1px solid rgba(251,146,60,0.4)",
+              }}
             >
               Ingredient Off
             </span>
@@ -135,10 +155,10 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             className="w-3 h-3 rounded-sm border-[2px] flex items-center justify-center"
             style={{ borderColor: vegColor }}
           >
-            {vegStatus === 'mixed' ? (
+            {vegStatus === "mixed" ? (
               <div className="flex items-center gap-[2px]">
-                <div className="w-1 h-1 rounded-full" style={{ background: '#22c55e' }} />
-                <div className="w-1 h-1 rounded-full" style={{ background: '#ef4444' }} />
+                <div className="w-1 h-1 rounded-full" style={{ background: "#22c55e" }} />
+                <div className="w-1 h-1 rounded-full" style={{ background: "#ef4444" }} />
               </div>
             ) : (
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: vegColor }} />
@@ -181,9 +201,7 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
       <div className="flex flex-col gap-2.5 p-3 flex-1">
         {/* Name + price */}
         <div>
-          <p className="text-sm font-semibold text-white line-clamp-1 leading-snug">
-            {item.name}
-          </p>
+          <p className="text-sm font-semibold text-white line-clamp-1 leading-snug">{item.name}</p>
           <div className="flex items-center justify-between gap-1 mt-0.5">
             <div className="flex items-baseline gap-1.5 min-w-0">
               {hasVariants ? (
@@ -196,7 +214,7 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                     ₹{effectivePrice ?? item.price}
                   </span>
                   {effectivePrice && (
-                    <span className="text-xs line-through text-slate-500">₹{item.price}</span>
+                    <span className="text-xs line-through text-slate-300">₹{item.price}</span>
                   )}
                 </>
               )}
@@ -213,26 +231,54 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                   value={discountInput}
                   onChange={(e) => setDiscountInput(e.target.value)}
                   onBlur={commitDiscount}
-                  onKeyDown={(e) => { if (e.key === "Enter") commitDiscount(); if (e.key === "Escape") setEditingDiscount(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitDiscount();
+                    if (e.key === "Escape") setEditingDiscount(false);
+                  }}
                   className="w-12 text-center text-xs font-bold rounded-md py-0.5 focus:outline-none"
-                  style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                  style={{
+                    background: "var(--t-float)",
+                    border: "1px solid var(--t-accent)",
+                    color: "var(--t-accent)",
+                  }}
                 />
-                <span className="text-[10px] text-slate-500">%</span>
+                <span className="text-[10px] text-slate-300">%</span>
               </div>
             ) : (
               <button
-                onClick={() => { setDiscountInput(String(discount)); setEditingDiscount(true); }}
+                onClick={() => {
+                  setDiscountInput(String(discount));
+                  setEditingDiscount(true);
+                }}
                 disabled={isSaving}
                 title="Click to set discount"
                 className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-all duration-150 disabled:opacity-40"
                 style={
                   discount > 0
-                    ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }
-                    : { background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }
+                    ? {
+                        background: "rgba(245,158,11,0.15)",
+                        color: "#fbbf24",
+                        border: "1px solid rgba(245,158,11,0.3)",
+                      }
+                    : {
+                        background: "var(--t-float)",
+                        color: "var(--t-dim)",
+                        border: "1px solid var(--t-line)",
+                      }
                 }
               >
-                <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                <svg
+                  className="w-2.5 h-2.5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                  />
                 </svg>
                 {discount > 0 ? `−${discount}%` : "Discount"}
               </button>
@@ -249,12 +295,20 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
             {/* Section header */}
             <div
               className="flex items-center justify-between px-2.5 py-1.5"
-              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
             >
-              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+              <span
+                className="text-[9px] font-bold uppercase tracking-widest"
+                style={{ color: "var(--t-dim)" }}
+              >
                 {item.variants[0]?.groupName || "Variants"}
               </span>
-              <span className="text-[9px]" style={{ color: "#475569" }}>tap to edit</span>
+              <span className="text-[9px]" style={{ color: "#475569" }}>
+                tap to edit
+              </span>
             </div>
             {/* Variant rows — 2-line layout for responsiveness */}
             <div>
@@ -263,8 +317,9 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                 const avail = v.isAvailable !== false;
                 const effPrice = variantEffectivePrice(v);
                 const vDisc = v.discount_percentage ?? 0;
-                const isDraftingPrice = variantDraft?.idx === idx && variantDraft.field === 'price';
-                const isDraftingDisc  = variantDraft?.idx === idx && variantDraft.field === 'discount';
+                const isDraftingPrice = variantDraft?.idx === idx && variantDraft.field === "price";
+                const isDraftingDisc =
+                  variantDraft?.idx === idx && variantDraft.field === "discount";
                 return (
                   <div
                     key={idx}
@@ -272,7 +327,10 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                     style={{
                       opacity: avail ? 1 : 0.5,
                       background: "rgba(255,255,255,0.01)",
-                      borderBottom: idx < item.variants.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                      borderBottom:
+                        idx < item.variants.length - 1
+                          ? "1px solid rgba(255,255,255,0.05)"
+                          : "none",
                     }}
                   >
                     {/* Line 1: availability pill + veg dot + name */}
@@ -283,18 +341,31 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                         title={avail ? "Tap to mark unavailable" : "Tap to mark available"}
                         disabled={isSaving}
                         onClick={() => {
-                          const updated = item.variants.map((vv, i) => i === idx ? { ...vv, isAvailable: !avail } : vv);
+                          const updated = item.variants.map((vv, i) =>
+                            i === idx ? { ...vv, isAvailable: !avail } : vv,
+                          );
                           onUpdateVariants(item._id, updated);
                         }}
                         className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-all duration-150 disabled:opacity-40"
                         style={
                           avail
-                            ? { background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }
-                            : { background: 'rgba(71,85,105,0.2)', color: '#64748b', border: '1px solid rgba(71,85,105,0.3)' }
+                            ? {
+                                background: "rgba(34,197,94,0.12)",
+                                color: "#4ade80",
+                                border: "1px solid rgba(34,197,94,0.25)",
+                              }
+                            : {
+                                background: "rgba(71,85,105,0.2)",
+                                color: "#64748b",
+                                border: "1px solid rgba(71,85,105,0.3)",
+                              }
                         }
                       >
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: avail ? '#22c55e' : '#475569' }} />
-                        {avail ? 'On' : 'Off'}
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ background: avail ? "#22c55e" : "#475569" }}
+                        />
+                        {avail ? "On" : "Off"}
                       </button>
                       {/* Veg dot */}
                       <span
@@ -304,7 +375,9 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                         <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
                       </span>
                       {/* Name */}
-                      <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">{v.name}</span>
+                      <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">
+                        {v.name}
+                      </span>
                     </div>
 
                     {/* Line 2: discount + price — right-aligned */}
@@ -313,46 +386,74 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                       {isDraftingDisc ? (
                         <input
                           autoFocus
-                          type="number" min="0" max="100"
+                          type="number"
+                          min="0"
+                          max="100"
                           value={variantDraft.value}
-                          onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
-                          onBlur={() => commitVariant(idx, 'discount', variantDraft.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'discount', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                          onChange={(e) =>
+                            setVariantDraft((d) => ({ ...d, value: e.target.value }))
+                          }
+                          onBlur={() => commitVariant(idx, "discount", variantDraft.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter")
+                              commitVariant(idx, "discount", variantDraft.value);
+                            if (e.key === "Escape") setVariantDraft(null);
+                          }}
                           className="w-10 text-center text-[10px] font-bold rounded py-0.5 focus:outline-none"
-                          style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                          style={{
+                            background: "var(--t-float)",
+                            border: "1px solid var(--t-accent)",
+                            color: "var(--t-accent)",
+                          }}
                         />
                       ) : (
                         <button
                           type="button"
                           disabled={isSaving}
                           title={vDisc > 0 ? "Click to edit discount" : "Click to add discount"}
-                          onClick={() => setVariantDraft({ idx, field: 'discount', value: String(vDisc) })}
+                          onClick={() =>
+                            setVariantDraft({ idx, field: "discount", value: String(vDisc) })
+                          }
                           className="text-[10px] font-semibold shrink-0 px-1 py-0.5 rounded transition-colors"
-                          style={vDisc > 0
-                            ? { color: '#fbbf24', background: 'rgba(245,158,11,0.1)' }
-                            : { color: 'var(--t-dim)', background: 'transparent' }}
+                          style={
+                            vDisc > 0
+                              ? { color: "#fbbf24", background: "rgba(245,158,11,0.1)" }
+                              : { color: "var(--t-dim)", background: "transparent" }
+                          }
                         >
-                          {vDisc > 0 ? `−${vDisc}%` : '+ disc'}
+                          {vDisc > 0 ? `−${vDisc}%` : "+ disc"}
                         </button>
                       )}
                       {/* Price inline editor — with ✏ hint */}
                       {isDraftingPrice ? (
                         <input
                           autoFocus
-                          type="number" min="0"
+                          type="number"
+                          min="0"
                           value={variantDraft.value}
-                          onChange={e => setVariantDraft(d => ({ ...d, value: e.target.value }))}
-                          onBlur={() => commitVariant(idx, 'price', variantDraft.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') commitVariant(idx, 'price', variantDraft.value); if (e.key === 'Escape') setVariantDraft(null); }}
+                          onChange={(e) =>
+                            setVariantDraft((d) => ({ ...d, value: e.target.value }))
+                          }
+                          onBlur={() => commitVariant(idx, "price", variantDraft.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitVariant(idx, "price", variantDraft.value);
+                            if (e.key === "Escape") setVariantDraft(null);
+                          }}
                           className="w-14 text-center text-[11px] font-bold rounded py-0.5 focus:outline-none"
-                          style={{ background: "var(--t-float)", border: "1px solid var(--t-accent)", color: "var(--t-accent)" }}
+                          style={{
+                            background: "var(--t-float)",
+                            border: "1px solid var(--t-accent)",
+                            color: "var(--t-accent)",
+                          }}
                         />
                       ) : (
                         <button
                           type="button"
                           disabled={isSaving}
                           title="Click to edit price"
-                          onClick={() => setVariantDraft({ idx, field: 'price', value: String(v.price) })}
+                          onClick={() =>
+                            setVariantDraft({ idx, field: "price", value: String(v.price) })
+                          }
                           className="flex items-center gap-0.5 text-[11px] font-semibold shrink-0 transition-colors group/vp"
                           style={{ color: "var(--t-accent)" }}
                         >
@@ -361,9 +462,21 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
                               <span>₹{effPrice}</span>
                               <span className="line-through text-[9px] opacity-50">₹{v.price}</span>
                             </span>
-                          ) : `₹${v.price}`}
-                          <svg className="w-2.5 h-2.5 ml-0.5 opacity-30 group-hover/vp:opacity-80 transition-opacity shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+                          ) : (
+                            `₹${v.price}`
+                          )}
+                          <svg
+                            className="w-2.5 h-2.5 ml-0.5 opacity-30 group-hover/vp:opacity-80 transition-opacity shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                            />
                           </svg>
                         </button>
                       )}
@@ -428,8 +541,16 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
               style={
                 item.is_chefs_special
-                  ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.35)" }
-                  : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }
+                  ? {
+                      background: "rgba(245,158,11,0.15)",
+                      color: "#fbbf24",
+                      border: "1px solid rgba(245,158,11,0.35)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#64748b",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                    }
               }
             >
               <span>🔥</span>
@@ -442,8 +563,16 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
               style={
                 item.is_featured
-                  ? { background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" }
-                  : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }
+                  ? {
+                      background: "rgba(96,165,250,0.12)",
+                      color: "#60a5fa",
+                      border: "1px solid rgba(96,165,250,0.3)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#64748b",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                    }
               }
             >
               <span>⭐</span>
@@ -457,11 +586,24 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               onClick={() => onEdit(item)}
               disabled={isSaving}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-white disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.04)", color: "var(--t-text)", border: "1px solid rgba(255,255,255,0.09)" }}
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                color: "var(--t-text)",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
             >
-              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
+              <svg
+                className="w-3 h-3 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"
+                />
               </svg>
               Edit Item
             </button>
@@ -470,11 +612,24 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               onClick={() => setConfirmDelete(true)}
               disabled={isSaving}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-red-400 hover:border-red-500/30 disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#64748b", border: "1px solid rgba(255,255,255,0.09)" }}
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                color: "#64748b",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
             >
-              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-3 h-3 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               Delete
             </button>
@@ -484,11 +639,22 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
 
       {/* ── Delete confirmation overlay ── */}
       {confirmDelete && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl px-4 text-center"
-          style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(4px)" }}>
-          <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl px-4 text-center"
+          style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(4px)" }}
+        >
+          <svg
+            className="w-8 h-8 text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.8}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
           </svg>
           <div>
             <p className="text-sm font-semibold text-white">Delete item?</p>
@@ -502,7 +668,10 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
               Cancel
             </button>
             <button
-              onClick={() => { setConfirmDelete(false); onDelete(item._id); }}
+              onClick={() => {
+                setConfirmDelete(false);
+                onDelete(item._id);
+              }}
               className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors"
             >
               Delete
@@ -513,8 +682,10 @@ function MenuItemCard({ item, onToggleAvail, onToggleSpecial, onToggleFeatured, 
 
       {/* Saving overlay */}
       {isSaving && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-2xl"
-          style={{ background: "rgba(0,0,0,0.45)" }}>
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-2xl"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
           <div className="w-6 h-6 border-[3px] border-white/20 border-t-white rounded-full animate-spin" />
         </div>
       )}
@@ -534,14 +705,17 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
           className="flex items-center gap-2.5 min-w-0 group"
         >
           <svg
-            className={`w-3.5 h-3.5 shrink-0 text-slate-500 group-hover:text-slate-300 transition-all duration-200 ${
+            className={`w-3.5 h-3.5 shrink-0 text-slate-300 group-hover:text-white transition-all duration-200 ${
               collapsed ? "-rotate-90" : ""
             }`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400 group-hover:text-slate-200 transition-colors truncate">
+          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400 group-hover:text-white transition-colors truncate">
             {category}
           </h2>
           <span
@@ -554,15 +728,15 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
 
         <button
           onClick={() => onAddToCategory(category)}
-          className="text-[11px] font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all duration-150 text-slate-500 hover:text-white shrink-0 border border-white/6 hover:border-white/15"
+          className="text-[11px] font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all duration-150 text-slate-300 hover:text-white shrink-0 border border-white/6 hover:border-white"
           style={{ background: "rgba(255,255,255,0.04)" }}
         >
-          <span className="text-base leading-none">+</span> Add here
+          + Add here
         </button>
       </div>
 
-      {!collapsed && (
-        items.length === 0 ? (
+      {!collapsed &&
+        (items.length === 0 ? (
           <div
             className="rounded-2xl flex items-center justify-center h-28 border border-dashed"
             style={{ borderColor: "rgba(255,255,255,0.07)" }}
@@ -586,8 +760,7 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
               />
             ))}
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 }
@@ -638,17 +811,17 @@ export default function MenuManagePage() {
   }, []);
 
   /* ── Handlers ── */
-  const handleUpdate = async (id, field, val) => {
-    setSaving(id);
-    try {
-      const updated = await updateDashMenuItem(id, { [field]: val });
-      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
-    } catch {
-      alert("Failed to save change.");
-    } finally {
-      setSaving(null);
-    }
-  };
+  // const handleUpdate = async (id, field, val) => {
+  //   setSaving(id);
+  //   try {
+  //     const updated = await updateDashMenuItem(id, { [field]: val });
+  //     setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...updated } : it)));
+  //   } catch {
+  //     alert("Failed to save change.");
+  //   } finally {
+  //     setSaving(null);
+  //   }
+  // };
 
   const handleToggleAvail = async (id) => {
     setSaving(id);
@@ -703,7 +876,7 @@ export default function MenuManagePage() {
     setItems((prev) =>
       editingItem?._id
         ? prev.map((it) => (it._id === savedItem._id ? savedItem : it))
-        : [...prev, savedItem]
+        : [...prev, savedItem],
     );
     setProductModalOpen(false);
     setEditingItem(null);
@@ -766,7 +939,7 @@ export default function MenuManagePage() {
     return (
       <div className="flex items-center justify-center h-48 gap-3">
         <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
-        <span className="text-slate-500 text-sm">Loading menu…</span>
+        <span className="text-slate-300 text-sm">Loading menu…</span>
       </div>
     );
   }
@@ -791,7 +964,8 @@ export default function MenuManagePage() {
         !(item.name || "").toLowerCase().includes(q) &&
         !(item.category || "").toLowerCase().includes(q) &&
         !(item.description || "").toLowerCase().includes(q)
-      ) return false;
+      )
+        return false;
     }
     return true;
   });
@@ -821,12 +995,14 @@ export default function MenuManagePage() {
             Menu Management
           </h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-              style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}>
+            <span
+              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}
+            >
               {items.length} items
             </span>
             <span className="text-slate-600 text-xs">·</span>
-            <span className="text-slate-500 text-xs">{availableCount} available</span>
+            <span className="text-slate-300 text-xs">{availableCount} available</span>
           </div>
         </div>
 
@@ -836,9 +1012,18 @@ export default function MenuManagePage() {
             onClick={() => setCategoryModalOpen(true)}
             className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
+              />
             </svg>
             Category
           </button>
@@ -852,23 +1037,35 @@ export default function MenuManagePage() {
               + Add Item
               <svg
                 className={`w-3.5 h-3.5 transition-transform duration-150 ${addMenuOpen ? "rotate-180" : ""}`}
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
             {addMenuOpen && (
-              <div className="absolute right-0 mt-1.5 w-52 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
-                style={{ background: "var(--t-float)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div
+                className="absolute right-0 mt-1.5 w-52 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
+                style={{ background: "var(--t-float)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
                 <button
-                  onClick={() => { setEditingItem(null); setProductModalOpen(true); setAddMenuOpen(false); }}
+                  onClick={() => {
+                    setEditingItem(null);
+                    setProductModalOpen(true);
+                    setAddMenuOpen(false);
+                  }}
                   className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
                 >
                   <span className="text-base">➕</span> Single Product
                 </button>
                 <button
-                  onClick={() => { setBulkModalOpen(true); setAddMenuOpen(false); }}
+                  onClick={() => {
+                    setBulkModalOpen(true);
+                    setAddMenuOpen(false);
+                  }}
                   className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
                 >
                   <span className="text-base">📂</span> Bulk Upload
@@ -883,9 +1080,16 @@ export default function MenuManagePage() {
       <div className="flex flex-wrap gap-3 items-center">
         {/* Search */}
         <div className="relative flex-1 min-w-52">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
             </svg>
           </span>
           <input
@@ -898,8 +1102,10 @@ export default function MenuManagePage() {
             onBlur={(e) => (e.target.style.borderColor = "")}
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs">
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs"
+            >
               ✕
             </button>
           )}
@@ -914,7 +1120,9 @@ export default function MenuManagePage() {
         >
           <option value="">All categories</option>
           {allCategories.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
 
@@ -931,7 +1139,7 @@ export default function MenuManagePage() {
               className={`px-3 py-2 transition-all duration-150 ${
                 availFilter === opt.value
                   ? "text-white"
-                  : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               }`}
               style={availFilter === opt.value ? { background: "var(--t-accent)" } : {}}
             >
@@ -942,10 +1150,16 @@ export default function MenuManagePage() {
 
         {isFiltering && (
           <>
-            <span className="text-slate-600 text-xs">{visibleItems.length} of {items.length}</span>
+            <span className="text-slate-600 text-xs">
+              {visibleItems.length} of {items.length}
+            </span>
             <button
-              onClick={() => { setSearchQuery(""); setCategoryFilter(""); setAvailFilter("all"); }}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              onClick={() => {
+                setSearchQuery("");
+                setCategoryFilter("");
+                setAvailFilter("all");
+              }}
+              className="text-xs text-slate-300 hover:text-white transition-colors"
             >
               Clear
             </button>
@@ -974,14 +1188,18 @@ export default function MenuManagePage() {
           <p className="text-white font-semibold">
             {isFiltering ? "No items match your filters" : "Your menu is empty"}
           </p>
-          <p className="text-slate-500 text-sm max-w-xs">
+          <p className="text-slate-300 text-sm max-w-xs">
             {isFiltering
               ? "Try adjusting your search or filters."
               : "Add your first dish to get started."}
           </p>
           {isFiltering ? (
             <button
-              onClick={() => { setSearchQuery(""); setCategoryFilter(""); setAvailFilter("all"); }}
+              onClick={() => {
+                setSearchQuery("");
+                setCategoryFilter("");
+                setAvailFilter("all");
+              }}
               className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
               style={{ color: "var(--t-accent)", background: "var(--t-accent-10)" }}
             >
@@ -989,7 +1207,10 @@ export default function MenuManagePage() {
             </button>
           ) : (
             <button
-              onClick={() => { setEditingItem(null); setProductModalOpen(true); }}
+              onClick={() => {
+                setEditingItem(null);
+                setProductModalOpen(true);
+              }}
               className="text-sm font-semibold text-white px-4 py-2 rounded-xl transition-all active:scale-95"
               style={{ background: "var(--t-accent)" }}
             >
@@ -1002,7 +1223,10 @@ export default function MenuManagePage() {
       {/* ── Modals ───────────────────────────────────────────────────────────── */}
       <ProductFormModal
         isOpen={productModalOpen}
-        onClose={() => { setProductModalOpen(false); setEditingItem(null); }}
+        onClose={() => {
+          setProductModalOpen(false);
+          setEditingItem(null);
+        }}
         onSave={handleProductSaved}
         item={editingItem?._isNew ? { category: editingItem.category } : editingItem}
         existingCategories={categories}

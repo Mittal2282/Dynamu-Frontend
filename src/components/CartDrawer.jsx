@@ -20,9 +20,7 @@ function CartItem({ item, currencySymbol }) {
   // Variant-aware price and veg status
   const basePrice = item.selectedVariant?.price ?? item.price;
   const effectivePrice =
-    item.discount_percentage > 0
-      ? basePrice * (1 - item.discount_percentage / 100)
-      : basePrice;
+    item.discount_percentage > 0 ? basePrice * (1 - item.discount_percentage / 100) : basePrice;
   const displayIsVeg = item.selectedVariant ? item.selectedVariant.isVeg : item.is_veg;
 
   return (
@@ -71,7 +69,7 @@ function CartItem({ item, currencySymbol }) {
           )}
           {item.discount_percentage > 0 ? (
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              <span className="line-through text-slate-500 text-xs">
+              <span className="line-through text-slate-300 text-xs">
                 {formatCurrency(basePrice, currencySymbol)}
               </span>
               <Text as="span" size="sm" weight="bold" color="brand">
@@ -240,7 +238,11 @@ export default function CartDrawer({
               }}
             >
               {items.map((item) => (
-                <CartItem key={item._cartKey ?? item._id} item={item} currencySymbol={currencySymbol} />
+                <CartItem
+                  key={item._cartKey ?? item._id}
+                  item={item}
+                  currencySymbol={currencySymbol}
+                />
               ))}
             </div>
 

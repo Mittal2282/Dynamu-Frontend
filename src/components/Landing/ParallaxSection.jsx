@@ -50,7 +50,7 @@ export function ParallaxSection({
         style={{ top: '-8%', height: '116%' }}
       />
       <div className="absolute inset-0" style={{ background: overlay }} />
-      <div className="relative z-10 flex-1 flex flex-col justify-center min-h-0 w-full">{children}</div>
+      <div className="relative z-10 flex-1 flex flex-col justify-center w-full">{children}</div>
     </section>
   );
 }
