@@ -56,7 +56,7 @@ export function CtaSlide() {
                 backdropFilter: 'blur(8px)',
               }}
             >
-              founder@dynamu.ai
+              Contact Team
             </a>
           </div>
         </Reveal>

@@ -5,10 +5,7 @@ import {
   requestJoinSession,
   startSession,
 } from "../../services/customerService";
-import {
-  connectTableSocket,
-  disconnectTableSocket,
-} from "../../services/socketService";
+import { connectTableSocket, disconnectTableSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
@@ -63,9 +60,11 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
         // directly so a page refresh doesn't lose the token before hydration completes.
         if (!existingToken) {
           try {
-            const stored = JSON.parse(localStorage.getItem('AuthStore') || '{}');
+            const stored = JSON.parse(localStorage.getItem("AuthStore") || "{}");
             existingToken = stored?.state?.sessionToken ?? null;
-          } catch { /* ignore parse errors */ }
+          } catch {
+            /* ignore parse errors */
+          }
         }
         const result = await checkSession(qrCodeId, existingToken);
 
@@ -179,18 +178,10 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     // our own session:started event and briefly flash the join_or_create screen.
     disconnectTableSocket();
     try {
-      const sessionData = await startSession(
-        qrCodeId,
-        tableNumber,
-        name,
-        false,
-      );
+      const sessionData = await startSession(qrCodeId, tableNumber, name, false);
       onSessionReady(sessionData, name);
     } catch (err) {
-      setErrorMsg(
-        err?.response?.data?.message ||
-          "Failed to start session. Please try again.",
-      );
+      setErrorMsg(err?.response?.data?.message || "Failed to start session. Please try again.");
       setGateState("error");
     } finally {
       setIsSubmitting(false);
@@ -206,10 +197,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
       const sessionData = await startSession(qrCodeId, tableNumber, name, true);
       onSessionReady(sessionData, name);
     } catch (err) {
-      setErrorMsg(
-        err?.response?.data?.message ||
-          "Failed to create session. Please try again.",
-      );
+      setErrorMsg(err?.response?.data?.message || "Failed to create session. Please try again.");
       setGateState("error");
     } finally {
       setIsSubmitting(false);
@@ -297,11 +285,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
             </Text>
           )}
         </div>
-        <Button
-          onClick={handleNameConfirm}
-          className="w-full"
-          loading={isSubmitting}
-        >
+        <Button onClick={handleNameConfirm} className="w-full" loading={isSubmitting}>
           Start Session
         </Button>
       </>,
@@ -342,11 +326,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
 
         <div className="flex flex-col gap-3">
           {anyoneOnline && (
-            <Button
-              onClick={handleJoin}
-              className="w-full"
-              loading={isSubmitting}
-            >
+            <Button onClick={handleJoin} className="w-full" loading={isSubmitting}>
               Join {existingName ? `${existingName}'s` : "the"} session
             </Button>
           )}
@@ -402,16 +382,12 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <Button
-            onClick={handleCreateNew}
-            className="w-full"
-            loading={isSubmitting}
-          >
+          <Button onClick={handleCreateNew} className="w-full" loading={isSubmitting}>
             Start my session
           </Button>
           <button
             onClick={() => setGateState("join_or_create")}
-            className="text-sm text-slate-500 hover:text-slate-300 transition-colors py-1"
+            className="text-sm text-slate-300 hover:text-white transition-colors py-1"
           >
             ← Back
           </button>
@@ -442,7 +418,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
           </div>
           <button
             onClick={handleCancelWaiting}
-            className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+            className="text-sm text-slate-300 hover:text-white transition-colors"
           >
             Cancel
           </button>
@@ -494,7 +470,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
                 setNameInput("");
                 setGateState("name_entry_new");
               }}
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors py-1"
+              className="text-sm text-slate-300 hover:text-white transition-colors py-1"
             >
               Create new session instead
             </button>

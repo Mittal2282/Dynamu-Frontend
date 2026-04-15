@@ -1,19 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getRestaurantOrders } from '../../services/adminService';
-import { apiCaller } from '../../api/apiCaller';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getRestaurantOrders } from "../../services/adminService";
+import { apiCaller } from "../../api/apiCaller";
 
 const STATUS_BADGE = {
-  pending:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/20',
-  confirmed: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
-  preparing: 'bg-purple-500/15 text-purple-400 border-purple-500/20',
-  ready:     'bg-green-500/15 text-green-400 border-green-500/20',
-  served:    'bg-slate-500/15 text-slate-300 border-slate-500/20',
-  completed: 'bg-slate-500/15 text-slate-300 border-slate-500/20',
-  cancelled: 'bg-red-500/15 text-red-400 border-red-500/20',
+  pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+  confirmed: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  preparing: "bg-purple-500/15 text-purple-400 border-purple-500/20",
+  ready: "bg-green-500/15 text-green-400 border-green-500/20",
+  served: "bg-slate-500/15 text-slate-300 border-slate-500/20",
+  completed: "bg-slate-500/15 text-slate-300 border-slate-500/20",
+  cancelled: "bg-red-500/15 text-red-400 border-red-500/20",
 };
 
-const ALL_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'served', 'completed', 'cancelled'];
+const ALL_STATUSES = [
+  "pending",
+  "confirmed",
+  "preparing",
+  "ready",
+  "served",
+  "completed",
+  "cancelled",
+];
 
 function timeAgo(date) {
   const diff = (Date.now() - new Date(date)) / 1000;
@@ -29,20 +37,20 @@ export default function RestaurantOrdersPage() {
   const [restaurant, setRestaurant] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
-    apiCaller({ method: 'GET', endpoint: `/api/superadmin/restaurants/${id}`, useAdmin: true })
-      .then(data => setRestaurant(data?.data?.restaurant))
+    apiCaller({ method: "GET", endpoint: `/api/superadmin/restaurants/${id}`, useAdmin: true })
+      .then((data) => setRestaurant(data?.data?.restaurant))
       .catch(console.error);
   }, [id]);
 
   useEffect(() => {
     setLoading(true);
     getRestaurantOrders(id)
-      .then(data => setOrders(data))
+      .then((data) => setOrders(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id, statusFilter, dateFrom, dateTo]);
@@ -54,7 +62,7 @@ export default function RestaurantOrdersPage() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start gap-3">
         <button
-          onClick={() => navigate('/superadmin')}
+          onClick={() => navigate("/superadmin")}
           className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all duration-150 shrink-0 mt-0.5"
         >
           ← Back
@@ -62,12 +70,16 @@ export default function RestaurantOrdersPage() {
         <div>
           <h1
             className="text-2xl font-bold"
-            style={{ background: 'linear-gradient(90deg, #fff 30%, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+            style={{
+              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
           >
-            {restaurant?.name || 'Restaurant'} — Orders
+            {restaurant?.name || "Restaurant"} — Orders
           </h1>
           {restaurant?.slug && (
-            <p className="text-slate-500 text-sm mt-0.5 font-mono">/{restaurant.slug}</p>
+            <p className="text-slate-300 text-sm mt-0.5 font-mono">/{restaurant.slug}</p>
           )}
         </div>
       </div>
@@ -76,51 +88,59 @@ export default function RestaurantOrdersPage() {
       <div className="flex flex-wrap gap-3 items-end">
         {/* Status */}
         <div className="space-y-1">
-          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">Status</label>
+          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">
+            Status
+          </label>
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
-            onBlur={e => e.target.style.borderColor = ''}
+            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+            onBlur={(e) => (e.target.style.borderColor = "")}
           >
             <option value="">All Statuses</option>
-            {ALL_STATUSES.map(s => (
-              <option key={s} value={s}>{s}</option>
+            {ALL_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
 
         {/* From */}
         <div className="space-y-1">
-          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">From</label>
+          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">From</label>
           <input
             type="date"
             value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
+            onChange={(e) => setDateFrom(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
-            onBlur={e => e.target.style.borderColor = ''}
+            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+            onBlur={(e) => (e.target.style.borderColor = "")}
           />
         </div>
 
         {/* To */}
         <div className="space-y-1">
-          <label className="text-[11px] text-slate-500 uppercase tracking-wider block">To</label>
+          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">To</label>
           <input
             type="date"
             value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
+            onChange={(e) => setDateTo(e.target.value)}
             className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={e => e.target.style.borderColor = 'var(--t-accent)'}
-            onBlur={e => e.target.style.borderColor = ''}
+            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+            onBlur={(e) => (e.target.style.borderColor = "")}
           />
         </div>
 
         {isFiltering && (
           <button
-            onClick={() => { setStatusFilter(''); setDateFrom(''); setDateTo(''); }}
-            className="text-xs text-slate-400 hover:text-slate-200 transition-colors pb-2"
+            onClick={() => {
+              setStatusFilter("");
+              setDateFrom("");
+              setDateTo("");
+            }}
+            className="text-xs text-slate-400 hover:text-white transition-colors pb-2"
           >
             Clear filters
           </button>
@@ -131,27 +151,37 @@ export default function RestaurantOrdersPage() {
       <div className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
           <p className="text-sm font-semibold text-white">Orders</p>
-          {!loading && (
-            <span className="text-xs text-slate-500">{orders.length} total</span>
-          )}
+          {!loading && <span className="text-xs text-slate-300">{orders.length} total</span>}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center gap-3 h-40">
             <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
-            <span className="text-slate-500 text-sm">Loading orders…</span>
+            <span className="text-slate-300 text-sm">Loading orders…</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Order #</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Table</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Items</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Time</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Order #
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Table
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Items
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Time
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -159,35 +189,42 @@ export default function RestaurantOrdersPage() {
                   <tr>
                     <td colSpan={6} className="text-center py-16">
                       <p className="text-3xl mb-3">📋</p>
-                      <p className="text-slate-500 text-sm">No orders found.</p>
+                      <p className="text-slate-300 text-sm">No orders found.</p>
                     </td>
                   </tr>
-                ) : orders.map(order => (
-                  <tr key={order._id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-5 py-4 font-mono text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
-                      {order.order_number}
-                    </td>
-                    <td className="px-5 py-4 text-slate-200">
-                      Table {order.table?.table_number ?? order.table_number ?? '—'}
-                    </td>
-                    <td className="px-5 py-4 text-slate-500 max-w-[220px]">
-                      <span className="truncate block text-xs">
-                        {order.items?.map(i => `${i.name} ×${i.quantity}`).join(', ') || '—'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right font-semibold" style={{ color: 'var(--t-accent)' }}>
-                      ₹{Math.round(order.total_amount || 0)}
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[order.status] ?? 'bg-white/10 text-white border-white/10'}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right text-slate-500 text-xs whitespace-nowrap">
-                      {timeAgo(order.createdAt)}
-                    </td>
-                  </tr>
-                ))}
+                ) : (
+                  orders.map((order) => (
+                    <tr key={order._id} className="hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-5 py-4 font-mono text-xs text-slate-400 group-hover:text-white transition-colors">
+                        {order.order_number}
+                      </td>
+                      <td className="px-5 py-4 text-slate-200">
+                        Table {order.table?.table_number ?? order.table_number ?? "—"}
+                      </td>
+                      <td className="px-5 py-4 text-slate-300 max-w-[220px]">
+                        <span className="truncate block text-xs">
+                          {order.items?.map((i) => `${i.name} ×${i.quantity}`).join(", ") || "—"}
+                        </span>
+                      </td>
+                      <td
+                        className="px-5 py-4 text-right font-semibold"
+                        style={{ color: "var(--t-accent)" }}
+                      >
+                        ₹{Math.round(order.total_amount || 0)}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <span
+                          className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[order.status] ?? "bg-white/10 text-white border-white/10"}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right text-slate-300 text-xs whitespace-nowrap">
+                        {timeAgo(order.createdAt)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

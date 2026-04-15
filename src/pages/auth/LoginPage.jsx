@@ -1,43 +1,43 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authStore } from '../../store/authStore';
-import { adminLogin } from '../../services/adminService';
-import Button from '../../components/ui/Button';
-import Text from '../../components/ui/Text';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { authStore } from "../../store/authStore";
+import { adminLogin } from "../../services/adminService";
+import Button from "../../components/ui/Button";
+import Text from "../../components/ui/Text";
 
 export default function LoginPage() {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
   const { setAdminTokens } = authStore();
-  const [form, setForm]     = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState("");
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      setError('Please fill in all fields.');
+      setError("Please fill in all fields.");
       return;
     }
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const data = await adminLogin(form);
       // Backend returns { user: { role, name, ... }, accessToken, refreshToken }
       const role = data.user?.role ?? data.role;
       setAdminTokens({
-        accessToken:  data.access_token  ?? data.accessToken,
+        accessToken: data.access_token ?? data.accessToken,
         refreshToken: data.refresh_token ?? data.refreshToken,
         role,
-        name:         data.user?.name ?? data.name ?? '',
+        name: data.user?.name ?? data.name ?? "",
       });
-      if (role === 'super_admin')                                        navigate('/superadmin', { replace: true });
-      else if (role === 'restaurant_owner' || role === 'restaurant_staff') navigate('/dashboard',   { replace: true });
-      else navigate('/', { replace: true });
+      if (role === "super_admin") navigate("/superadmin", { replace: true });
+      else if (role === "restaurant_owner" || role === "restaurant_staff")
+        navigate("/dashboard", { replace: true });
+      else navigate("/", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -49,8 +49,8 @@ export default function LoginPage() {
         {/* Back to home */}
         <div className="text-center mb-4">
           <button
-            onClick={() => navigate('/')}
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            onClick={() => navigate("/")}
+            className="text-xs text-slate-300 hover:text-white transition-colors"
           >
             ← Back to home
           </button>
@@ -66,12 +66,16 @@ export default function LoginPage() {
           >
             Dynamu
           </Text>
-          <Text size="sm" color="muted" className="mt-1">Admin Portal</Text>
+          <Text size="sm" color="muted" className="mt-1 text-slate-200">
+            Admin Portal
+          </Text>
         </div>
 
         {/* Card */}
         <div className="glass p-8 rounded-3xl">
-          <Text as="h2" size="lg" weight="semibold" className="mb-6">Sign in to your account</Text>
+          <Text as="h2" size="lg" weight="semibold" className="mb-6 !text-orange-500">
+            Sign in to your account
+          </Text>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl mb-5">
@@ -81,7 +85,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs text-slate-400 block mb-1.5">Email address</label>
+              <label className="text-xs text-slate-200 block mb-1.5">Email address</label>
               <input
                 name="email"
                 type="email"
@@ -89,12 +93,12 @@ export default function LoginPage() {
                 onChange={handleChange}
                 placeholder="admin@restaurant.com"
                 autoComplete="username"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-300 focus:outline-none focus:border-orange-500 transition-colors"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 block mb-1.5">Password</label>
+              <label className="text-xs text-slate-200 block mb-1.5">Password</label>
               <input
                 name="password"
                 type="password"
@@ -102,7 +106,7 @@ export default function LoginPage() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-300 focus:outline-none focus:border-orange-500 transition-colors"
               />
             </div>
 
