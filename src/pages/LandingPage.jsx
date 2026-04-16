@@ -4,7 +4,7 @@ import { SlideDots } from '../components/Landing/SlideDots';
 import { SlideFrame } from '../components/Landing/SlideFrame';
 import { SLIDE_COMPONENTS } from '../components/Landing/slides';
 import { BG } from '../constants/landingConstants';
-import { useSlideDeck } from '../hooks/useSlideDeck';
+import { useSlideDeck } from './useSlideDeck';
 import '../styles/landing.css';
 
 export default function LandingPage() {
