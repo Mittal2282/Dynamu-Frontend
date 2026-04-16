@@ -18,6 +18,7 @@ export async function apiCaller({
   params,
   payload,
   useAdmin = false,
+  responseType,
 }) {
   const instance = useAdmin ? adminApi : api;
   const upperMethod = method.toUpperCase();
@@ -26,6 +27,7 @@ export async function apiCaller({
     method: upperMethod,
     url: endpoint,
     ...(params ? { params } : {}),
+    ...(responseType ? { responseType } : {}),
   };
 
   // Attach body for mutating methods
@@ -34,5 +36,5 @@ export async function apiCaller({
   }
 
   const response = await instance(config);
-  return response.data;
+  return responseType ? response : response.data;
 }

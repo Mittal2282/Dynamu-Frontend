@@ -1,5 +1,18 @@
-import { useRef } from 'react';
-import { useLandingInView } from '../../hooks/useLandingInView';
+import { useRef, useEffect, useState } from 'react';
+
+function useInView(ref, threshold = 0.12) {
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      { threshold }
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [ref, threshold]);
+  return inView;
+}
 
 export function Reveal({
   children,
@@ -11,7 +24,7 @@ export function Reveal({
   style = {},
 }) {
   const ref = useRef(null);
-  const inView = useLandingInView(ref, threshold);
+  const inView = useInView(ref, threshold);
   const Root = as;
   return (
     <Root
