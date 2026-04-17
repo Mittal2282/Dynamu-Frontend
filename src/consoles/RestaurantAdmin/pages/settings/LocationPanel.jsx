@@ -199,6 +199,7 @@ export default function LocationPanel() {
 
   const hasCoords = form.latitude != null && form.longitude != null;
   const center    = hasCoords ? { lat: form.latitude, lng: form.longitude } : DEFAULT_CENTER;
+  const allowAll  = form.enforce_proximity === false;
 
   return (
     <div className="space-y-6">
@@ -334,9 +335,45 @@ export default function LocationPanel() {
             Customer Proximity
           </h2>
           <p className="text-xs mt-1" style={{ color: "var(--t-dim)" }}>
-            Only customers within this radius can start a session or keep ordering.
+            Choose whether to restrict ordering by distance, or allow everyone.
           </p>
         </div>
+
+        {/* Allow all toggle */}
+        <label
+          className="flex items-center gap-4 p-3 rounded-xl cursor-pointer select-none"
+          style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+              Allow all customers (disable geofencing)
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--t-dim)" }}>
+              When on, anyone with the QR can start a session and order from anywhere.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={allowAll}
+            onChange={(e) => setForm((p) => ({ ...p, enforce_proximity: !e.target.checked }))}
+            className="sr-only peer"
+          />
+          <span
+            className="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-all"
+            style={{
+              background: allowAll ? "rgba(239,68,68,0.7)" : "#22c55e",
+              boxShadow: allowAll
+                ? "0 0 8px rgba(239,68,68,0.25)"
+                : "0 0 10px rgba(34,197,94,0.4)",
+            }}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 mt-[2px] ml-[2px] ${
+                allowAll ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </span>
+        </label>
 
         {/* Radius slider */}
         <div>
@@ -359,48 +396,13 @@ export default function LocationPanel() {
             onChange={(e) => setForm((p) => ({ ...p, radius_m: Number(e.target.value) }))}
             className="w-full accent-orange-500"
             style={{ accentColor: "var(--t-accent)" }}
+            disabled={allowAll}
           />
           <div className="flex justify-between mt-1 text-[10px]" style={{ color: "var(--t-dim)" }}>
             <span>100 m</span>
             <span>10 km</span>
           </div>
         </div>
-
-        {/* Enforce toggle */}
-        <label
-          className="flex items-center gap-4 p-3 rounded-xl cursor-pointer select-none"
-          style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
-              Enforce proximity check
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--t-dim)" }}>
-              When off, anyone with the QR photo can order. Keep this on for live service.
-            </p>
-          </div>
-          <input
-            type="checkbox"
-            checked={form.enforce_proximity}
-            onChange={(e) => setForm((p) => ({ ...p, enforce_proximity: e.target.checked }))}
-            className="sr-only peer"
-          />
-          <span
-            className="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-all"
-            style={{
-              background: form.enforce_proximity ? "#22c55e" : "rgba(239,68,68,0.7)",
-              boxShadow: form.enforce_proximity
-                ? "0 0 10px rgba(34,197,94,0.4)"
-                : "0 0 8px rgba(239,68,68,0.25)",
-            }}
-          >
-            <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 mt-[2px] ml-[2px] ${
-                form.enforce_proximity ? "translate-x-5" : "translate-x-0"
-              }`}
-            />
-          </span>
-        </label>
 
         {/* Summary + Save */}
         <div
@@ -411,13 +413,19 @@ export default function LocationPanel() {
             color: "var(--t-text)",
           }}
         >
-          Customers beyond{" "}
-          <span style={{ color: "var(--t-accent)", fontWeight: 700 }}>
-            {form.radius_m >= 1000
-              ? `${(form.radius_m / 1000).toFixed(form.radius_m % 1000 === 0 ? 0 : 2)} km`
-              : `${form.radius_m} m`}
-          </span>{" "}
-          will {form.enforce_proximity ? "be asked to visit the restaurant." : "still be allowed — enforcement is off."}
+          {allowAll ? (
+            <>Geofencing is <span style={{ fontWeight: 800 }}>disabled</span> — anyone can order from anywhere.</>
+          ) : (
+            <>
+              Customers beyond{" "}
+              <span style={{ color: "var(--t-accent)", fontWeight: 700 }}>
+                {form.radius_m >= 1000
+                  ? `${(form.radius_m / 1000).toFixed(form.radius_m % 1000 === 0 ? 0 : 2)} km`
+                  : `${form.radius_m} m`}
+              </span>{" "}
+              will be asked to visit the restaurant.
+            </>
+          )}
         </div>
 
         <div className="flex justify-end">
