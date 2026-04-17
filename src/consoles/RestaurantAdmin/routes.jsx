@@ -7,6 +7,7 @@ import TableStatusPage from "./pages/TableStatusPage/TableStatusPage";
 import MenuManagePage from "./pages/MenuManagePage/MenuManagePage";
 import IngredientsPage from "./pages/IngredientsPage";
 import CompletedOrdersPage from "./pages/CompletedOrdersPage/CompletedOrdersPage";
+import SettingsPage from "./pages/SettingsPage";
 
 export const restaurantAdminRoutes = (
   <Route
@@ -23,5 +24,6 @@ export const restaurantAdminRoutes = (
     <Route path="menu" element={<MenuManagePage />} />
     <Route path="ingredients" element={<IngredientsPage />} />
     <Route path="completed-orders" element={<CompletedOrdersPage />} />
+    <Route path="settings" element={<SettingsPage />} />
   </Route>
 );

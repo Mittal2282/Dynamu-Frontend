@@ -12,11 +12,17 @@ import { ENDPOINTS } from '../utils/endpoints';
  * @param {string|number} tableNumber
  * @returns {Promise<{ session_token, restaurant, table, menu }>}
  */
-export async function startSession(qrCodeId, tableNumber, name = '', forceNew = false) {
+export async function startSession(qrCodeId, tableNumber, name = '', forceNew = false, location = null) {
+  const payload = { qr_code_id: qrCodeId, name, force_new: forceNew };
+  if (location && location.latitude != null && location.longitude != null) {
+    payload.customer_latitude   = location.latitude;
+    payload.customer_longitude  = location.longitude;
+    payload.customer_accuracy_m = location.accuracy_m ?? null;
+  }
   const data = await apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_START,
-    payload:  { qr_code_id: qrCodeId, name, force_new: forceNew },
+    payload,
   });
   return data.data;
 }

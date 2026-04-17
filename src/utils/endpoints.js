@@ -55,6 +55,7 @@ export const ENDPOINTS = {
   DASH_INGREDIENTS_TOGGLE: '/api/restaurant-dash/ingredients/toggle',
   DASH_ORDERS_MANUAL:      '/api/restaurant-dash/orders/manual',
   DASH_ORDERS_BULK_MANUAL: '/api/restaurant-dash/orders/bulk-manual',
+  DASH_LOCATION:           '/api/restaurant-dash/location',
 
   // Customer — special sections
   CART_SUGGESTIONS:   '/api/customer/suggestions',

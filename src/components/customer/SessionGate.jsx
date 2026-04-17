@@ -7,9 +7,12 @@ import {
 } from "../../services/customerService";
 import { connectTableSocket, disconnectTableSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
+import { locationStore } from "../../store/locationStore";
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
 import Text from "../ui/Text";
+import OutOfRangeScreen from "./OutOfRangeScreen";
+import LocationRequiredScreen from "./LocationRequiredScreen";
 
 /**
  * SessionGate — shown before the customer menu loads.
@@ -38,6 +41,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
   const [countdown, setCountdown] = useState(60);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [outOfRangeDetails, setOutOfRangeDetails] = useState(null);
 
   const requestIdRef = useRef(null);
   const pollIntervalRef = useRef(null);
@@ -170,6 +174,44 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     return v;
   };
 
+  const captureLocation = async () => {
+    try {
+      locationStore.getState().start(); // begin watchPosition for future API calls
+      return await locationStore.getState().ensureFresh(15_000);
+    } catch (err) {
+      return { __error: err };
+    }
+  };
+
+  const handleStartWithLocation = async (name, forceNew) => {
+    const geo = await captureLocation();
+    if (geo.__error) {
+      setGateState(geo.__error?.code === 1 ? "location_denied" : "location_error");
+      return;
+    }
+    try {
+      const sessionData = await startSession(qrCodeId, tableNumber, name, forceNew, geo);
+      onSessionReady(sessionData, name);
+    } catch (err) {
+      const code = err?.response?.data?.code;
+      if (code === "OUT_OF_RANGE") {
+        setOutOfRangeDetails({
+          distance_m: err.response.data.details?.distance_m,
+          radius_m:   err.response.data.details?.radius_m,
+          restaurant_name: err.response.data.details?.restaurant_name || "",
+        });
+        setGateState("out_of_range");
+        return;
+      }
+      if (code === "LOCATION_REQUIRED") {
+        setGateState("location_denied");
+        return;
+      }
+      setErrorMsg(err?.response?.data?.message || "Failed to start session. Please try again.");
+      setGateState("error");
+    }
+  };
+
   const handleNameConfirm = async () => {
     const name = validateName();
     if (!name) return;
@@ -178,11 +220,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     // our own session:started event and briefly flash the join_or_create screen.
     disconnectTableSocket();
     try {
-      const sessionData = await startSession(qrCodeId, tableNumber, name, false);
-      onSessionReady(sessionData, name);
-    } catch (err) {
-      setErrorMsg(err?.response?.data?.message || "Failed to start session. Please try again.");
-      setGateState("error");
+      await handleStartWithLocation(name, false);
     } finally {
       setIsSubmitting(false);
     }
@@ -194,11 +232,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
     setIsSubmitting(true);
     disconnectTableSocket();
     try {
-      const sessionData = await startSession(qrCodeId, tableNumber, name, true);
-      onSessionReady(sessionData, name);
-    } catch (err) {
-      setErrorMsg(err?.response?.data?.message || "Failed to create session. Please try again.");
-      setGateState("error");
+      await handleStartWithLocation(name, true);
     } finally {
       setIsSubmitting(false);
     }
@@ -477,6 +511,49 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
           </div>
         </div>
       </>,
+    );
+  }
+
+  if (gateState === "out_of_range") {
+    return (
+      <OutOfRangeScreen
+        distance_m={outOfRangeDetails?.distance_m}
+        radius_m={outOfRangeDetails?.radius_m}
+        restaurantName={outOfRangeDetails?.restaurant_name}
+        onRetry={async () => {
+          setGateState(nameInput.trim() ? "name_entry_new" : "name_entry");
+          try { await locationStore.getState().ensureFresh(0); } catch { /* ignore */ }
+        }}
+      />
+    );
+  }
+
+  if (gateState === "location_denied") {
+    return (
+      <LocationRequiredScreen
+        onRetry={async () => {
+          try {
+            await locationStore.getState().ensureFresh(0);
+            setGateState(nameInput.trim() ? "name_entry" : "name_entry");
+          } catch {
+            // stays on this screen; user needs to fix OS-level permission
+          }
+        }}
+      />
+    );
+  }
+
+  if (gateState === "location_error") {
+    return (
+      <LocationRequiredScreen
+        variant="error"
+        onRetry={async () => {
+          try {
+            await locationStore.getState().ensureFresh(0);
+            setGateState("name_entry");
+          } catch { /* keep on screen */ }
+        }}
+      />
     );
   }
 

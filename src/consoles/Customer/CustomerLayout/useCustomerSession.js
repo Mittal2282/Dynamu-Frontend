@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCart, placeOrder, syncCart } from "../../../services/customerService";
-import { connectSocket, getSocket } from "../../../services/socketService";
+import { connectSocket, disconnectSocket, getSocket } from "../../../services/socketService";
 import { authStore } from "../../../store/authStore";
 import { cartStore, loadVariantCache } from "../../../store/cartStore";
 import { chatStore } from "../../../store/chatStore";
+import { locationStore } from "../../../store/locationStore";
 import { restaurantStore } from "../../../store/restaurantStore";
 
 /**
@@ -96,12 +97,31 @@ export default function useCustomerSession(loading, setLoading, setOrderVersion)
       setSessionReplaced(true);
     };
 
+    const onSessionOutOfRange = (payload = {}) => {
+      try {
+        sessionStorage.setItem("outOfRangeDetails", JSON.stringify({
+          distance_m: payload.distance_m,
+          radius_m:   payload.radius_m,
+          restaurant_name: payload.restaurant_name || restaurantStore.getState().restaurant?.name || "",
+          at: Date.now(),
+        }));
+      } catch { /* ignore */ }
+      authStore.getState().resetAuth();
+      locationStore.getState().stop();
+      disconnectSocket();
+      if (typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/customer/out-of-range")) {
+        window.location.replace("/customer/out-of-range");
+      }
+    };
+
     socket.on("cart:updated", onCartUpdated);
     socket.on("order:placed", onOrderPlaced);
     socket.on("order:updated", onOrderUpdated);
     socket.on("chat:message", onChatMessage);
     socket.on("join:request", onJoinRequest);
     socket.on("session:replaced", onSessionReplaced);
+    socket.on("session:out_of_range", onSessionOutOfRange);
 
     return () => {
       socket.off("cart:updated", onCartUpdated);
@@ -110,6 +130,7 @@ export default function useCustomerSession(loading, setLoading, setOrderVersion)
       socket.off("chat:message", onChatMessage);
       socket.off("join:request", onJoinRequest);
       socket.off("session:replaced", onSessionReplaced);
+      socket.off("session:out_of_range", onSessionOutOfRange);
     };
   }, [loading, setOrderVersion]);
 

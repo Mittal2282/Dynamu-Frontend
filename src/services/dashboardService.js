@@ -361,3 +361,33 @@ export async function toggleIngredient(name, isAvailable) {
   });
   return data.data;
 }
+
+// ─── Location / Proximity ─────────────────────────────────────────────────────
+
+/**
+ * Fetch the restaurant's current geolocation + proximity settings.
+ * @returns {Promise<{ location, proximity_radius_m, enforce_proximity }>}
+ */
+export async function getRestaurantLocation() {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_LOCATION,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+/**
+ * Update the restaurant's geolocation + proximity settings.
+ * @param {{ latitude: number, longitude: number, accuracy_m?: number, label?: string,
+ *          radius_m: number, enforce_proximity?: boolean }} payload
+ */
+export async function updateRestaurantLocation(payload) {
+  const data = await apiCaller({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_LOCATION,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}

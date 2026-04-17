@@ -165,10 +165,10 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.28.5"
 
-"@esbuild/darwin-arm64@0.27.3":
+"@esbuild/linux-x64@0.27.3":
   version "0.27.3"
-  resolved "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.27.3.tgz"
-  integrity sha512-Re491k7ByTVRy0t3EKWajdLIr0gz2kKKfzafkth4Q8A5n1xTHrkqZgLLjFEHVD+AXdUGgQMq+Godfq45mGpCKg==
+  resolved "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.27.3.tgz"
+  integrity sha512-Czi8yzXUWIQYAtL/2y6vogER8pvcsOsk5cpwL4Gk5nJqH5UZiVByIY8Eorm5R13gq+DQKYg0+JyQoytLQas4dA==
 
 "@eslint-community/eslint-utils@^4.8.0":
   version "4.9.1"
@@ -295,15 +295,25 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@react-leaflet/core@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/@react-leaflet/core/-/core-3.0.0.tgz"
+  integrity sha512-3EWmekh4Nz+pGcr+xjf0KNyYfC3U2JjnkWsh0zcqaexYqmmB5ZhH37kz41JXGmKzpaMZCnPofBBm64i+YrEvGQ==
+
 "@rolldown/pluginutils@1.0.0-rc.3":
   version "1.0.0-rc.3"
   resolved "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-rc.3.tgz"
   integrity sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==
 
-"@rollup/rollup-darwin-arm64@4.59.0":
+"@rollup/rollup-linux-x64-gnu@4.59.0":
   version "4.59.0"
-  resolved "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.59.0.tgz"
-  integrity sha512-W2Psnbh1J8ZJw0xKAd8zdNgF9HRLkdWwwdWqubSVk0pUuQkoHnv7rx4GiF9rT4t5DIZGAsConRE3AxCdJ4m8rg==
+  resolved "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.59.0.tgz"
+  integrity sha512-3AHmtQq/ppNuUspKAlvA8HtLybkDflkMuLK4DPo77DfthRb71V84/c4MlWJXixZz4uruIH4uaa07IqoAkG64fg==
+
+"@rollup/rollup-linux-x64-musl@4.59.0":
+  version "4.59.0"
+  resolved "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.59.0.tgz"
+  integrity sha512-2UdiwS/9cTAx7qIUZB/fWtToJwvt0Vbo0zmnYt7ED35KPg13Q0ym1g442THLC7VyI6JfYTP4PiSOWyoMdV2/xg==
 
 "@socket.io/component-emitter@~3.1.0":
   version "3.1.2"
@@ -323,10 +333,15 @@
     source-map-js "^1.2.1"
     tailwindcss "4.2.1"
 
-"@tailwindcss/oxide-darwin-arm64@4.2.1":
+"@tailwindcss/oxide-linux-x64-gnu@4.2.1":
   version "4.2.1"
-  resolved "https://registry.npmjs.org/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.2.1.tgz"
-  integrity sha512-q/LHkOstoJ7pI1J0q6djesLzRvQSIfEto148ppAd+BVQK0JYjQIFSK3JgYZJa+Yzi0DDa52ZsQx2rqytBnf8Hw==
+  resolved "https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-gnu/-/oxide-linux-x64-gnu-4.2.1.tgz"
+  integrity sha512-qMFzxI2YlBOLW5PhblzuSWlWfwLHaneBE0xHzLrBgNtqN6mWfs+qYbhryGSXQjFYB1Dzf5w+LN5qbUTPhW7Y5g==
+
+"@tailwindcss/oxide-linux-x64-musl@4.2.1":
+  version "4.2.1"
+  resolved "https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.2.1.tgz"
+  integrity sha512-5r1X2FKnCMUPlXTWRYpHdPYUY6a1Ar/t7P24OuiEdEOmms5lyqjDRvVY1yy9Rmioh+AunQ0rWiOTPE8F9A3v5g==
 
 "@tailwindcss/oxide@4.2.1":
   version "4.2.1"
@@ -917,11 +932,6 @@ fraction.js@^5.3.4:
   resolved "https://registry.npmjs.org/fraction.js/-/fraction.js-5.3.4.tgz"
   integrity sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==
 
-fsevents@~2.3.2, fsevents@~2.3.3:
-  version "2.3.3"
-  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz"
-  integrity sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
-
 function-bind@^1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz"
@@ -1103,6 +1113,11 @@ keyv@^4.5.4:
   dependencies:
     json-buffer "3.0.1"
 
+leaflet@^1.9.0, leaflet@^1.9.4:
+  version "1.9.4"
+  resolved "https://registry.npmjs.org/leaflet/-/leaflet-1.9.4.tgz"
+  integrity sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==
+
 levn@^0.4.1:
   version "0.4.1"
   resolved "https://registry.npmjs.org/levn/-/levn-0.4.1.tgz"
@@ -1111,10 +1126,15 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
-lightningcss-darwin-arm64@1.31.1:
+lightningcss-linux-x64-gnu@1.31.1:
   version "1.31.1"
-  resolved "https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.31.1.tgz"
-  integrity sha512-02uTEqf3vIfNMq3h/z2cJfcOXnQ0GRwQrkmPafhueLb2h7mqEidiCzkE4gBMEH65abHRiQvhdcQ+aP0D0g67sg==
+  resolved "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.31.1.tgz"
+  integrity sha512-xGlFWRMl+0KvUhgySdIaReQdB4FNudfUTARn7q0hh/V67PVGCs3ADFjw+6++kG1RNd0zdGRlEKa+T13/tQjPMA==
+
+lightningcss-linux-x64-musl@1.31.1:
+  version "1.31.1"
+  resolved "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.31.1.tgz"
+  integrity sha512-eowF8PrKHw9LpoZii5tdZwnBcYDxRw2rRCyvAXLi34iyeYfqCQNA9rmUM0ce62NlPhCvof1+9ivRaTY6pSKDaA==
 
 lightningcss@^1.21.0, lightningcss@1.31.1:
   version "1.31.1"
@@ -1287,12 +1307,19 @@ punycode@^2.1.0:
   resolved "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
-react-dom@^19.2.0, react-dom@>=18:
+react-dom@^19.0.0, react-dom@^19.2.0, react-dom@>=18:
   version "19.2.4"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-19.2.4.tgz"
   integrity sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==
   dependencies:
     scheduler "^0.27.0"
+
+react-leaflet@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.npmjs.org/react-leaflet/-/react-leaflet-5.0.0.tgz"
+  integrity sha512-CWbTpr5vcHw5bt9i4zSlPEVQdTVcML390TjeDG0cK59z1ylexpqC6M1PJFjV8jD7CF+ACBFsLIDs6DRMoLEofw==
+  dependencies:
+    "@react-leaflet/core" "^3.0.0"
 
 react-refresh@^0.18.0:
   version "0.18.0"
@@ -1314,7 +1341,7 @@ react-router@7.13.1:
     cookie "^1.0.1"
     set-cookie-parser "^2.6.0"
 
-react@^19.2.0, react@^19.2.4, react@>=18, react@>=18.0.0:
+react@^19.0.0, react@^19.2.0, react@^19.2.4, react@>=18, react@>=18.0.0:
   version "19.2.4"
   resolved "https://registry.npmjs.org/react/-/react-19.2.4.tgz"
   integrity sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==
