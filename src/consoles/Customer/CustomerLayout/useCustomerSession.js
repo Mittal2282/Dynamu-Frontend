@@ -142,6 +142,12 @@ export default function useCustomerSession(loading, setLoading, setOrderVersion)
     restaurantStore.getState().setTable(sessionData.table);
     restaurantStore.getState().setMenu(sessionData.menu ?? {});
 
+    // If geofencing is disabled for this restaurant, don't track/store customer GPS at all.
+    if (sessionData.restaurant?.settings?.enforce_proximity === false) {
+      locationStore.getState().stop();
+      locationStore.getState().reset();
+    }
+
     connectSocket(sessionData.session_token);
 
     // Restore server-side cart

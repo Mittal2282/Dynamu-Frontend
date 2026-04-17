@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { authStore } from '../store/authStore';
 import { locationStore } from '../store/locationStore';
+import { restaurantStore } from '../store/restaurantStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -18,8 +19,12 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${sessionToken}`;
   }
 
+  // If the restaurant has disabled proximity enforcement, do not send customer location headers.
+  const enforceProximity = restaurantStore.getState().enforceProximity !== false;
+
   const { latitude, longitude, accuracy_m, captured_at } = locationStore.getState();
   if (
+    enforceProximity &&
     latitude != null && longitude != null && captured_at &&
     Date.now() - captured_at < LOCATION_MAX_AGE_MS
   ) {

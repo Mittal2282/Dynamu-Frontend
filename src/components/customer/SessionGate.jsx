@@ -184,11 +184,37 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }) {
   };
 
   const handleStartWithLocation = async (name, forceNew) => {
+    try {
+      // First try WITHOUT location. If the restaurant has "Allow all" enabled,
+      // this should succeed and we never ask for GPS permission.
+      const sessionData = await startSession(qrCodeId, tableNumber, name, forceNew, null);
+      onSessionReady(sessionData, name);
+      return;
+    } catch (err) {
+      const code = err?.response?.data?.code;
+      if (code !== "LOCATION_REQUIRED") {
+        if (code === "OUT_OF_RANGE") {
+          setOutOfRangeDetails({
+            distance_m: err.response.data.details?.distance_m,
+            radius_m:   err.response.data.details?.radius_m,
+            restaurant_name: err.response.data.details?.restaurant_name || "",
+          });
+          setGateState("out_of_range");
+          return;
+        }
+        setErrorMsg(err?.response?.data?.message || "Failed to start session. Please try again.");
+        setGateState("error");
+        return;
+      }
+    }
+
+    // Server requires location (geofencing enforced) → capture and retry once.
     const geo = await captureLocation();
     if (geo.__error) {
       setGateState(geo.__error?.code === 1 ? "location_denied" : "location_error");
       return;
     }
+
     try {
       const sessionData = await startSession(qrCodeId, tableNumber, name, forceNew, geo);
       onSessionReady(sessionData, name);

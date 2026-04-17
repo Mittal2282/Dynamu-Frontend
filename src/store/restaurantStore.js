@@ -23,6 +23,7 @@ export const restaurantStore = create(
         currencySymbol:        '₹',
         acceptsOnlinePayment:  false,
         aiWelcomeMessage:      '',
+        enforceProximity:      true,
 
         // Table
         tableId:        null,
@@ -46,6 +47,7 @@ export const restaurantStore = create(
             currencySymbol:       restaurant.settings?.currency_symbol       ?? '₹',
             acceptsOnlinePayment: restaurant.settings?.accepts_online_payment ?? false,
             aiWelcomeMessage:     restaurant.ai_config?.welcome_message       ?? '',
+            enforceProximity:     restaurant.settings?.enforce_proximity !== false,
           })),
 
         setTable: (table) =>
@@ -67,6 +69,7 @@ export const restaurantStore = create(
             currencySymbol:       '₹',
             acceptsOnlinePayment: false,
             aiWelcomeMessage:     '',
+            enforceProximity:     true,
             tableId: null, tableNumber: null, tableName: '', tableFloor: null, tableFloorName: '',
             menu: {},
           })),
