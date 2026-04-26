@@ -1,6 +1,5 @@
 import { BG, ORANGE } from '../../../constants/landingConstants';
 import { SOLUTION_BULLETS } from '../../../constants/landingContent';
-import { ChatDemo } from '../ChatDemo';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
 import { Reveal } from '../Reveal';
@@ -16,7 +15,7 @@ export function SolutionSlide() {
           <Reveal animation="revealLeft">
             <Eyebrow>The Solution</Eyebrow>
             <H2 className="mb-5">
-              ZestyBot — your AI
+              Dynamu — your AI
               <br />
               <span style={{ color: ORANGE }}>sales rep at every table</span>
             </H2>
@@ -41,7 +40,14 @@ export function SolutionSlide() {
           </Reveal>
 
           <Reveal animation="revealRight" delay={0.15}>
-            <ChatDemo />
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B00] to-[#7B00FF] rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              <img 
+                src="/images/DynamuChat.jpeg" 
+                alt="Dynamu AI Chat Interface" 
+                className="relative rounded-2xl shadow-2xl border border-white/10 w-full max-w-md lg:max-w-full mx-auto max-h-[580px] lg:max-h-[640px] object-cover object-top"
+              />
+            </div>
           </Reveal>
         </div>
       </div>

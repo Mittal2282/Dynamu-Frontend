@@ -31,7 +31,9 @@ export function CtaSlide() {
         <Reveal animation="revealScale" delay={0.32}>
           <div className="flex flex-wrap justify-center gap-3">
             <a
-              href="mailto:founder@dynamu.ai"
+              href="https://calendly.com/arorabhavyam"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
               style={{ background: ORANGE, boxShadow: '0 0 36px rgba(255,107,0,0.38)' }}
             >

@@ -46,7 +46,7 @@ export const ENDPOINTS = {
   DASH_MENU_IMAGE_UPLOAD:  '/api/restaurant-dash/menu/upload-image',
   DASH_CATEGORIES:         '/api/restaurant-dash/categories',
   DASH_TABLES:             '/api/restaurant-dash/tables',
-  DASH_TABLES_QR_PDF:      '/api/restaurant-dash/tables/qr-pdf',
+  DASH_TABLES_QR_PDF:      'api/restaurant-dash/tables/qr-pdf',
   DASH_TABLES_BULK:        '/api/restaurant-dash/tables/bulk',
   DASH_TABLE_FREE:         (id) => `/api/restaurant-dash/tables/${id}/free`,
   DASH_TABLE_TOGGLE_ACTIVE:(id) => `/api/restaurant-dash/tables/${id}/toggle-active`,
