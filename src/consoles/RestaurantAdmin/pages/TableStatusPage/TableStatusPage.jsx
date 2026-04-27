@@ -93,16 +93,42 @@ function TableIcon({ color }) {
 }
 
 function TableCard({ table, onFree, onToggleActive }) {
-  const cfg              = STATUS_CONFIG[table.display_status] ?? STATUS_CONFIG.free;
-  const isUnserviceable  = table.display_status === 'unserviceable';
-  const isOccupied       = !isUnserviceable && table.display_status !== 'free';
+  const cfg             = STATUS_CONFIG[table.display_status] ?? STATUS_CONFIG.free;
+  const isUnserviceable = table.display_status === 'unserviceable';
+  const isOccupied      = !isUnserviceable && table.display_status !== 'free';
+  const isBilling       = table.display_status === 'billing';
 
   const [confirming, setConfirming]         = useState(false);
   const [freeing, setFreeing]               = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
   const [infoOpen, setInfoOpen]             = useState(false);
+  const [billDlLoading, setBillDlLoading]   = useState(false);
   const confirmTimer                        = useRef(null);
   const infoRef                             = useRef(null);
+
+  const downloadBill = async (e) => {
+    e.stopPropagation();
+    setBillDlLoading(true);
+    try {
+      const token = authStore.getState().adminAccessToken;
+      const base  = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const res   = await fetch(`${base}${ENDPOINTS.DASH_TABLE_BILL_PDF(table._id)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `bill-table-${table.table_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setBillDlLoading(false);
+    }
+  };
 
   const startConfirm = (e) => {
     e.stopPropagation();
@@ -370,53 +396,79 @@ function TableCard({ table, onFree, onToggleActive }) {
           </div>
         )}
 
-        {/* Row 4: action */}
-        <div style={{ height: '30px' }} className="shrink-0">
-          {isOccupied && !isUnserviceable && (
-            !confirming ? (
+        {/* Row 4: actions */}
+        {isOccupied && !isUnserviceable && (
+          <div className="flex flex-col gap-1.5 shrink-0">
+
+            {/* Download Bill — billing tables with orders only */}
+            {isBilling && (sess?.orders ?? []).length > 0 && (
               <button
                 type="button"
-                onClick={startConfirm}
-                className="w-full h-full rounded-lg text-[11px] font-medium transition-colors hover:bg-white/10"
-                style={{
-                  color:           'var(--t-dim)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  border:          '1px solid rgba(255,255,255,0.08)',
-                }}
+                onClick={downloadBill}
+                disabled={billDlLoading}
+                className="w-full h-[30px] rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                style={{ backgroundColor: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)' }}
               >
-                Free Table
+                {billDlLoading
+                  ? <span className="w-3 h-3 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+                  : <>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Bill
+                    </>
+                }
               </button>
-            ) : (
-              <div className="flex gap-1.5 h-full">
+            )}
+
+            {/* Free Table */}
+            <div style={{ height: '30px' }}>
+              {!confirming ? (
                 <button
                   type="button"
-                  onClick={cancelConfirm}
-                  disabled={freeing}
-                  className="flex-1 rounded-lg text-[11px] font-medium transition-colors"
+                  onClick={startConfirm}
+                  className="w-full h-full rounded-lg text-[11px] font-medium transition-colors hover:bg-white/10"
                   style={{
                     color:           'var(--t-dim)',
                     backgroundColor: 'rgba(255,255,255,0.05)',
                     border:          '1px solid rgba(255,255,255,0.08)',
                   }}
                 >
-                  No
+                  Free Table
                 </button>
-                <button
-                  type="button"
-                  onClick={handleFree}
-                  disabled={freeing}
-                  className="flex-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 disabled:opacity-50"
-                  style={{ backgroundColor: 'rgba(239,68,68,0.8)', color: '#fff', border: 'none' }}
-                >
-                  {freeing
-                    ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : 'Yes, Free'
-                  }
-                </button>
-              </div>
-            )
-          )}
-        </div>
+              ) : (
+                <div className="flex gap-1.5 h-full">
+                  <button
+                    type="button"
+                    onClick={cancelConfirm}
+                    disabled={freeing}
+                    className="flex-1 rounded-lg text-[11px] font-medium transition-colors"
+                    style={{
+                      color:           'var(--t-dim)',
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      border:          '1px solid rgba(255,255,255,0.08)',
+                    }}
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFree}
+                    disabled={freeing}
+                    className="flex-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 disabled:opacity-50"
+                    style={{ backgroundColor: 'rgba(239,68,68,0.8)', color: '#fff', border: 'none' }}
+                  >
+                    {freeing
+                      ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : 'Yes, Free'
+                    }
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
       </div>
     </div>
   );
@@ -637,11 +689,12 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }) {
 
 export default function TableStatusPage() {
   const [tables, setTables]       = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState('');
-  const [activeFloor, setActiveFloor]   = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [activeFloor, setActiveFloor] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [pdfLoading, setPdfLoading]     = useState(false);
+  const [pdfLoading, setPdfLoading]   = useState(false);
+  const [billToasts, setBillToasts]   = useState([]);
 
   const fetchTables = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -661,9 +714,24 @@ export default function TableStatusPage() {
     const token = authStore.getState().adminAccessToken;
     if (!token) return;
     const socket = connectAdminSocket(token);
+
     socket.on('table:updated', () => fetchTables(true));
+
+    socket.on('bill:requested', (payload) => {
+      const id = `bill-${Date.now()}-${Math.random()}`;
+      setBillToasts(prev => [...prev, {
+        id,
+        table_number: payload.table_number,
+        members: payload.members ?? [],
+      }]);
+      setTimeout(() => {
+        setBillToasts(prev => prev.filter(t => t.id !== id));
+      }, 12000);
+    });
+
     return () => {
       socket.off('table:updated');
+      socket.off('bill:requested');
       disconnectAdminSocket();
     };
   }, [fetchTables]);
@@ -746,6 +814,52 @@ export default function TableStatusPage() {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Bill-request toast notifications ─────────────────────────────────── */}
+      {billToasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2" style={{ maxWidth: '300px' }}>
+          {billToasts.map(toast => (
+            <div
+              key={toast.id}
+              className="flex items-start gap-3 rounded-2xl px-4 py-3 shadow-2xl"
+              style={{
+                background: 'var(--t-surface)',
+                border: '1px solid rgba(249,115,22,0.35)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}
+            >
+              <div
+                className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(249,115,22,0.15)' }}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-9.33-5.003A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold leading-snug" style={{ color: 'var(--t-text)' }}>
+                  Table {toast.table_number} — Bill Requested
+                </p>
+                {toast.members.length > 0 && (
+                  <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--t-dim)' }}>
+                    {toast.members.join(', ')}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBillToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ color: 'var(--t-dim)' }}
+              >
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
