@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getDashMenu,
   updateDashMenuItem,
@@ -8,10 +8,17 @@ import {
   toggleFeatured,
   getDashCategories,
 } from "../../../../services/dashboardService";
+import { useInfiniteList, useSentinel } from "../../../../hooks/useInfiniteList";
 import ProductFormModal from "../../components/ProductFormModal";
 import BulkUploadModal from "../../components/BulkUploadModal";
 import AddCategoryModal from "../../components/AddCategoryModal";
 import { getItemVegStatus, variantEffectivePrice } from "../../../../utils/vegStatus";
+
+function useDebounce(value, delay) {
+  const [d, setD] = useState(value);
+  useEffect(() => { const t = setTimeout(() => setD(value), delay); return () => clearTimeout(t); }, [value, delay]);
+  return d;
+}
 
 /* ─── Toggle Switch ──────────────────────────────────────────────────────────── */
 function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }) {
@@ -765,17 +772,102 @@ function CategorySection({ category, items, handlers, onAddToCategory }) {
   );
 }
 
+/* ─── Skeleton helpers ───────────────────────────────────────────────────────── */
+function MenuItemSkeleton() {
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border flex flex-col"
+      style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
+    >
+      {/* Image */}
+      <div className="shimmer w-full" style={{ paddingBottom: "58%" }} />
+      {/* Body */}
+      <div className="p-3 space-y-2.5">
+        <div className="shimmer h-3.5 w-3/4 rounded" />
+        <div className="flex gap-1.5">
+          <div className="shimmer h-3 w-14 rounded-full" />
+          <div className="shimmer h-3 w-10 rounded-full" />
+        </div>
+        <div className="shimmer h-4 w-1/2 rounded" />
+        <div className="flex items-center justify-between pt-1">
+          <div className="shimmer h-5 w-16 rounded-full" />
+          <div className="shimmer h-6 w-11 rounded-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MenuCategorySkeleton({ itemCount }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2.5">
+        <div className="shimmer w-3.5 h-3.5 rounded" />
+        <div className="shimmer h-3 w-28 rounded" />
+        <div className="shimmer h-4 w-6 rounded-md" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {Array.from({ length: itemCount }).map((_, i) => <MenuItemSkeleton key={i} />)}
+      </div>
+    </div>
+  );
+}
+
+function MenuPageSkeleton() {
+  return (
+    <div className="space-y-7">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="shimmer h-8 w-52 rounded-xl" />
+          <div className="flex items-center gap-2">
+            <div className="shimmer h-5 w-20 rounded-full" />
+            <div className="shimmer h-4 w-4 rounded-full" />
+            <div className="shimmer h-4 w-28 rounded" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <div className="shimmer h-10 w-32 rounded-xl" />
+          <div className="shimmer h-10 w-28 rounded-xl" />
+        </div>
+      </div>
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-3">
+        <div className="shimmer h-9 flex-1 min-w-[13rem] rounded-xl" />
+        <div className="shimmer h-9 w-36 rounded-xl" />
+        <div className="shimmer h-9 w-44 rounded-xl" />
+      </div>
+      {/* Category sections */}
+      <MenuCategorySkeleton itemCount={5} />
+      <MenuCategorySkeleton itemCount={3} />
+    </div>
+  );
+}
+
 /* ─── Main Page ──────────────────────────────────────────────────────────────── */
 export default function MenuManagePage() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(null);
 
   // Search & filter
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery]     = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [availFilter, setAvailFilter] = useState("all");
+  const [availFilter, setAvailFilter]     = useState("all");
+  // Used to force a reload after bulk import
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const debouncedSearch = useDebounce(searchQuery, 400);
+
+  const fetchParams = useMemo(() => ({
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(categoryFilter  && { category: categoryFilter }),
+    ...(availFilter !== "all" && { availability: availFilter }),
+    _k: refreshKey,
+  }), [debouncedSearch, categoryFilter, availFilter, refreshKey]);
+
+  const { items, setItems, hasMore, loading, error, loadMore, total } =
+    useInfiniteList(getDashMenu, fetchParams);
+
+  const sentinelRef = useSentinel(loadMore);
 
   // Categories
   const [categories, setCategories] = useState([]);
@@ -793,10 +885,6 @@ export default function MenuManagePage() {
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
   useEffect(() => {
-    getDashMenu()
-      .then(setItems)
-      .catch(() => setError("Failed to load menu."))
-      .finally(() => setLoading(false));
     getDashCategories()
       .then(setCategories)
       .catch(() => {});
@@ -883,7 +971,7 @@ export default function MenuManagePage() {
   };
 
   const handleBulkImport = () => {
-    getDashMenu().then(setItems);
+    setRefreshKey((k) => k + 1);
     setBulkModalOpen(false);
   };
 
@@ -934,50 +1022,25 @@ export default function MenuManagePage() {
     saving,
   };
 
-  /* ── Loading / error ── */
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48 gap-3">
-        <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
-        <span className="text-slate-300 text-sm">Loading menu…</span>
-      </div>
-    );
-  }
-  if (error) {
+  /* ── Derived data ── */
+  const grouped = items.reduce((acc, item) => {
+    const cat = item.category || "Uncategorised";
+    (acc[cat] = acc[cat] || []).push(item);
+    return acc;
+  }, {});
+
+  const isFiltering   = searchQuery.trim() !== "" || categoryFilter !== "" || availFilter !== "all";
+  const availableCount = items.filter((i) => i.is_available).length;
+  const initialLoad   = loading && items.length === 0;
+
+  if (initialLoad) return <MenuPageSkeleton />;
+  if (error && items.length === 0) {
     return (
       <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
         {error}
       </div>
     );
   }
-
-  /* ── Derived data ── */
-  const allCategories = [...new Set(items.map((i) => i.category || "Uncategorised"))].sort();
-
-  const visibleItems = items.filter((item) => {
-    if (categoryFilter && (item.category || "Uncategorised") !== categoryFilter) return false;
-    if (availFilter === "available" && !item.is_available) return false;
-    if (availFilter === "unavailable" && item.is_available) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      if (
-        !(item.name || "").toLowerCase().includes(q) &&
-        !(item.category || "").toLowerCase().includes(q) &&
-        !(item.description || "").toLowerCase().includes(q)
-      )
-        return false;
-    }
-    return true;
-  });
-
-  const grouped = visibleItems.reduce((acc, item) => {
-    const cat = item.category || "Uncategorised";
-    (acc[cat] = acc[cat] || []).push(item);
-    return acc;
-  }, {});
-
-  const isFiltering = searchQuery.trim() !== "" || categoryFilter !== "" || availFilter !== "all";
-  const availableCount = items.filter((i) => i.is_available).length;
 
   return (
     <div className="space-y-7">
@@ -999,7 +1062,7 @@ export default function MenuManagePage() {
               className="text-xs font-semibold px-2.5 py-1 rounded-full"
               style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}
             >
-              {items.length} items
+              {total} items
             </span>
             <span className="text-slate-600 text-xs">·</span>
             <span className="text-slate-300 text-xs">{availableCount} available</span>
@@ -1119,7 +1182,7 @@ export default function MenuManagePage() {
           style={{ color: "var(--t-text)" }}
         >
           <option value="">All categories</option>
-          {allCategories.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -1151,7 +1214,7 @@ export default function MenuManagePage() {
         {isFiltering && (
           <>
             <span className="text-slate-600 text-xs">
-              {visibleItems.length} of {items.length}
+              {items.length} of {total}
             </span>
             <button
               onClick={() => {
@@ -1178,8 +1241,21 @@ export default function MenuManagePage() {
         />
       ))}
 
+      {/* ── Infinite scroll sentinel + loading indicator ────────────────────── */}
+      <div ref={sentinelRef} className="h-1" />
+      {loading && items.length > 0 && (
+        <div className="flex justify-center py-4">
+          <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+        </div>
+      )}
+      {!hasMore && items.length > 0 && (
+        <p className="text-center text-xs py-2 text-slate-600">
+          All {total} item{total !== 1 ? "s" : ""} loaded
+        </p>
+      )}
+
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
-      {visibleItems.length === 0 && (
+      {items.length === 0 && !loading && (
         <div
           className="border border-white/10 rounded-2xl flex flex-col items-center justify-center py-20 text-center gap-3"
           style={{ background: "var(--t-surface)" }}

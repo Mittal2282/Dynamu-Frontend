@@ -134,15 +134,18 @@ export async function createBulkOrders(rows, orderDate, source = 'bulk') {
 // ─── Menu Management ──────────────────────────────────────────────────────────
 
 /**
- * Fetch all menu items for the restaurant (including unavailable).
+ * Fetch paginated menu items for the restaurant (including unavailable).
+ * @param {{ search?, category?, availability?, page?, limit? }} params
+ * @returns {{ items, total, hasMore }}
  */
-export async function getDashMenu() {
+export async function getDashMenu(params = {}) {
   const data = await apiCaller({
     method:   'GET',
     endpoint: ENDPOINTS.DASH_MENU,
+    params,
     useAdmin: true,
   });
-  return data.data ?? [];
+  return { items: data.items ?? [], total: data.total ?? 0, hasMore: data.hasMore ?? false };
 }
 
 /**
@@ -343,13 +346,19 @@ export async function uploadMenuItemImage(file) {
   return res.data.data.url;
 }
 
-export async function getIngredients() {
+/**
+ * Fetch paginated ingredients with stock status.
+ * @param {{ search?, status?, page?, limit? }} params
+ * @returns {{ items, total, hasMore }}
+ */
+export async function getIngredients(params = {}) {
   const data = await apiCaller({
     method:   'GET',
     endpoint: ENDPOINTS.DASH_INGREDIENTS,
+    params,
     useAdmin: true,
   });
-  return data.data;
+  return { items: data.items ?? [], total: data.total ?? 0, hasMore: data.hasMore ?? false };
 }
 
 export async function toggleIngredient(name, isAvailable) {

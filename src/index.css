@@ -135,6 +135,25 @@ button { cursor: pointer; }
 .ai-chat-badge-pulse  { animation: pulseGlow 2.5s ease-in-out infinite; }
 .ai-chat-fade-in-up   { animation: fadeInUp 0.55s ease-out both; }
 
+/* ─── Shimmer skeleton ───────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -300% center; }
+  100% { background-position:  300% center; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.10) 45%,
+    rgba(255,255,255,0.16) 50%,
+    rgba(255,255,255,0.10) 55%,
+    rgba(255,255,255,0.04) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 6px;
+}
+
 .ai-chat-gradient-text {
   background: linear-gradient(135deg, var(--t-accent) 0%, #ffb347 100%);
   -webkit-background-clip: text;

@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getIngredients, toggleIngredient } from "../../../services/dashboardService";
+import { useInfiniteList, useSentinel } from "../../../hooks/useInfiniteList";
+
+function useDebounce(value, delay) {
+  const [d, setD] = useState(value);
+  useEffect(() => { const t = setTimeout(() => setD(value), delay); return () => clearTimeout(t); }, [value, delay]);
+  return d;
+}
 
 /* ─── Toggle ────────────────────────────────────────────────────────────────── */
 function Toggle({ checked, onChange, disabled }) {
@@ -26,10 +33,7 @@ function Toggle({ checked, onChange, disabled }) {
   );
 }
 
-/* ─── VegDot ─────────────────────────────────────────────────────────────────
-   Classic Indian restaurant dot-in-square symbol.
-   type: "veg" | "nonveg" | "mixed"
-────────────────────────────────────────────────────────────────────────────── */
+/* ─── VegDot ─────────────────────────────────────────────────────────────────*/
 function VegDot({ type = "veg", size = "sm" }) {
   const cfg = {
     veg:    { border: "#22c55e", dot: "#22c55e" },
@@ -52,14 +56,7 @@ function VegDot({ type = "veg", size = "sm" }) {
         flexShrink: 0,
       }}
     >
-      <span
-        style={{
-          width: dotSize,
-          height: dotSize,
-          borderRadius: "50%",
-          background: dot,
-        }}
-      />
+      <span style={{ width: dotSize, height: dotSize, borderRadius: "50%", background: dot }} />
     </span>
   );
 }
@@ -75,9 +72,7 @@ function getVegType(items_using = []) {
   return "veg";
 }
 
-/* ─── Ingredient Row ─────────────────────────────────────────────────────────
-   Full-width horizontal row with expandable dishes list beneath.
-────────────────────────────────────────────────────────────────────────────── */
+/* ─── Ingredient Row ─────────────────────────────────────────────────────────*/
 function IngredientCard({ ingredient, onToggle, saving }) {
   const { name, is_available, affected_count, items_using = [] } = ingredient;
   const isSaving  = saving === name;
@@ -197,7 +192,6 @@ function IngredientCard({ ingredient, onToggle, saving }) {
           <ul className="divide-y" style={{ borderColor: "var(--t-line)" }}>
             {items_using.map((dish) => (
               <li key={dish._id} className="flex items-center gap-2.5 px-3 py-2">
-                {/* Dish thumbnail */}
                 <div
                   className="w-8 h-8 rounded-lg shrink-0 overflow-hidden flex items-center justify-center"
                   style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
@@ -208,13 +202,10 @@ function IngredientCard({ ingredient, onToggle, saving }) {
                     <VegDot type={dish.is_veg ? "veg" : "nonveg"} />
                   )}
                 </div>
-                {/* Dish veg indicator */}
                 <VegDot type={dish.is_veg ? "veg" : "nonveg"} />
-                {/* Dish name */}
                 <span className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>
                   {dish.name}
                 </span>
-                {/* Price */}
                 {dish.price != null && (
                   <span className="text-[10px] font-bold shrink-0" style={{ color: "var(--t-accent)" }}>
                     ₹{dish.price}
@@ -246,22 +237,84 @@ function StatChip({ label, value, color }) {
   );
 }
 
+/* ─── Skeleton ───────────────────────────────────────────────────────────────── */
+function IngredientRowSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="shimmer w-9 h-9 rounded-xl shrink-0" />
+      <div className="flex-1 space-y-1.5 min-w-0">
+        <div className="shimmer h-3.5 w-32 rounded" />
+        <div className="shimmer h-3 w-16 rounded" />
+      </div>
+      <div className="shimmer h-5 w-16 rounded-full hidden sm:block" />
+      <div className="shimmer h-4 w-14 rounded" />
+      <div className="shimmer h-6 w-11 rounded-full shrink-0" />
+    </div>
+  );
+}
+
+function IngredientsPageSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="shimmer h-8 w-48 rounded-xl" />
+          <div className="shimmer h-4 w-72 rounded" />
+        </div>
+        <div className="shimmer h-7 w-14 rounded-full" />
+      </div>
+      {/* Stat chips */}
+      <div className="flex gap-3">
+        {[80, 56, 48].map((w, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-2xl px-4 py-3 space-y-2"
+            style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
+          >
+            <div className={`shimmer h-6 rounded`} style={{ width: `${w}%` }} />
+            <div className="shimmer h-3 w-3/4 rounded" />
+          </div>
+        ))}
+      </div>
+      {/* Search + filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="shimmer h-10 flex-1 rounded-xl" />
+        <div className="shimmer h-10 w-56 rounded-xl" />
+      </div>
+      {/* Rows */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ border: "1px solid var(--t-line)", background: "var(--t-surface)" }}
+      >
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i}>
+            <IngredientRowSkeleton />
+            {i < 7 && <div className="h-px mx-4" style={{ background: "var(--t-line)" }} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Page ─────────────────────────────────────────────────────────────── */
 export default function IngredientsPage() {
-  const [ingredients, setIngredients] = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState(null);
-  const [saving, setSaving]           = useState(null);
-  const [search, setSearch]           = useState("");
+  const [saving, setSaving]             = useState(null);
+  const [search, setSearch]             = useState("");
   const [activeFilter, setActiveFilter] = useState("all"); // 'all' | 'out' | 'in'
 
-  useEffect(() => {
-    setLoading(true);
-    getIngredients()
-      .then(setIngredients)
-      .catch(() => setError("Failed to load ingredients"))
-      .finally(() => setLoading(false));
-  }, []);
+  const debouncedSearch = useDebounce(search, 400);
+
+  const params = useMemo(() => ({
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(activeFilter !== "all" && { status: activeFilter }),
+  }), [debouncedSearch, activeFilter]);
+
+  const { items: ingredients, setItems: setIngredients, hasMore, loading, error, loadMore, total } =
+    useInfiniteList(getIngredients, params);
+
+  const sentinelRef = useSentinel(loadMore);
 
   const handleToggle = async (name, newAvailability) => {
     setSaving(name);
@@ -279,25 +332,15 @@ export default function IngredientsPage() {
     }
   };
 
-  const outOfStockAll  = ingredients.filter((i) => !i.is_available);
-  const inStockAll     = ingredients.filter((i) => i.is_available);
-  const totalAffected  = outOfStockAll.reduce((sum, i) => sum + i.affected_count, 0);
-
-  const searchFiltered = ingredients.filter((ing) =>
-    ing.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const displayed =
-    activeFilter === "out"
-      ? searchFiltered.filter((i) => !i.is_available)
-      : activeFilter === "in"
-      ? searchFiltered.filter((i) => i.is_available)
-      : searchFiltered;
+  const isFiltering = debouncedSearch !== "" || activeFilter !== "all";
 
   const FILTERS = [
-    { key: "all", label: "All",          count: ingredients.length },
-    { key: "out", label: "Out of Stock", count: outOfStockAll.length },
-    { key: "in",  label: "In Stock",     count: inStockAll.length },
+    { key: "all", label: "All" },
+    { key: "out", label: "Out of Stock" },
+    { key: "in",  label: "In Stock" },
   ];
+
+  const initialLoad = loading && ingredients.length === 0;
 
   return (
     <div className="space-y-6">
@@ -319,7 +362,7 @@ export default function IngredientsPage() {
             Mark ingredients as out of stock to instantly hide all dishes that use them.
           </p>
         </div>
-        {!loading && ingredients.length > 0 && (
+        {!initialLoad && total > 0 && (
           <div
             className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
             style={{
@@ -334,50 +377,29 @@ export default function IngredientsPage() {
         )}
       </div>
 
-      {/* ── Alert banner ── */}
-      {!loading && outOfStockAll.length > 0 && (
-        <div
-          className="flex items-center gap-4 px-5 py-4 rounded-2xl"
-          style={{
-            background: "rgba(239,68,68,0.07)",
-            border: "1px solid rgba(239,68,68,0.2)",
-          }}
-        >
-          <div
-            className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-lg"
-            style={{ background: "rgba(239,68,68,0.12)" }}
-          >
-            🚫
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-red-300">
-              {outOfStockAll.length} ingredient{outOfStockAll.length > 1 ? "s" : ""} out of stock
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(248,113,113,0.7)" }}>
-              {totalAffected} {totalAffected === 1 ? "dish is" : "dishes are"} currently hidden from customers
-            </p>
-          </div>
-          <div className="shrink-0 text-2xl font-bold tabular-nums" style={{ color: "#f87171" }}>
-            {outOfStockAll.length}
-          </div>
-        </div>
-      )}
-
       {/* ── Stat chips ── */}
-      {!loading && ingredients.length > 0 && (
+      {!initialLoad && total > 0 && (
         <div className="flex gap-3">
-          <StatChip label="Total Ingredients" value={ingredients.length} color="var(--t-accent)" />
-          <StatChip label="In Stock"           value={inStockAll.length}  color="#4ade80" />
+          <StatChip
+            label={isFiltering ? "Matching" : "Total Ingredients"}
+            value={total}
+            color="var(--t-accent)"
+          />
+          <StatChip
+            label="In Stock"
+            value={ingredients.filter((i) => i.is_available).length}
+            color="#4ade80"
+          />
           <StatChip
             label="Out of Stock"
-            value={outOfStockAll.length}
-            color={outOfStockAll.length > 0 ? "#f87171" : "var(--t-dim)"}
+            value={ingredients.filter((i) => !i.is_available).length}
+            color={ingredients.some((i) => !i.is_available) ? "#f87171" : "var(--t-dim)"}
           />
         </div>
       )}
 
       {/* ── Search + Filter bar ── */}
-      {!loading && ingredients.length > 0 && (
+      {!initialLoad && (total > 0 || isFiltering) && (
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <svg
@@ -426,15 +448,17 @@ export default function IngredientsPage() {
                 }
               >
                 {f.label}
-                <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{
-                    background: activeFilter === f.key ? "var(--t-accent-20)" : "var(--t-line)",
-                    color:      activeFilter === f.key ? "var(--t-accent)"    : "var(--t-dim)",
-                  }}
-                >
-                  {f.count}
-                </span>
+                {activeFilter === f.key && (
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{
+                      background: "var(--t-accent-20)",
+                      color: "var(--t-accent)",
+                    }}
+                  >
+                    {total}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -442,15 +466,9 @@ export default function IngredientsPage() {
       )}
 
       {/* ── Content ── */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div
-            className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
-          />
-          <p className="text-sm" style={{ color: "var(--t-dim)" }}>Loading ingredients…</p>
-        </div>
-      ) : error ? (
+      {initialLoad ? (
+        <IngredientsPageSkeleton />
+      ) : error && ingredients.length === 0 ? (
         <div
           className="flex flex-col items-center justify-center py-16 rounded-2xl"
           style={{ background: "var(--t-surface)", border: "1px solid rgba(239,68,68,0.2)" }}
@@ -458,13 +476,7 @@ export default function IngredientsPage() {
           <span className="text-4xl mb-3">⚠️</span>
           <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>{error}</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              getIngredients()
-                .then(setIngredients)
-                .catch(() => setError("Failed to load ingredients"))
-                .finally(() => setLoading(false));
-            }}
+            onClick={() => setActiveFilter(activeFilter)} // re-trigger params change
             className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
             style={{
               background: "var(--t-accent-20)",
@@ -475,7 +487,7 @@ export default function IngredientsPage() {
             Retry
           </button>
         </div>
-      ) : ingredients.length === 0 ? (
+      ) : !isFiltering && total === 0 ? (
         <div
           className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed"
           style={{ borderColor: "var(--t-line)", background: "var(--t-surface)" }}
@@ -491,7 +503,7 @@ export default function IngredientsPage() {
             Add ingredients to your menu items and they'll appear here for stock management.
           </p>
         </div>
-      ) : displayed.length === 0 ? (
+      ) : total === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <span className="text-3xl">🔍</span>
           <p className="text-sm font-medium" style={{ color: "var(--t-text)" }}>No matches</p>
@@ -500,19 +512,37 @@ export default function IngredientsPage() {
           </p>
         </div>
       ) : (
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ border: "1px solid var(--t-line)", background: "var(--t-surface)" }}
-        >
-          {displayed.map((ing, i) => (
-            <div key={ing.name}>
-              <IngredientCard ingredient={ing} onToggle={handleToggle} saving={saving} />
-              {i < displayed.length - 1 && (
-                <div className="h-px mx-4" style={{ background: "var(--t-line)" }} />
-              )}
+        <>
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: "1px solid var(--t-line)", background: "var(--t-surface)" }}
+          >
+            {ingredients.map((ing, i) => (
+              <div key={ing.name}>
+                <IngredientCard ingredient={ing} onToggle={handleToggle} saving={saving} />
+                {i < ingredients.length - 1 && (
+                  <div className="h-px mx-4" style={{ background: "var(--t-line)" }} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── Infinite scroll sentinel ── */}
+          <div ref={sentinelRef} className="h-1" />
+          {loading && (
+            <div className="flex justify-center py-4">
+              <div
+                className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
+                style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
+              />
             </div>
-          ))}
-        </div>
+          )}
+          {!hasMore && ingredients.length > 0 && (
+            <p className="text-center text-xs py-2" style={{ color: "var(--t-dim)" }}>
+              All {total} ingredient{total !== 1 ? "s" : ""} loaded
+            </p>
+          )}
+        </>
       )}
     </div>
   );

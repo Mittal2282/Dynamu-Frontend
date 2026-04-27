@@ -352,9 +352,82 @@ function TableOrderCard({
   );
 }
 
+/* ─── Skeleton ───────────────────────────────────────────────────────────────────── */
+const COLUMN_DEFS = [
+  { color: '#f59e0b', label: 'Allocated',   cards: [{ items: 2 }, { items: 1 }] },
+  { color: '#a855f7', label: 'In Progress', cards: [{ items: 3 }, { items: 2 }] },
+  { color: '#22c55e', label: 'Completed',   cards: [{ items: 1 }] },
+];
+
+function OrderCardSkeleton({ color, itemCount }) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ background: "var(--t-surface)", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      {/* Column colour bar */}
+      <div className="h-0.5 w-full" style={{ background: color }} />
+      {/* Card header */}
+      <div className="px-2.5 py-2 flex items-center justify-between gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="flex items-center gap-2">
+          <div className="shimmer w-7 h-7 rounded-lg shrink-0" />
+          <div className="space-y-1">
+            <div className="shimmer h-3 w-20 rounded" />
+            <div className="shimmer h-2.5 w-14 rounded" />
+          </div>
+        </div>
+        <div className="shimmer h-4 w-12 rounded" />
+      </div>
+      {/* Order items */}
+      <div className="px-2.5 py-2 space-y-2">
+        <div className="flex items-center gap-2 justify-between">
+          <div className="shimmer h-2.5 w-16 rounded" />
+          <div className="shimmer h-4 w-16 rounded-full" />
+        </div>
+        {Array.from({ length: itemCount }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2 py-1">
+            <div className="shimmer w-4 h-4 rounded shrink-0" />
+            <div className="shimmer h-7 w-8 rounded-md shrink-0 hidden sm:block" />
+            <div className="shimmer h-3 flex-1 rounded" />
+            <div className="shimmer h-3 w-8 rounded" />
+          </div>
+        ))}
+        <div className="flex items-center justify-between pt-1">
+          <div className="shimmer h-3.5 w-12 rounded" />
+          <div className="shimmer h-7 w-28 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrdersPageSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {COLUMN_DEFS.map(({ color, label, cards }) => (
+          <div key={label} className="flex flex-col gap-2">
+            {/* Column header */}
+            <div className="flex items-center gap-1.5 pb-1.5" style={{ borderBottom: `1px solid ${color}28` }}>
+              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color, opacity: 0.5 }} />
+              <div className="shimmer h-3 w-24 rounded" />
+              <div className="shimmer h-4 w-5 rounded-md ml-auto" />
+            </div>
+            {/* Cards */}
+            {cards.map((c, i) => (
+              <OrderCardSkeleton key={i} color={color} itemCount={c.items} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main page ─────────────────────────────────────────────────────────────────── */
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [closingTable, setClosingTable] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
@@ -376,6 +449,8 @@ export default function OrdersPage() {
       if (!quiet) setLastRefresh(new Date());
     } catch (err) {
       console.error(err);
+    } finally {
+      setInitialLoading(false);
     }
   }, []);
 
@@ -462,6 +537,8 @@ export default function OrdersPage() {
   const activeCount = orders.filter((o) => !TERMINAL.includes(o.status)).length;
   const showTableFilter = orders.length > 0 && tableNumbers.length > 0;
   const useTableSelect = tableNumbers.length > 8;
+
+  if (initialLoading) return <OrdersPageSkeleton />;
 
   return (
     <div className="flex flex-col gap-3 min-h-0">
