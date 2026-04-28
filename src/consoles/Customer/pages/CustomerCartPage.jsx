@@ -9,7 +9,6 @@ import { restaurantStore } from "../../../store/restaurantStore";
 import { formatCurrency } from "../../../utils/formatters";
 
 const SERVICE_CHARGE = 10;
-const TAX_RATE = 0.05;
 
 // ── Cart item row ─────────────────────────────────────────────────────────────
 function CartItem({ item, currencySymbol }) {
@@ -202,8 +201,7 @@ export default function CustomerCartPage() {
     const p = i.discount_percentage > 0 ? basePrice * (1 - i.discount_percentage / 100) : basePrice;
     return s + p * i.qty;
   }, 0);
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + SERVICE_CHARGE + tax;
+  const total = subtotal + SERVICE_CHARGE;
 
   return (
     <div
@@ -314,10 +312,6 @@ export default function CustomerCartPage() {
                     label="Service Charge"
                     value={formatCurrency(SERVICE_CHARGE, currencySymbol, 2)}
                   />
-                  <BillRow
-                    label="Estimated Taxes (5%)"
-                    value={formatCurrency(tax, currencySymbol, 2)}
-                  />
                   <div className="border-t mt-1 pt-1" style={{ borderColor: "var(--t-line)" }}>
                     <BillRow
                       label="Total Amount"
@@ -329,7 +323,7 @@ export default function CustomerCartPage() {
                 </div>
 
                 <button
-                  onClick={onPlaceOrder}
+                  onClick={() => onPlaceOrder()}
                   disabled={orderingCart}
                   className="w-full mt-4 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
                   style={{

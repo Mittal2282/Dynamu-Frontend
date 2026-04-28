@@ -246,11 +246,6 @@ export default function CompletedOrdersPage() {
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
                         <p className="text-sm font-bold text-white tabular-nums">{fmtCurrency(order.total_amount)}</p>
-                        {(order.tax_amount > 0 || order.service_charge > 0) && (
-                          <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: 'var(--t-dim)' }}>
-                            +{fmtCurrency((order.tax_amount ?? 0) + (order.service_charge ?? 0))} tax
-                          </p>
-                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <StatusBadge status={order.status} />

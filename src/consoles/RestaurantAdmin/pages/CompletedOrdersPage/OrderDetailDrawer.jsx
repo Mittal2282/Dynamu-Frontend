@@ -18,7 +18,6 @@ export default function OrderDetailDrawer({ order, onClose }) {
   if (!order) return null;
 
   const subtotal      = order.subtotal       ?? 0;
-  const tax           = order.tax_amount     ?? 0;
   const svc           = order.service_charge ?? 0;
   const total         = order.total_amount   ?? 0;
 
@@ -168,7 +167,6 @@ export default function OrderDetailDrawer({ order, onClose }) {
         >
           {[
             { label: 'Subtotal', value: subtotal },
-            ...(tax   > 0 ? [{ label: 'Tax',            value: tax }] : []),
             ...(svc   > 0 ? [{ label: 'Service Charge', value: svc }] : []),
           ].map(({ label, value }) => (
             <div key={label} className="flex justify-between text-sm" style={{ color: 'var(--t-dim)' }}>

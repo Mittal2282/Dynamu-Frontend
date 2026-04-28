@@ -36,7 +36,6 @@ export default function ExportModal({ onClose }) {
                             `${i.name}${i.variant_name ? ` (${i.variant_name})` : ''} ×${i.quantity}`
                           ).join('; '),
         'Subtotal':       o.subtotal        ?? 0,
-        'Tax':            o.tax_amount      ?? 0,
         'Service Charge': o.service_charge  ?? 0,
         'Total':          o.total_amount    ?? 0,
         'Status':         o.status          ?? '',

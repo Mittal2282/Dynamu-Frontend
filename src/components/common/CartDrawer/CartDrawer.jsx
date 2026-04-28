@@ -13,7 +13,6 @@ import Text from "../../ui/Text";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 const SERVICE_CHARGE = 10; // fixed ₹10
-const TAX_RATE = 0.05; // 5 %
 
 /* ─── Cart item row ────────────────────────────────────────────────────────── */
 function CartItem({ item, currencySymbol }) {
@@ -176,8 +175,7 @@ export default function CartDrawer({
       i.discount_percentage > 0 ? basePrice * (1 - i.discount_percentage / 100) : basePrice;
     return s + effectivePrice * i.qty;
   }, 0);
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + SERVICE_CHARGE + tax;
+  const total = subtotal + SERVICE_CHARGE;
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} height={items.length > 0 ? "85vh" : undefined}>
@@ -292,11 +290,6 @@ export default function CartDrawer({
               <BillRow
                 label="Service Charge"
                 value={formatCurrency(SERVICE_CHARGE, currencySymbol, 2)}
-                muted
-              />
-              <BillRow
-                label="Estimated Taxes (5%)"
-                value={formatCurrency(tax, currencySymbol, 2)}
                 muted
               />
             </div>

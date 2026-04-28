@@ -454,9 +454,6 @@ export default function CustomerOrdersPage() {
         >
           {formatCurrency(grandTotal, currencySymbol)}
         </p>
-        <p className="text-xs mt-1" style={{ color: "var(--t-nav-muted)" }}>
-          + Service tax included
-        </p>
       </div>
 
       <div className="flex flex-row gap-2.5">
