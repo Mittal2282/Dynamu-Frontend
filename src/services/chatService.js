@@ -93,7 +93,7 @@ export async function streamChatMessage(message, { onChunk, onDone, onError } = 
           try {
             const event = JSON.parse(line.slice(6));
             if (event.type === 'chunk') onChunk?.(event.text);
-            else if (event.type === 'done') onDone?.(event.items ?? []);
+            else if (event.type === 'done') onDone?.(event.items ?? [], event.mode ?? 'normal', event.options ?? []);
             else if (event.type === 'error') onChunk?.(event.message ?? '');
           } catch {
             // malformed JSON in SSE line — ignore

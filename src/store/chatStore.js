@@ -21,7 +21,7 @@ export const chatStore = create(
         streaming: true,
         messages: [
           ...state.messages,
-          { role: 'ai', text: '', items: [], timestamp: Date.now(), streaming: true },
+          { role: 'ai', text: '', items: [], mode: 'normal', options: [], timestamp: Date.now(), streaming: true },
         ],
       })),
 
@@ -37,12 +37,12 @@ export const chatStore = create(
       }),
 
     // Streaming: finalize the last AI message with items, clear streaming flag
-    finalizeStreamingMessage: (items = []) =>
+    finalizeStreamingMessage: (items = [], mode = 'normal', options = []) =>
       set((state) => {
         const msgs = [...state.messages];
         const last = msgs[msgs.length - 1];
         if (last?.streaming) {
-          msgs[msgs.length - 1] = { ...last, items, streaming: false };
+          msgs[msgs.length - 1] = { ...last, items, mode, options, streaming: false };
         }
         return { messages: msgs, streaming: false };
       }),
