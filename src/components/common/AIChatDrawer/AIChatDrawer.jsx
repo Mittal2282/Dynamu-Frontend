@@ -356,8 +356,8 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
           }
           appendStreamingText(chunk);
         },
-        onDone: (items) => {
-          finalizeStreamingMessage(items ?? []);
+        onDone: (items, mode, options) => {
+          finalizeStreamingMessage(items ?? [], mode ?? 'normal', options ?? []);
         },
         onError: () => {
           if (firstChunk) {
@@ -399,6 +399,13 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
             {messages.map((m, i) => {
               const isUser = m.role === "user";
               const t = formatMessageTime(m.timestamp);
+              const isLatestAi =
+                !isUser &&
+                i === messages.length - 1 &&
+                !m.streaming &&
+                !isBusy;
+              const showClarifyOptions =
+                isLatestAi && m.mode === "clarify" && Array.isArray(m.options) && m.options.length > 0;
 
               return (
                 <div key={i} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -465,6 +472,26 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }) {
                           item={item}
                           currencySymbol={currencySymbol}
                         />
+                      ))}
+                    </div>
+                  )}
+
+                  {showClarifyOptions && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {m.options.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => send(opt)}
+                          className="px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap active:scale-95 transition-all"
+                          style={{
+                            background: "var(--t-accent2-20)",
+                            border: "1px solid var(--t-accent2-40)",
+                            color: "var(--t-accent2)",
+                          }}
+                        >
+                          {opt}
+                        </button>
                       ))}
                     </div>
                   )}
