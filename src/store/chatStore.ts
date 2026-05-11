@@ -1,0 +1,79 @@
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import type { MenuItem } from '../types/menu';
+
+export interface ChatMessage {
+  role: 'user' | 'ai';
+  text: string;
+  items?: MenuItem[];
+  mode?: string;
+  options?: string[];
+  timestamp?: number;
+  streaming?: boolean;
+}
+
+interface ChatState {
+  messages: ChatMessage[];
+  loading: boolean;
+  initialized: boolean;
+  streaming: boolean;
+  setMessages: (messages: ChatMessage[]) => void;
+  addMessage: (message: ChatMessage) => void;
+  setLoading: (loading: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
+  startStreamingMessage: () => void;
+  appendStreamingText: (text: string) => void;
+  finalizeStreamingMessage: (items?: MenuItem[], mode?: string, options?: string[]) => void;
+  reset: () => void;
+}
+
+export const chatStore = create<ChatState>()(
+  devtools((set) => ({
+    messages: [],
+    loading: false,
+    initialized: false,
+    streaming: false,
+
+    setMessages: (messages) => set(() => ({ messages })),
+    addMessage: (message) =>
+      set((state) => ({ messages: [...state.messages, message] })),
+    setLoading: (loading) => set(() => ({ loading })),
+    setInitialized: (initialized) => set(() => ({ initialized })),
+
+    // Streaming: add an empty AI message placeholder, switch from loading→streaming
+    startStreamingMessage: () =>
+      set((state) => ({
+        loading: false,
+        streaming: true,
+        messages: [
+          ...state.messages,
+          { role: 'ai', text: '', items: [], mode: 'normal', options: [], timestamp: Date.now(), streaming: true },
+        ],
+      })),
+
+    // Streaming: append a chunk of text to the last (streaming) AI message
+    appendStreamingText: (text) =>
+      set((state) => {
+        const msgs = [...state.messages];
+        const last = msgs[msgs.length - 1];
+        if (last?.streaming) {
+          msgs[msgs.length - 1] = { ...last, text: last.text + text };
+        }
+        return { messages: msgs };
+      }),
+
+    // Streaming: finalize the last AI message with items, clear streaming flag
+    finalizeStreamingMessage: (items = [], mode = 'normal', options = []) =>
+      set((state) => {
+        const msgs = [...state.messages];
+        const last = msgs[msgs.length - 1];
+        if (last?.streaming) {
+          msgs[msgs.length - 1] = { ...last, items, mode, options, streaming: false };
+        }
+        return { messages: msgs, streaming: false };
+      }),
+
+    reset: () =>
+      set(() => ({ messages: [], loading: false, initialized: false, streaming: false })),
+  }))
+);
