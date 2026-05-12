@@ -278,14 +278,15 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
       <div className="space-y-5">
         {/* Downloads row */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ background: 'var(--t-float)', border: '1px solid var(--t-line)' }}>
             <div>
-              <p className="text-sm text-white font-medium">Sample CSV Template</p>
-              <p className="text-xs text-slate-300 mt-0.5">Pre-defined headers — just fill in your data</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--t-text)' }}>Sample CSV Template</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--t-dim)' }}>Pre-defined headers — just fill in your data</p>
             </div>
             <button
               onClick={downloadSampleCSV}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all shrink-0"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+              style={{ color: 'var(--t-text)', background: 'var(--t-surface)', border: '1px solid var(--t-line)' }}
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -295,17 +296,18 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
           </div>
 
           {categories.length > 0 && (
-            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between rounded-xl px-4 py-3" style={{ background: 'var(--t-float)', border: '1px solid var(--t-line)' }}>
               <div>
-                <p className="text-sm text-white font-medium">Valid Categories</p>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="text-sm font-medium" style={{ color: 'var(--t-text)' }}>Valid Categories</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--t-dim)' }}>
                   {categories.length} categor{categories.length === 1 ? "y" : "ies"} — the{" "}
-                  <span className="font-mono text-slate-400">category</span> column must use these exact names
+                  <span className="font-mono" style={{ color: 'var(--t-dim)' }}>category</span> column must use these exact names
                 </p>
               </div>
               <button
                 onClick={() => downloadCategoriesCSV(categories)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all shrink-0"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0"
+                style={{ color: 'var(--t-text)', background: 'var(--t-surface)', border: '1px solid var(--t-line)' }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -327,16 +329,16 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
 
         {/* Column guide */}
         <details className="group">
-          <summary className="text-xs font-semibold text-slate-400 cursor-pointer select-none flex items-center gap-1.5 hover:text-white transition-colors">
+          <summary className="text-xs font-semibold cursor-pointer select-none flex items-center gap-1.5 transition-colors" style={{ color: 'var(--t-dim)' }}>
             <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
             Column format guide
           </summary>
-          <div className="mt-3 rounded-xl border border-white/10 overflow-hidden">
+          <div className="mt-3 rounded-xl overflow-hidden" style={{ border: '1px solid var(--t-line)' }}>
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-white/5 text-slate-300 text-[10px] uppercase tracking-wider">
+                <tr className="text-[10px] uppercase tracking-wider" style={{ borderBottom: '1px solid var(--t-line)', color: 'var(--t-dim)' }}>
                   <th className="text-left px-3 py-2 w-44">Column</th>
                   <th className="text-left px-3 py-2 w-16">Required</th>
                   <th className="text-left px-3 py-2">Notes</th>
@@ -344,16 +346,16 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
               </thead>
               <tbody>
                 {FIELD_GUIDE.map((f, i) => (
-                  <tr key={f.col} className={i < FIELD_GUIDE.length - 1 ? "border-b border-white/5" : ""}>
-                    <td className="px-3 py-2 font-mono text-slate-300">{f.col}</td>
+                  <tr key={f.col} style={i < FIELD_GUIDE.length - 1 ? { borderBottom: '1px solid var(--t-line)' } : {}}>
+                    <td className="px-3 py-2 font-mono" style={{ color: 'var(--t-text)' }}>{f.col}</td>
                     <td className="px-3 py-2">
                       {f.req ? (
                         <span className="text-red-400 font-semibold">Yes</span>
                       ) : (
-                        <span className="text-slate-600">No</span>
+                        <span style={{ color: 'var(--t-dim)', opacity: 0.6 }}>No</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-slate-400">{f.note}</td>
+                    <td className="px-3 py-2" style={{ color: 'var(--t-dim)' }}>{f.note}</td>
                   </tr>
                 ))}
               </tbody>
@@ -368,25 +370,25 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 cursor-pointer text-center transition-all ${
-              dragOver
-                ? "border-[var(--t-accent)] bg-[var(--t-accent)]/5"
-                : "border-white/10 hover:border-white/20 hover:bg-white/5"
-            }`}
+            className="border-2 border-dashed rounded-2xl p-8 cursor-pointer text-center transition-all"
+            style={{
+              borderColor: dragOver ? 'var(--t-accent)' : 'var(--t-line)',
+              background: dragOver ? 'color-mix(in srgb, var(--t-accent) 5%, transparent)' : 'var(--t-float)',
+            }}
           >
             {fileName ? (
               <div className="space-y-1">
                 <p className="text-2xl">📄</p>
-                <p className="text-white text-sm font-medium">{fileName}</p>
-                <p className="text-slate-300 text-xs">
+                <p className="text-sm font-medium" style={{ color: 'var(--t-text)' }}>{fileName}</p>
+                <p className="text-xs" style={{ color: 'var(--t-dim)' }}>
                   {rowCount} data row{rowCount !== 1 ? "s" : ""} found · Click to replace
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
                 <p className="text-3xl">📂</p>
-                <p className="text-slate-300 text-sm font-medium">Drop your CSV or Excel file here</p>
-                <p className="text-slate-600 text-xs">or click to browse · .csv, .xlsx, .xls supported</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--t-dim)' }}>Drop your CSV or Excel file here</p>
+                <p className="text-xs" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>or click to browse · .csv, .xlsx, .xls supported</p>
               </div>
             )}
           </div>
@@ -410,13 +412,13 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
         {/* Preview table */}
         {preview.length > 0 && !result && (
           <div>
-            <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest mb-2">
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--t-dim)' }}>
               Preview — first {preview.length} row{preview.length !== 1 ? "s" : ""}
             </p>
-            <div className="rounded-xl border border-white/10 overflow-x-auto">
+            <div className="rounded-xl overflow-x-auto" style={{ border: '1px solid var(--t-line)' }}>
               <table className="text-xs whitespace-nowrap">
                 <thead>
-                  <tr className="border-b border-white/5 text-slate-300 text-[10px] uppercase">
+                  <tr className="text-[10px] uppercase" style={{ borderBottom: '1px solid var(--t-line)', color: 'var(--t-dim)' }}>
                     <th className="text-left px-3 py-2">Name</th>
                     <th className="text-left px-3 py-2">Category</th>
                     <th className="text-left px-3 py-2">Price</th>
@@ -425,10 +427,10 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
                 </thead>
                 <tbody>
                   {preview.map((row, i) => (
-                    <tr key={i} className={i < preview.length - 1 ? "border-b border-white/5" : ""}>
-                      <td className="px-3 py-2 text-white">{row.name || "—"}</td>
-                      <td className="px-3 py-2 text-slate-400">{row.category || "—"}</td>
-                      <td className="px-3 py-2 text-slate-400">
+                    <tr key={i} style={i < preview.length - 1 ? { borderBottom: '1px solid var(--t-line)' } : {}}>
+                      <td className="px-3 py-2" style={{ color: 'var(--t-text)' }}>{row.name || "—"}</td>
+                      <td className="px-3 py-2" style={{ color: 'var(--t-dim)' }}>{row.category || "—"}</td>
+                      <td className="px-3 py-2" style={{ color: 'var(--t-dim)' }}>
                         {row.price ? (row.price === "Variants" ? row.price : `₹${row.price}`) : "—"}
                       </td>
                       <td className="px-3 py-2">
@@ -455,7 +457,7 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
               <div className="flex items-center gap-3">
                 <span className="text-2xl">✅</span>
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>
                     {result.imported} item{result.imported !== 1 ? "s" : ""} imported successfully
                   </p>
                   {result.errors.length > 0 && (
@@ -477,7 +479,8 @@ export default function BulkUploadModal({ isOpen, onClose, onImport, categories 
             type="button"
             onClick={handleClose}
             disabled={importing}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{ color: 'var(--t-dim)', background: 'var(--t-float)', border: '1px solid var(--t-line)' }}
           >
             {result ? "Close" : "Cancel"}
           </button>

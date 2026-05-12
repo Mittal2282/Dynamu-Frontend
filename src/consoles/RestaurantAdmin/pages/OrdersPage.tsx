@@ -118,9 +118,9 @@ function OrderItemRow({ item }: OrderItemRowProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-white leading-tight line-clamp-1">
+        <p className="text-xs font-semibold leading-tight line-clamp-1" style={{ color: "var(--t-text)" }}>
           {item.name}
-          {variantBit && <span className="font-medium text-slate-400"> · {variantBit}</span>}
+          {variantBit && <span className="font-medium" style={{ color: "var(--t-dim)" }}> · {variantBit}</span>}
         </p>
         {instruct && (
           <p
@@ -134,7 +134,7 @@ function OrderItemRow({ item }: OrderItemRowProps) {
       </div>
 
       <div className="text-right shrink-0 leading-tight">
-        <p className="text-[10px] text-slate-300 tabular-nums">×{item.quantity ?? 1}</p>
+        <p className="text-[10px] tabular-nums" style={{ color: "var(--t-dim)" }}>×{item.quantity ?? 1}</p>
         <p className="text-xs font-bold tabular-nums" style={{ color: "var(--t-accent)" }}>
           ₹{total}
         </p>
@@ -192,10 +192,10 @@ function OrderBatch({ order, sessionOrders, onStatusChange, updating }: OrderBat
               +ADD
             </span>
           )}
-          <span className="text-[10px] text-slate-300 font-mono shrink-0">
+          <span className="text-[10px] font-mono shrink-0" style={{ color: "var(--t-dim)" }}>
             #{order.order_number}
           </span>
-          <span className="text-[10px] text-slate-600 truncate">
+          <span className="text-[10px] truncate" style={{ color: "var(--t-dim)", opacity: 0.7 }}>
             {formatTime(order.createdAt)} · {timeAgo(order.createdAt)}
           </span>
         </div>
@@ -240,14 +240,15 @@ function OrderBatch({ order, sessionOrders, onStatusChange, updating }: OrderBat
 
       {order.notes && (
         <p
-          className="text-[10px] text-slate-400 rounded-md px-2 py-1 line-clamp-2 leading-snug"
+          className="text-[10px] rounded-md px-2 py-1 line-clamp-2 leading-snug"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            background: "var(--t-float)",
+            border: "1px solid var(--t-line)",
+            color: "var(--t-dim)",
           }}
           title={order.notes}
         >
-          <span className="font-semibold text-slate-300">Note: </span>
+          <span className="font-semibold" style={{ color: "var(--t-text)" }}>Note: </span>
           {order.notes}
         </p>
       )}
@@ -336,10 +337,10 @@ function TableOrderCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-xs font-bold text-white leading-none">
+              <p className="text-xs font-bold leading-none" style={{ color: "var(--t-text)" }}>
                 Table {tableNumber ?? "?"}
               </p>
-              <span className="text-[10px] text-slate-300">
+              <span className="text-[10px]" style={{ color: "var(--t-dim)" }}>
                 {sessionOrders.length} order{sessionOrders.length !== 1 ? "s" : ""}
               </span>
               {isNew && (
@@ -584,7 +585,7 @@ export default function OrdersPage() {
       {orders.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 gap-y-2">
           {showTableFilter && useTableSelect && (
-            <label className="flex items-center gap-2 text-[11px] text-slate-300 shrink-0">
+            <label className="flex items-center gap-2 text-[11px] shrink-0" style={{ color: "var(--t-dim)" }}>
               <span className="sr-only">Table</span>
               <select
                 value={selectedTable == null ? "" : String(selectedTable)}
@@ -609,15 +610,11 @@ export default function OrdersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedTable(null)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-150 ${
-                  selectedTable === null
-                    ? "text-white border-transparent"
-                    : "text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white"
-                }`}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-150"
                 style={
                   selectedTable === null
-                    ? { background: "var(--t-accent)", borderColor: "transparent" }
-                    : {}
+                    ? { background: "var(--t-accent)", borderColor: "transparent", color: "#fff" }
+                    : { background: "var(--t-float)", borderColor: "var(--t-line)", color: "var(--t-dim)" }
                 }
               >
                 All
@@ -627,15 +624,11 @@ export default function OrdersPage() {
                   type="button"
                   key={String(num)}
                   onClick={() => setSelectedTable(selectedTable == num ? null : num)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-150 ${
-                    selectedTable == num
-                      ? "text-white border-transparent"
-                      : "text-slate-400 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white"
-                  }`}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all duration-150"
                   style={
                     selectedTable == num
-                      ? { background: "var(--t-accent)", borderColor: "transparent" }
-                      : {}
+                      ? { background: "var(--t-accent)", borderColor: "transparent", color: "#fff" }
+                      : { background: "var(--t-float)", borderColor: "var(--t-line)", color: "var(--t-dim)" }
                   }
                 >
                   T{num}
@@ -648,10 +641,10 @@ export default function OrdersPage() {
             <span className="badge badge-primary badge-sm shrink-0">{activeCount} active</span>
           )}
 
-          <span className="text-[10px] text-slate-300 shrink-0">
+          <span className="text-[10px] shrink-0" style={{ color: "var(--t-dim)" }}>
             Auto 10s
             {lastRefresh && (
-              <span className="text-slate-600">
+              <span style={{ color: "var(--t-dim)", opacity: 0.6 }}>
                 {" "}
                 ·{" "}
                 {lastRefresh.toLocaleTimeString([], {
@@ -671,12 +664,12 @@ export default function OrdersPage() {
 
       {orders.length === 0 && (
         <div
-          className="border border-white/10 rounded-xl flex flex-col items-center justify-center py-12 text-center gap-2"
-          style={{ background: "var(--t-surface)" }}
+          className="rounded-xl flex flex-col items-center justify-center py-12 text-center gap-2"
+          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
         >
           <span className="text-4xl">🍽️</span>
-          <p className="text-white text-sm font-semibold">No orders yet</p>
-          <p className="text-slate-300 text-xs">Waiting for customers to place orders…</p>
+          <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>No orders yet</p>
+          <p className="text-xs" style={{ color: "var(--t-dim)" }}>Waiting for customers to place orders…</p>
           <button type="button" onClick={() => fetchOrders()} className="btn btn-sm btn-ghost gap-1 mt-2">
             <span aria-hidden>↻</span> Refresh
           </button>
@@ -720,7 +713,7 @@ export default function OrdersPage() {
                         className="rounded-xl h-14 flex items-center justify-center"
                         style={{ border: `1px dashed ${color}20` }}
                       >
-                        <span className="text-slate-600 text-[10px]">No orders</span>
+                        <span className="text-[10px]" style={{ color: "var(--t-dim)" }}>No orders</span>
                       </div>
                     ) : (
                       cols.map((session) => (

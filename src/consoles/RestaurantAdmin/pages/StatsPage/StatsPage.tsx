@@ -141,7 +141,7 @@ function StatusBreakdown({ data }: StatusBreakdownProps) {
             <div
               key={status}
               className="flex items-center gap-2 px-2.5 py-2 rounded-xl"
-              style={{ background: cfg?.bg ?? "rgba(255,255,255,0.04)", border: `1px solid ${cfg?.border ?? "rgba(255,255,255,0.1)"}` }}
+              style={{ background: cfg?.bg ?? "var(--t-float)", border: `1px solid ${cfg?.border ?? "var(--t-line)"}` }}
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -320,7 +320,7 @@ function OrderDetailPanel({ order, onClose }: OrderDetailPanelProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white leading-snug">{item.name}</p>
+                      <p className="text-sm font-semibold leading-snug" style={{ color: "var(--t-text)" }}>{item.name}</p>
                       {variantLabel && (
                         <p className="text-[11px]" style={{ color: "var(--t-dim)" }}>{variantLabel}</p>
                       )}
@@ -468,9 +468,9 @@ function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
                       <span
                         className="inline-block text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap"
                         style={{
-                          background: cfg?.bg ?? "rgba(255,255,255,0.06)",
-                          color: cfg?.color ?? "#94a3b8",
-                          border: `1px solid ${cfg?.border ?? "rgba(255,255,255,0.1)"}`,
+                          background: cfg?.bg ?? "var(--t-float)",
+                          color: cfg?.color ?? "var(--t-dim)",
+                          border: `1px solid ${cfg?.border ?? "var(--t-line)"}`,
                         }}
                       >
                         {cfg?.label ?? order.status}
@@ -547,8 +547,8 @@ export default function StatsPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
-            Stats & Reports
+          <h1 className="text-2xl font-bold" style={{ color: "var(--t-text)" }}>
+            Stats &amp; Reports
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--t-dim)" }}>
             Performance overview for your restaurant

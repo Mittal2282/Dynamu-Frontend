@@ -61,12 +61,12 @@ const STATUS_CONFIG: Record<string, DisplayStatusConfig> = {
   },
   unserviceable: {
     label: 'Offline',
-    bg:    'rgba(255,255,255,0.02)',
-    text:  'rgba(255,255,255,0.25)',
-    dot:   'rgba(255,255,255,0.2)',
-    bar:   'rgba(255,255,255,0.1)',
+    bg:    'color-mix(in srgb, var(--t-dim) 4%, transparent)',
+    text:  'var(--t-dim)',
+    dot:   'var(--t-dim)',
+    bar:   'var(--t-dim)',
     glow:  'none',
-    pillBg: 'rgba(255,255,255,0.07)',
+    pillBg: 'color-mix(in srgb, var(--t-dim) 12%, transparent)',
   },
 };
 
@@ -206,9 +206,9 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
       style={{
         minHeight:       (isOccupied && !isUnserviceable) ? undefined : '210px',
         backgroundColor: cfg.bg,
-        borderColor:     isUnserviceable ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)',
+        borderColor:     'var(--t-line)',
         boxShadow:       cfg.glow,
-        opacity:         isUnserviceable ? 0.6 : 1,
+        opacity:         isUnserviceable ? 0.65 : 1,
       }}
     >
       <div
@@ -235,9 +235,9 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                 onClick={() => setInfoOpen(v => !v)}
                 className="w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0 text-[10px] font-bold leading-none"
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  color: 'rgba(255,255,255,0.35)',
+                  background: 'var(--t-float)',
+                  border: '1px solid var(--t-line)',
+                  color: 'var(--t-dim)',
                 }}
               >
                 i
@@ -302,7 +302,7 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
         {isOccupied && (
           <div
             className="flex flex-col rounded-xl overflow-hidden"
-            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+            style={{ border: '1px solid var(--t-line)' }}
           >
             {orders.length === 0 ? (
               table.display_status === 'billing' ? (
@@ -330,8 +330,8 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                   style={{
                     gridTemplateColumns: '20px 1fr auto auto',
                     gap: '0 10px',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    backgroundColor: 'rgba(255,255,255,0.03)',
+                    borderBottom: '1px solid var(--t-line)',
+                    backgroundColor: 'var(--t-float)',
                   }}
                 >
                   <span />
@@ -350,7 +350,7 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                         style={{
                           gridTemplateColumns: '20px 1fr auto auto',
                           gap: '0 10px',
-                          borderBottom: i < orders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                          borderBottom: i < orders.length - 1 ? '1px solid var(--t-line)' : 'none',
                         }}
                       >
                         <span
@@ -392,8 +392,8 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                   <div
                     className="flex items-center justify-between px-3 py-2"
                     style={{
-                      borderTop: '1px solid rgba(255,255,255,0.07)',
-                      backgroundColor: 'rgba(255,255,255,0.03)',
+                      borderTop: '1px solid var(--t-line)',
+                      backgroundColor: 'var(--t-float)',
                     }}
                   >
                     <span
@@ -558,97 +558,127 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full max-w-sm rounded-2xl p-6 space-y-5"
+        className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
         style={{ background: 'var(--t-surface)', border: '1px solid var(--t-line)' }}
       >
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-bold" style={{ color: 'var(--t-text)' }}>Add Tables</p>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none">×</button>
+        {/* Modal header */}
+        <div
+          className="flex items-center justify-between px-6 py-4"
+          style={{ borderBottom: '1px solid var(--t-line)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: 'var(--t-accent-20)', border: '1px solid var(--t-accent-40)' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="var(--t-accent)" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <p className="text-sm font-bold" style={{ color: 'var(--t-text)' }}>Add Tables</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-base leading-none"
+            style={{ color: 'var(--t-dim)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--t-float)'; e.currentTarget.style.color = 'var(--t-text)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--t-dim)'; }}
+          >×</button>
         </div>
 
-        {error && <div role="alert" className="alert alert-error text-xs py-2">{error}</div>}
+        <div className="px-6 py-5 space-y-4">
+          {error && <div role="alert" className="alert alert-error text-xs py-2">{error}</div>}
 
-        {existingFloors.length > 0 && (
-          <div role="tablist" className="tabs tabs-boxed">
-            {[{ v: true, label: 'New Floor' }, { v: false, label: 'Existing Floor' }].map(({ v, label }) => (
-              <button
-                key={String(v)}
-                role="tab"
-                onClick={() => handleChange('is_new_floor', v)}
-                className={`tab text-xs font-semibold flex-1 ${form.is_new_floor === v ? 'tab-active' : ''}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {!form.is_new_floor && existingFloors.length > 0 && (
-          <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor</label>
-            <select
-              value={form.floor_number}
-              onChange={(e) => handleChange('floor_number', e.target.value)}
-              className="select select-bordered select-sm w-full cursor-pointer"
-            >
-              <option value="">Select floor…</option>
-              {existingFloors.map(f => (
-                <option key={f.floor} value={f.floor}>
-                  {f.floor_name ? `Floor ${f.floor} — ${f.floor_name}` : `Floor ${f.floor}`}
-                </option>
+          {existingFloors.length > 0 && (
+            <div role="tablist" className="tabs tabs-boxed">
+              {[{ v: true, label: 'New Floor' }, { v: false, label: 'Existing Floor' }].map(({ v, label }) => (
+                <button
+                  key={String(v)}
+                  role="tab"
+                  onClick={() => handleChange('is_new_floor', v)}
+                  className={`tab text-xs font-semibold flex-1 ${form.is_new_floor === v ? 'tab-active' : ''}`}
+                >
+                  {label}
+                </button>
               ))}
-            </select>
-          </div>
-        )}
+            </div>
+          )}
 
-        {form.is_new_floor && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor #</label>
-              <input
-                type="number"
-                min="1"
+          {!form.is_new_floor && existingFloors.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor</label>
+              <select
                 value={form.floor_number}
                 onChange={(e) => handleChange('floor_number', e.target.value)}
-                placeholder="Auto"
-                className={inputStyle}
-              />
+                className="select select-bordered select-sm w-full cursor-pointer"
+              >
+                <option value="">Select floor…</option>
+                {existingFloors.map(f => (
+                  <option key={f.floor} value={f.floor}>
+                    {f.floor_name ? `Floor ${f.floor} — ${f.floor_name}` : `Floor ${f.floor}`}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor Name</label>
-              <input
-                type="text"
-                value={form.floor_name}
-                onChange={(e) => handleChange('floor_name', e.target.value)}
-                placeholder="e.g. Rooftop"
-                className={inputStyle}
-              />
-            </div>
-          </div>
-        )}
+          )}
 
-        <div className="space-y-1">
-          <label className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Tables to Add *</label>
-          <input
-            type="number"
-            min="1"
-            max="100"
-            value={form.table_count}
-            onChange={(e) => handleChange('table_count', e.target.value)}
-            className={inputStyle}
-          />
-          <p className="text-[10px]" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>
-            Will be numbered T{nextStartNumber} → T{nextStartNumber + Math.max(0, (parseInt(form.table_count) || 1) - 1)}
-          </p>
+          {form.is_new_floor && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor #</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.floor_number}
+                  onChange={(e) => handleChange('floor_number', e.target.value)}
+                  placeholder="Auto"
+                  className={inputStyle}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Floor Name</label>
+                <input
+                  type="text"
+                  value={form.floor_name}
+                  onChange={(e) => handleChange('floor_name', e.target.value)}
+                  placeholder="e.g. Rooftop"
+                  className={inputStyle}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Tables to Add *</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={form.table_count}
+              onChange={(e) => handleChange('table_count', e.target.value)}
+              className={inputStyle}
+            />
+            <p className="text-[10px]" style={{ color: 'var(--t-dim)' }}>
+              Will be numbered T{nextStartNumber} → T{nextStartNumber + Math.max(0, (parseInt(form.table_count) || 1) - 1)}
+            </p>
+          </div>
         </div>
 
-        <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="btn btn-sm btn-ghost flex-1 text-xs">Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} className="btn btn-sm btn-primary flex-1 text-xs disabled:opacity-50">
+        {/* Modal footer */}
+        <div
+          className="flex gap-2 px-6 py-4"
+          style={{ borderTop: '1px solid var(--t-line)', background: 'var(--t-float)' }}
+        >
+          <button onClick={onClose} className="btn btn-sm btn-ghost flex-1 text-xs font-semibold">Cancel</button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="btn btn-sm btn-primary flex-1 text-xs font-semibold disabled:opacity-60"
+          >
             {saving ? <span className="loading loading-spinner loading-xs" /> : 'Add Tables'}
           </button>
         </div>
@@ -860,8 +890,11 @@ export default function TableStatusPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setAddModalOpen(true)} className="btn btn-sm btn-primary gap-1.5 text-xs">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="btn btn-sm btn-primary gap-1.5 text-xs font-semibold shadow-sm"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Add Tables
@@ -870,7 +903,8 @@ export default function TableStatusPage() {
           <button
             onClick={downloadQRPDF}
             disabled={pdfLoading || tables.length === 0}
-            className="btn btn-sm btn-ghost gap-1.5 text-xs disabled:opacity-40"
+            className="btn btn-sm btn-ghost gap-1.5 text-xs font-semibold disabled:opacity-50"
+            style={{ border: '1px solid var(--t-line)' }}
           >
             {pdfLoading
               ? <span className="loading loading-spinner loading-xs" />
@@ -882,11 +916,15 @@ export default function TableStatusPage() {
           <button
             onClick={() => fetchTables()}
             disabled={loading}
-            className="btn btn-sm btn-ghost gap-2 text-xs disabled:opacity-40"
+            className="btn btn-sm btn-ghost gap-1.5 text-xs font-semibold disabled:opacity-50"
+            style={{ border: '1px solid var(--t-line)' }}
           >
-            <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            {loading
+              ? <span className="loading loading-spinner loading-xs" />
+              : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            }
             Refresh
           </button>
         </div>

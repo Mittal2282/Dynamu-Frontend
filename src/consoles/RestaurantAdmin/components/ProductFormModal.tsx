@@ -129,7 +129,7 @@ interface SectionLabelProps { children: React.ReactNode }
 
 function SectionLabel({ children }: SectionLabelProps) {
   return (
-    <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-widest mb-3">
+    <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--t-dim)' }}>
       {children}
     </p>
   );
@@ -139,15 +139,15 @@ interface FieldLabelProps { children: React.ReactNode; hint?: string }
 
 function FieldLabel({ children, hint }: FieldLabelProps) {
   return (
-    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+    <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--t-dim)' }}>
       {children}
-      {hint && <span className="ml-1 text-slate-600 font-normal">{hint}</span>}
+      {hint && <span className="ml-1 font-normal" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>{hint}</span>}
     </label>
   );
 }
 
 const inputCls =
-  "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder-slate-600 focus:outline-none transition-colors";
+  "w-full t-form-field rounded-xl px-3 py-2 text-sm transition-colors";
 
 interface ToggleProps {
   checked: boolean;
@@ -161,13 +161,14 @@ function Toggle({ checked, onChange, label }: ToggleProps) {
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${checked ? "bg-green-500" : "bg-slate-600"}`}
+        className="relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none"
+        style={{ background: checked ? '#22c55e' : 'var(--t-dim)' }}
       >
         <span
           className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition duration-200 ${checked ? "translate-x-4" : "translate-x-0"}`}
         />
       </button>
-      <span className="text-xs text-slate-300">{label}</span>
+      <span className="text-xs" style={{ color: 'var(--t-dim)' }}>{label}</span>
     </label>
   );
 }
@@ -190,17 +191,17 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        border: `1px solid ${isDefault ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)"}`,
+        border: `1px solid ${isDefault ? "rgba(245,158,11,0.3)" : "var(--t-line)"}`,
       }}
     >
       {/* Part 1: data inputs */}
       <div
         className="flex items-center gap-2 p-2.5"
-        style={{ background: "rgba(255,255,255,0.03)" }}
+        style={{ background: "var(--t-float)" }}
       >
         <span
           className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-          style={{ background: "rgba(255,255,255,0.06)", color: "var(--t-dim)" }}
+          style={{ background: "var(--t-float)", color: "var(--t-dim)" }}
         >
           {index + 1}
         </span>
@@ -213,7 +214,7 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
           style={{ padding: "5px 10px", fontSize: "12px" }}
         />
         <div className="relative shrink-0">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-300 pointer-events-none select-none">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none select-none" style={{ color: 'var(--t-dim)' }}>
             ₹
           </span>
           <input
@@ -244,7 +245,7 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
             className={`${inputCls} w-16 text-center`}
             style={{ padding: "5px 18px 5px 6px", fontSize: "12px" }}
           />
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-600 pointer-events-none">
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>
             %
           </span>
         </div>
@@ -253,9 +254,9 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
           onClick={onRemove}
           title="Remove this variant"
           className="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg transition-colors"
-          style={{ color: "#475569" }}
+          style={{ color: "var(--t-dim)" }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--t-dim)")}
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -267,8 +268,8 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
       <div
         className="flex items-center gap-2 px-3 py-2 flex-wrap"
         style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.015)",
+          borderTop: "1px solid var(--t-line)",
+          background: "var(--t-float)",
         }}
       >
         <button
@@ -294,7 +295,7 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
           {isVeg ? "Vegetarian" : "Non-Veg"}
         </button>
 
-        <div className="h-3 w-px shrink-0" style={{ background: "rgba(255,255,255,0.1)" }} />
+        <div className="h-3 w-px shrink-0" style={{ background: "var(--t-line)" }} />
 
         <button
           type="button"
@@ -319,7 +320,7 @@ function VariantRow({ variant, index, onChange, onRemove, onSetDefault, isDefaul
           style={
             isDefault
               ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.3)" }
-              : { background: "transparent", color: "#475569", border: "1px solid rgba(255,255,255,0.07)" }
+              : { background: "transparent", color: "var(--t-dim)", border: "1px solid var(--t-line)" }
           }
         >
           <span>{isDefault ? "★" : "☆"}</span>
@@ -482,8 +483,8 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
               <div>
                 <FieldLabel>Category</FieldLabel>
                 {(existingCategories ?? []).length === 0 ? (
-                  <p className="text-xs text-slate-300 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
-                    No categories yet — use the <span className="text-white font-medium">Add Category</span> button first.
+                  <p className="text-xs rounded-xl px-3 py-2.5" style={{ color: 'var(--t-dim)', background: 'var(--t-float)', border: '1px solid var(--t-line)' }}>
+                    No categories yet — use the <span className="font-medium" style={{ color: 'var(--t-text)' }}>Add Category</span> button first.
                   </p>
                 ) : (
                   <select
@@ -492,7 +493,6 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                     className={`${inputCls} cursor-pointer`}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    style={{ background: "rgba(255,255,255,0.05)" }}
                   >
                     <option value="">Select a category…</option>
                     {(existingCategories ?? []).map((cat) => (
@@ -521,7 +521,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Pricing */}
         <div>
@@ -541,15 +541,14 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
             <div>
               <FieldLabel>GST Slab</FieldLabel>
               <select value={form.gst_slab} onChange={(e) => set("gst_slab", Number(e.target.value))}
-                className={`${inputCls} cursor-pointer`} onFocus={handleFocus} onBlur={handleBlur}
-                style={{ background: "rgba(255,255,255,0.05)" }}>
+                className={`${inputCls} cursor-pointer`} onFocus={handleFocus} onBlur={handleBlur}>
                 {GST_OPTIONS.map((g) => (<option key={g} value={g}>{g}%</option>))}
               </select>
             </div>
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Variants */}
         <div>
@@ -563,7 +562,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
             {form.has_variants && (
               <div className="space-y-3">
                 <div>
-                  <FieldLabel>Group Name <span className="text-slate-600">(applies to all variants)</span></FieldLabel>
+                  <FieldLabel>Group Name <span style={{ color: 'var(--t-dim)', opacity: 0.7 }}>(applies to all variants)</span></FieldLabel>
                   <input
                     type="text"
                     value={form.variants[0]?.groupName ?? ""}
@@ -581,15 +580,15 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                     onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
                     onBlur={(e) => (e.target.style.borderColor = "")}
                   />
-                  <p className="text-[10px] text-slate-600 mt-1">Shown to customers as "Protein: Chicken", "Size: Large" etc.</p>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>Shown to customers as "Protein: Chicken", "Size: Large" etc.</p>
                 </div>
 
                 {form.variants.length > 0 && (
                   <div className="flex items-center gap-2 px-2 select-none">
                     <span className="w-5 shrink-0" />
-                    <span className="flex-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Variant Name</span>
-                    <span className="w-20 text-[10px] font-semibold uppercase tracking-widest text-slate-600 text-right shrink-0">Price</span>
-                    <span className="w-16 text-[10px] font-semibold uppercase tracking-widest text-slate-600 text-center shrink-0">Discount</span>
+                    <span className="flex-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>Variant Name</span>
+                    <span className="w-20 text-[10px] font-semibold uppercase tracking-widest text-right shrink-0" style={{ color: 'var(--t-dim)' }}>Price</span>
+                    <span className="w-16 text-[10px] font-semibold uppercase tracking-widest text-center shrink-0" style={{ color: 'var(--t-dim)' }}>Discount</span>
                     <span className="w-6 shrink-0" />
                   </div>
                 )}
@@ -620,8 +619,8 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                       { ...EMPTY_VARIANT, groupName: form.variants[0]?.groupName ?? "" },
                     ])
                   }
-                  className="w-full py-2 rounded-xl text-xs font-semibold border border-dashed transition-all hover:border-white/20"
-                  style={{ borderColor: "rgba(255,255,255,0.1)", color: "var(--t-dim)", background: "rgba(255,255,255,0.02)" }}
+                  className="w-full py-2 rounded-xl text-xs font-semibold border border-dashed transition-all"
+                  style={{ borderColor: "var(--t-line)", color: "var(--t-dim)", background: "var(--t-float)" }}
                 >
                   + Add Variant
                 </button>
@@ -630,7 +629,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Properties */}
         <div>
@@ -652,31 +651,30 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                       key={n}
                       type="button"
                       onClick={() => set("spice_level", n)}
-                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all border ${
+                      className="w-8 h-8 rounded-lg text-xs font-semibold transition-all border"
+                      style={
                         form.spice_level === n
-                          ? "text-white border-transparent"
-                          : "text-slate-400 border-white/10 hover:border-white/20 bg-white/5"
-                      }`}
-                      style={form.spice_level === n ? { background: "var(--t-accent)", borderColor: "var(--t-accent)" } : {}}
+                          ? { background: "var(--t-accent)", borderColor: "var(--t-accent)", color: "#fff" }
+                          : { background: "var(--t-float)", borderColor: "var(--t-line)", color: "var(--t-dim)" }
+                      }
                     >
                       {n}
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-600 mt-1">0 = No spice · 5 = Extra hot</p>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>0 = No spice · 5 = Extra hot</p>
               </div>
               <div>
                 <FieldLabel>Taste Profile</FieldLabel>
                 <select value={form.taste_profile} onChange={(e) => set("taste_profile", e.target.value)}
-                  className={`${inputCls} cursor-pointer`} onFocus={handleFocus} onBlur={handleBlur}
-                  style={{ background: "rgba(255,255,255,0.05)" }}>
+                  className={`${inputCls} cursor-pointer`} onFocus={handleFocus} onBlur={handleBlur}>
                   {TASTE_OPTIONS.map((t) => (<option key={t} value={t}>{t}</option>))}
                 </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <FieldLabel>Preparation Time <span className="text-slate-600">(minutes)</span></FieldLabel>
+                <FieldLabel>Preparation Time <span style={{ color: 'var(--t-dim)', opacity: 0.7 }}>(minutes)</span></FieldLabel>
                 <input type="number" min="0" value={form.preparation_time} onChange={(e) => set("preparation_time", e.target.value)}
                   placeholder="15" className={inputCls} onFocus={handleFocus} onBlur={handleBlur} />
               </div>
@@ -689,7 +687,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Status Flags */}
         <div>
@@ -702,7 +700,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Ingredients & Allergens */}
         <div>
@@ -713,24 +711,24 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
               <textarea rows={2} value={form.ingredients} onChange={(e) => set("ingredients", e.target.value)}
                 placeholder="Paneer, tomato, bell peppers, tandoori masala, yogurt"
                 className={`${inputCls} resize-none`} onFocus={handleFocus} onBlur={handleBlur} />
-              <p className="text-[10px] text-slate-600 mt-1">Comma-separated list of key ingredients</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>Comma-separated list of key ingredients</p>
             </div>
             <div>
               <FieldLabel>Allergens</FieldLabel>
               <input type="text" value={form.allergens} onChange={(e) => set("allergens", e.target.value)}
                 placeholder="Dairy, Gluten, Nuts" className={inputCls} onFocus={handleFocus} onBlur={handleBlur} />
-              <p className="text-[10px] text-slate-600 mt-1">Comma-separated allergen list</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>Comma-separated allergen list</p>
             </div>
             <div>
               <FieldLabel>Tags</FieldLabel>
               <input type="text" value={form.tags} onChange={(e) => set("tags", e.target.value)}
                 placeholder="bestseller, spicy, quick" className={inputCls} onFocus={handleFocus} onBlur={handleBlur} />
-              <p className="text-[10px] text-slate-600 mt-1">Comma-separated labels for filtering</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>Comma-separated labels for filtering</p>
             </div>
           </div>
         </div>
 
-        <hr className="border-white/5" />
+        <hr style={{ borderColor: 'var(--t-line)' }} />
 
         {/* Media & Display */}
         <div>
@@ -747,32 +745,37 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
               />
               {imagePreview ? (
                 <div className="flex items-center gap-3">
-                  <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0" />
+                  <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-xl object-cover shrink-0" style={{ border: '1px solid var(--t-line)' }} />
                   <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={imageUploading}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-all disabled:opacity-50">
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                      style={{ background: 'var(--t-float)', border: '1px solid var(--t-line)', color: 'var(--t-dim)' }}>
                       {imageUploading ? "Uploading…" : "Change image"}
                     </button>
                     <button type="button"
                       onClick={() => { set("image_url", ""); setImagePreview(""); }}
-                      className="text-xs text-slate-600 hover:text-red-400 transition-colors text-left">
+                      className="text-xs transition-colors text-left"
+                      style={{ color: 'var(--t-dim)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t-dim)'; }}>
                       Remove
                     </button>
                   </div>
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={imageUploading}
-                  className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-xl border border-dashed border-white/15 bg-white/3 hover:bg-white/5 hover:border-white/25 transition-all disabled:opacity-50">
+                  className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed transition-all disabled:opacity-50"
+                  style={{ borderColor: 'var(--t-line)', background: 'var(--t-float)' }}>
                   {imageUploading ? (
                     <>
                       <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="text-xs text-slate-300">Uploading…</span>
+                      <span className="text-xs" style={{ color: 'var(--t-dim)' }}>Uploading…</span>
                     </>
                   ) : (
                     <>
                       <span className="text-xl">📷</span>
-                      <span className="text-xs text-slate-400">Click to upload image</span>
-                      <span className="text-[10px] text-slate-600">JPG, PNG, WEBP — max 5 MB</span>
+                      <span className="text-xs" style={{ color: 'var(--t-dim)' }}>Click to upload image</span>
+                      <span className="text-[10px]" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>JPG, PNG, WEBP — max 5 MB</span>
                     </>
                   )}
                 </button>
@@ -783,7 +786,7 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
                 <FieldLabel>Display Order</FieldLabel>
                 <input type="number" min="0" value={form.display_order} onChange={(e) => set("display_order", e.target.value)}
                   placeholder="0" className={inputCls} onFocus={handleFocus} onBlur={handleBlur} />
-                <p className="text-[10px] text-slate-600 mt-1">Lower number = shown first</p>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--t-dim)', opacity: 0.7 }}>Lower number = shown first</p>
               </div>
               <div className="pb-1">
                 <Toggle checked={form.is_combo} onChange={(v) => set("is_combo", v)} label="Combo item" />
@@ -809,7 +812,8 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
 
         <div className="flex gap-3 pt-1">
           <button type="button" onClick={onClose} disabled={saving}
-            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-all disabled:opacity-50">
+            className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+            style={{ color: 'var(--t-dim)', background: 'var(--t-float)', border: '1px solid var(--t-line)' }}>
             Cancel
           </button>
           <button type="button" onClick={handleSubmit} disabled={saving || imageUploading}

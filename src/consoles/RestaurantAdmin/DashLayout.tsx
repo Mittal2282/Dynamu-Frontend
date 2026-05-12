@@ -163,7 +163,7 @@ function NavItem({ item, collapsed, onClick }: NavItemProps) {
       className={({ isActive }) =>
         `relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group/nav ${
           collapsed ? "lg:justify-center lg:gap-0 lg:px-2 lg:py-2.5" : "px-3 py-2.5"
-        } ${isActive ? "" : "hover:bg-white/[0.04]"}`
+        }`
       }
       style={({ isActive }) =>
         isActive
@@ -175,6 +175,20 @@ function NavItem({ item, collapsed, onClick }: NavItemProps) {
             }
           : { color: "var(--t-dim)" }
       }
+      onMouseEnter={(e) => {
+        const el = e.currentTarget;
+        if (el.getAttribute("aria-current") !== "page") {
+          el.style.background = "var(--t-float)";
+          el.style.color = "var(--t-text)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget;
+        if (el.getAttribute("aria-current") !== "page") {
+          el.style.background = "";
+          el.style.color = "var(--t-dim)";
+        }
+      }}
     >
       {({ isActive }) => (
         <>
@@ -270,14 +284,15 @@ export default function DashLayout() {
         }}
       >
         <div
-          className="h-[2px] w-full shrink-0"
+          className="h-[3px] w-full shrink-0"
           style={{
-            background: "linear-gradient(90deg, var(--t-accent), var(--t-accent2, #fb923c))",
+            background: "linear-gradient(90deg, var(--t-accent) 0%, var(--t-accent2, #fb923c) 60%, transparent 100%)",
+            boxShadow: "0 1px 8px var(--t-accent-20)",
           }}
         />
 
         {/* Mobile drawer header */}
-        <div className="flex items-center justify-between px-3 py-2 shrink-0 lg:hidden border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-3 py-2 shrink-0 lg:hidden" style={{ borderBottom: "1px solid var(--t-line)" }}>
           <span className="text-xs font-semibold truncate pr-2" style={{ color: "var(--t-text)" }}>
             {restaurantName || "Menu"}
           </span>
@@ -286,8 +301,8 @@ export default function DashLayout() {
             className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors"
             style={{ color: "var(--t-dim)" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#fff";
-              e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+              e.currentTarget.style.color = "var(--t-text)";
+              e.currentTarget.style.background = "var(--t-float)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = "var(--t-dim)";
@@ -329,11 +344,7 @@ export default function DashLayout() {
             <div className={`min-w-0 flex-1 ${sidebarCollapsed ? "lg:hidden" : ""}`}>
               <p
                 className="text-sm font-bold truncate leading-tight"
-                style={{
-                  background: "linear-gradient(90deg, #fff 40%, rgba(255,255,255,0.5))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
+                style={{ color: "var(--t-text)" }}
               >
                 {restaurantName || "My Restaurant"}
               </p>
@@ -352,8 +363,8 @@ export default function DashLayout() {
               }`}
               style={{ color: "var(--t-dim)" }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#fff";
-                e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+                e.currentTarget.style.color = "var(--t-text)";
+                e.currentTarget.style.background = "var(--t-float)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.color = "var(--t-dim)";
@@ -475,7 +486,7 @@ export default function DashLayout() {
             style={{ color: "var(--t-dim)" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "var(--t-text)";
-              e.currentTarget.style.background = "rgba(128,128,128,0.08)";
+              e.currentTarget.style.background = "var(--t-float)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = "var(--t-dim)";
@@ -540,8 +551,8 @@ export default function DashLayout() {
             color: "var(--t-dim)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#fff";
-            e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.color = "var(--t-text)";
+            e.currentTarget.style.background = "var(--t-float)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = "var(--t-dim)";

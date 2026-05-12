@@ -99,13 +99,13 @@ export default function OrderDetailDrawer({ order, onClose }: OrderDetailDrawerP
           {order.customer_name && (
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--t-dim)' }}>Customer</p>
-              <p className="text-sm font-medium text-white">{order.customer_name}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--t-text)' }}>{order.customer_name}</p>
             </div>
           )}
           {order.table?.table_number && (
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--t-dim)' }}>Table</p>
-              <p className="text-sm font-medium text-white">#{order.table.table_number}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--t-text)' }}>#{order.table.table_number}</p>
             </div>
           )}
           {order.payment_status && (
@@ -168,7 +168,7 @@ export default function OrderDetailDrawer({ order, onClose }: OrderDetailDrawerP
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white leading-snug">{item.name}</p>
+                      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--t-text)' }}>{item.name}</p>
                       {variantLabel && (
                         <p className="text-[11px]" style={{ color: 'var(--t-dim)' }}>{variantLabel}</p>
                       )}
@@ -211,8 +211,8 @@ export default function OrderDetailDrawer({ order, onClose }: OrderDetailDrawerP
             </div>
           ))}
           <div
-            className="flex justify-between pt-2 mt-1 font-bold text-base text-white"
-            style={{ borderTop: '1px solid var(--t-line)' }}
+            className="flex justify-between pt-2 mt-1 font-bold text-base"
+            style={{ borderTop: '1px solid var(--t-line)', color: 'var(--t-text)' }}
           >
             <span>Total</span>
             <span style={{ color: 'var(--t-accent)' }}>{fmtCurrency(total)}</span>

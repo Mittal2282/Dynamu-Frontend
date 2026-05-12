@@ -80,7 +80,7 @@ export default function CompletedOrdersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Order History</h1>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--t-text)' }}>Order History</h1>
           <p className="text-xs mt-0.5" style={{ color: 'var(--t-dim)' }}>
             Completed &amp; served orders · {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           </p>
@@ -155,7 +155,7 @@ export default function CompletedOrdersPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
             <span className="text-3xl">📋</span>
-            <p className="text-sm font-semibold text-white">No orders found</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>No orders found</p>
             <p className="text-xs" style={{ color: 'var(--t-dim)' }}>
               {search ? 'Try a different search term' : 'Try adjusting the date range or add a manual order'}
             </p>
@@ -195,7 +195,7 @@ export default function CompletedOrdersPage() {
                       onClick={() => setSelectedOrder(order)}
                     >
                       <td className="px-4 py-3.5 whitespace-nowrap">
-                        <p className="text-xs font-semibold text-white">{fmtDate(order.createdAt)}</p>
+                        <p className="text-xs font-semibold" style={{ color: 'var(--t-text)' }}>{fmtDate(order.createdAt)}</p>
                         <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: 'var(--t-dim)' }}>{fmtTime(order.createdAt)}</p>
                       </td>
                       <td className="px-4 py-3.5">
@@ -216,9 +216,10 @@ export default function CompletedOrdersPage() {
                           {itemSummary || '—'}
                         </p>
                         {itemsArr.length > 0 && (
-                          <p className="text-[10px] mt-0.5 font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                          <p className="text-[10px] mt-0.5 font-semibold" style={{ color: 'var(--t-dim)' }}>
                             {totalItemCount} item{totalItemCount !== 1 ? 's' : ''}
                           </p>
+
                         )}
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
@@ -234,7 +235,7 @@ export default function CompletedOrdersPage() {
                         )}
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap">
-                        <p className="text-sm font-bold text-white tabular-nums">{fmtCurrency(order.total_amount)}</p>
+                        <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--t-text)' }}>{fmtCurrency(order.total_amount)}</p>
                       </td>
                       <td className="px-4 py-3.5">
                         <StatusBadge status={order.status} />

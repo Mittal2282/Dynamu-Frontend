@@ -263,7 +263,7 @@ function MenuItemCard({
       {/* ── Content ── */}
       <div className="flex flex-col gap-2.5 p-3 flex-1">
         <div>
-          <p className="text-sm font-semibold text-white line-clamp-1 leading-snug">{item.name}</p>
+          <p className="text-sm font-semibold line-clamp-1 leading-snug" style={{ color: "var(--t-text)" }}>{item.name}</p>
           <div className="flex items-center justify-between gap-1 mt-0.5">
             <div className="flex items-baseline gap-1.5 min-w-0">
               {hasVariants ? (
@@ -276,7 +276,7 @@ function MenuItemCard({
                     ₹{effectivePrice ?? item.price}
                   </span>
                   {effectivePrice && (
-                    <span className="text-xs line-through text-slate-300">₹{item.price}</span>
+                    <span className="text-xs line-through" style={{ color: "var(--t-dim)" }}>₹{item.price}</span>
                   )}
                 </>
               )}
@@ -331,15 +331,15 @@ function MenuItemCard({
 
         {/* Variants quick edit */}
         {hasVariants && (
-          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--t-line)" }}>
             <div
               className="flex items-center justify-between px-2.5 py-1.5"
-              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ background: "var(--t-float)", borderBottom: "1px solid var(--t-line)" }}
             >
               <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
                 {item.variants?.[0]?.groupName || "Variants"}
               </span>
-              <span className="text-[9px]" style={{ color: "#475569" }}>tap to edit</span>
+              <span className="text-[9px]" style={{ color: "var(--t-dim)" }}>tap to edit</span>
             </div>
             <div>
               {item.variants?.map((v, idx) => {
@@ -355,8 +355,8 @@ function MenuItemCard({
                     className="px-2.5 py-2"
                     style={{
                       opacity: avail ? 1 : 0.5,
-                      background: "rgba(255,255,255,0.01)",
-                      borderBottom: idx < (item.variants?.length ?? 0) - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                      background: "transparent",
+                      borderBottom: idx < (item.variants?.length ?? 0) - 1 ? "1px solid var(--t-line)" : "none",
                     }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
@@ -383,7 +383,7 @@ function MenuItemCard({
                       <span className="w-2 h-2 rounded-[2px] border shrink-0 flex items-center justify-center" style={{ borderColor: vCol }}>
                         <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
                       </span>
-                      <span className="text-[11px] text-slate-300 truncate flex-1 min-w-0">{v.name}</span>
+                      <span className="text-[11px] truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>{v.name}</span>
                     </div>
 
                     <div className="flex items-center justify-end gap-1.5">
@@ -474,13 +474,13 @@ function MenuItemCard({
           <div
             className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl"
             style={{
-              background: item.is_available ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.03)",
-              border: `1px solid ${item.is_available ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`,
+              background: item.is_available ? "rgba(34,197,94,0.08)" : "var(--t-float)",
+              border: `1px solid ${item.is_available ? "rgba(34,197,94,0.2)" : "var(--t-line)"}`,
             }}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: item.is_available ? "#22c55e" : "#475569" }} />
-              <span className="text-xs font-semibold truncate" style={{ color: item.is_available ? "#4ade80" : "#64748b" }}>
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: item.is_available ? "#22c55e" : "var(--t-dim)" }} />
+              <span className="text-xs font-semibold truncate" style={{ color: item.is_available ? "#4ade80" : "var(--t-dim)" }}>
                 {item.is_available ? "Visible to customers" : "Hidden from menu"}
               </span>
             </div>
@@ -497,7 +497,7 @@ function MenuItemCard({
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
               style={item.is_chefs_special
                 ? { background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.35)" }
-                : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }}
+                : { background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }}
             >
               <span>🔥</span><span className="whitespace-nowrap">Special</span>
             </button>
@@ -508,7 +508,7 @@ function MenuItemCard({
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 border disabled:opacity-50"
               style={item.is_featured
                 ? { background: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.3)" }
-                : { background: "rgba(255,255,255,0.03)", color: "#64748b", border: "1px solid rgba(255,255,255,0.07)" }}
+                : { background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }}
             >
               <span>⭐</span><span className="whitespace-nowrap">Featured</span>
             </button>
@@ -519,7 +519,7 @@ function MenuItemCard({
               onClick={() => onEdit(item)}
               disabled={isSaving}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-white disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.04)", color: "var(--t-text)", border: "1px solid rgba(255,255,255,0.09)" }}
+              style={{ background: "var(--t-float)", color: "var(--t-text)", border: "1px solid var(--t-line)" }}
             >
               <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z" />
@@ -531,7 +531,7 @@ function MenuItemCard({
               onClick={() => setConfirmDelete(true)}
               disabled={isSaving}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150 hover:text-red-400 hover:border-red-500/30 disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#64748b", border: "1px solid rgba(255,255,255,0.09)" }}
+              style={{ background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }}
             >
               <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -593,17 +593,23 @@ function CategorySection({ category, items, handlers, onAddToCategory }: Categor
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <button onClick={() => setCollapsed((c) => !c)} className="flex items-center gap-2.5 min-w-0 group">
-          <svg className={`w-3.5 h-3.5 shrink-0 text-slate-300 group-hover:text-white transition-all duration-200 ${collapsed ? "-rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg
+            className={`w-3.5 h-3.5 shrink-0 transition-all duration-200 ${collapsed ? "-rotate-90" : ""}`}
+            style={{ color: "var(--t-dim)" }}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-          <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400 group-hover:text-white transition-colors truncate">{category}</h2>
+          <h2 className="text-xs font-bold uppercase tracking-[0.12em] truncate" style={{ color: "var(--t-dim)" }}>{category}</h2>
           <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md shrink-0" style={{ background: "var(--t-float)", color: "var(--t-dim)" }}>{items.length}</span>
         </button>
 
         <button
           onClick={() => onAddToCategory(category)}
-          className="text-[11px] font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all duration-150 text-slate-300 hover:text-white shrink-0 border border-white/6 hover:border-white"
-          style={{ background: "rgba(255,255,255,0.04)" }}
+          className="text-[11px] font-semibold flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all duration-150 shrink-0"
+          style={{ background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--t-text)"; e.currentTarget.style.borderColor = "var(--t-dim)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--t-dim)"; e.currentTarget.style.borderColor = "var(--t-line)"; }}
         >
           + Add here
         </button>
@@ -611,8 +617,8 @@ function CategorySection({ category, items, handlers, onAddToCategory }: Categor
 
       {!collapsed && (
         items.length === 0 ? (
-          <div className="rounded-2xl flex items-center justify-center h-28 border border-dashed" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-            <p className="text-slate-600 text-xs">No items in this category</p>
+          <div className="rounded-2xl flex items-center justify-center h-28 border border-dashed" style={{ borderColor: "var(--t-line)" }}>
+            <p className="text-xs" style={{ color: "var(--t-dim)" }}>No items in this category</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -875,22 +881,15 @@ export default function MenuManagePage() {
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1
-            className="text-2xl font-bold"
-            style={{
-              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            } as React.CSSProperties}
-          >
+          <h1 className="text-2xl font-bold" style={{ color: "var(--t-text)" }}>
             Menu Management
           </h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}>
               {total} items
             </span>
-            <span className="text-slate-600 text-xs">·</span>
-            <span className="text-slate-300 text-xs">{availableCount} available</span>
+            <span className="text-xs" style={{ color: "var(--t-dim)" }}>·</span>
+            <span className="text-xs" style={{ color: "var(--t-dim)" }}>{availableCount} available</span>
           </div>
         </div>
 
@@ -916,17 +915,23 @@ export default function MenuManagePage() {
             {addMenuOpen && (
               <div
                 className="absolute right-0 mt-1.5 w-52 rounded-xl shadow-2xl z-50 overflow-hidden py-1"
-                style={{ background: "var(--t-float)", border: "1px solid rgba(255,255,255,0.1)" }}
+                style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
               >
                 <button
                   onClick={() => { setEditingItem(null); setProductModalOpen(true); setAddMenuOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
+                  className="w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 font-medium"
+                  style={{ color: "var(--t-text)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-surface)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
                   <span className="text-base">➕</span> Single Product
                 </button>
                 <button
                   onClick={() => { setBulkModalOpen(true); setAddMenuOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/5 transition-colors flex items-center gap-2.5"
+                  className="w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 font-medium"
+                  style={{ color: "var(--t-text)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-surface)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
                   <span className="text-base">📂</span> Bulk Upload
                 </button>
@@ -939,7 +944,7 @@ export default function MenuManagePage() {
       {/* ── Filters ── */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-52">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--t-dim)" }}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
@@ -953,14 +958,21 @@ export default function MenuManagePage() {
             className="input input-bordered w-full pl-9 pr-8 text-sm"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs">✕</button>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs transition-colors"
+              style={{ color: "var(--t-dim)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--t-text)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--t-dim)"; }}
+            >✕</button>
           )}
         </div>
 
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="select select-bordered text-sm"
+          className="select select-bordered text-sm font-medium"
+          style={{ minWidth: '10rem' }}
         >
           <option value="">All categories</option>
           {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
@@ -985,12 +997,15 @@ export default function MenuManagePage() {
 
         {isFiltering && (
           <>
-            <span className="text-slate-600 text-xs">{items.length} of {total}</span>
+            <span className="text-xs" style={{ color: "var(--t-dim)" }}>{items.length} of {total}</span>
             <button
               onClick={() => { setSearchQuery(""); setCategoryFilter(""); setAvailFilter("all"); }}
-              className="text-xs text-slate-300 hover:text-white transition-colors"
+              className="text-xs font-medium transition-colors"
+              style={{ color: "var(--t-dim)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--t-text)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--t-dim)"; }}
             >
-              Clear
+              Clear filters
             </button>
           </>
         )}
