@@ -18,22 +18,16 @@ interface ToggleProps {
 function Toggle({ checked, onChange, disabled }: ToggleProps) {
   return (
     <button
-      onClick={onChange}
-      disabled={disabled}
+      type="button"
       role="switch"
       aria-checked={checked}
-      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-      style={{
-        background: checked ? "#22c55e" : "rgba(239,68,68,0.7)",
-        boxShadow: checked
-          ? "0 0 10px rgba(34,197,94,0.4)"
-          : "0 0 8px rgba(239,68,68,0.25)",
-      }}
+      disabled={disabled}
+      onClick={onChange}
+      className="relative inline-flex h-6 w-11 rounded-full transition-colors duration-200 disabled:opacity-50 shrink-0"
+      style={{ background: checked ? 'var(--t-success)' : 'rgba(239,68,68,0.55)' }}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 mt-1 ${checked ? 'translate-x-6' : 'translate-x-1'}`}
       />
     </button>
   );
@@ -140,14 +134,7 @@ function IngredientCard({ ingredient, onToggle, saving }: IngredientCardProps) {
           </span>
         </div>
 
-        <span
-          className="px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 hidden xs:block"
-          style={
-            is_available
-              ? { background: "rgba(34,197,94,0.12)", color: "#4ade80" }
-              : { background: "rgba(239,68,68,0.12)", color: "#f87171" }
-          }
-        >
+        <span className={`badge badge-sm shrink-0 hidden xs:block ${is_available ? 'badge-success' : 'badge-error'}`}>
           {is_available ? "In Stock" : "Out of Stock"}
         </span>
 
@@ -178,7 +165,7 @@ function IngredientCard({ ingredient, onToggle, saving }: IngredientCardProps) {
 
         {isSaving ? (
           <div className="w-11 h-6 flex items-center justify-center shrink-0">
-            <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin" />
+            <span className="loading loading-spinner loading-sm" />
           </div>
         ) : (
           <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} />
@@ -405,32 +392,20 @@ export default function IngredientsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search ingredients…"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none transition-colors"
-              style={{ background: "var(--t-float)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+              className="input input-bordered w-full pl-10 text-sm"
             />
           </div>
 
-          <div
-            className="flex items-center gap-1 p-1 rounded-xl shrink-0"
-            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
-          >
+          <div role="tablist" className="tabs tabs-boxed shrink-0">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
+                role="tab"
                 onClick={() => setActiveFilter(f.key)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5"
-                style={
-                  activeFilter === f.key
-                    ? { background: "var(--t-surface)", color: "var(--t-text)", border: "1px solid var(--t-line)", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }
-                    : { color: "var(--t-dim)", border: "1px solid transparent" }
-                }
+                className={`tab text-xs font-semibold ${activeFilter === f.key ? 'tab-active' : ''}`}
               >
                 {f.label}
-                {activeFilter === f.key && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}>
-                    {total}
-                  </span>
-                )}
+                {activeFilter === f.key && <span className="ml-1.5 text-[10px] font-bold">{total}</span>}
               </button>
             ))}
           </div>
@@ -490,10 +465,7 @@ export default function IngredientsPage() {
           <div ref={sentinelRef} className="h-1" />
           {loading && (
             <div className="flex justify-center py-4">
-              <div
-                className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
-              />
+              <span className="loading loading-spinner loading-sm" />
             </div>
           )}
           {!hasMore && (ingredients as Ingredient[]).length > 0 && (

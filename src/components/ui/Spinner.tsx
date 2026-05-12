@@ -1,11 +1,9 @@
-import React from 'react';
-
-const SIZES: Record<string, string> = {
-  xs: 'w-3 h-3 border-[2px]',
-  sm: 'w-4 h-4 border-[2px]',
-  md: 'w-6 h-6 border-[2px]',
-  lg: 'w-8 h-8 border-[3px]',
-  xl: 'w-10 h-10 border-[3px]',
+const SIZE: Record<string, string> = {
+  xs: 'loading-xs',
+  sm: 'loading-sm',
+  md: 'loading-md',
+  lg: 'loading-lg',
+  xl: 'loading-xl',
 };
 
 interface SpinnerProps {
@@ -13,19 +11,12 @@ interface SpinnerProps {
   className?: string;
 }
 
-/**
- * Consistent loading spinner.
- */
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
     <span
       role="status"
       aria-label="Loading"
-      className={[
-        'inline-block rounded-full border-white/30 border-t-white animate-spin',
-        SIZES[size] ?? SIZES.md,
-        className,
-      ].filter(Boolean).join(' ')}
+      className={`loading loading-spinner ${SIZE[size] ?? SIZE.md} ${className}`}
     />
   );
 }

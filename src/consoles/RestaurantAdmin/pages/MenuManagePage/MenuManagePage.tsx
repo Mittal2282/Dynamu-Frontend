@@ -28,21 +28,19 @@ interface ToggleProps {
   colorOn?: string;
 }
 
-function Toggle({ checked, onChange, disabled, colorOn = "bg-green-500" }: ToggleProps) {
+function Toggle({ checked, onChange, disabled }: ToggleProps) {
   return (
     <button
-      onClick={onChange}
-      disabled={disabled}
-      aria-checked={checked}
+      type="button"
       role="switch"
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? colorOn : "bg-slate-600/80"
-      }`}
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onChange}
+      className="relative inline-flex h-6 w-11 rounded-full transition-colors duration-200 disabled:opacity-50 shrink-0"
+      style={{ background: checked ? 'var(--t-success)' : 'rgba(100,116,139,0.35)' }}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition duration-200 ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 mt-1 ${checked ? 'translate-x-6' : 'translate-x-1'}`}
       />
     </button>
   );
@@ -573,7 +571,7 @@ function MenuItemCard({
 
       {isSaving && (
         <div className="absolute inset-0 flex items-center justify-center rounded-2xl" style={{ background: "rgba(0,0,0,0.45)" }}>
-          <div className="w-6 h-6 border-[3px] border-white/20 border-t-white rounded-full animate-spin" />
+          <span className="loading loading-spinner loading-md" />
         </div>
       )}
     </div>
@@ -869,11 +867,7 @@ export default function MenuManagePage() {
 
   if (initialLoad) return <MenuPageSkeleton />;
   if (error && items.length === 0) {
-    return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
-        {error}
-      </div>
-    );
+    return <div role="alert" className="alert alert-error text-sm">{error}</div>;
   }
 
   return (
@@ -901,10 +895,7 @@ export default function MenuManagePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button
-            onClick={() => setCategoryModalOpen(true)}
-            className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95"
-          >
+          <button onClick={() => setCategoryModalOpen(true)} className="btn btn-sm btn-ghost gap-2 text-sm font-semibold">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
             </svg>
@@ -914,8 +905,7 @@ export default function MenuManagePage() {
           <div className="relative" ref={addMenuRef}>
             <button
               onClick={() => setAddMenuOpen((o) => !o)}
-              className="inline-flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95"
-              style={{ background: "var(--t-accent)" }}
+              className="btn btn-sm btn-primary gap-2 text-sm font-semibold"
             >
               + Add Item
               <svg className={`w-3.5 h-3.5 transition-transform duration-150 ${addMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -960,9 +950,7 @@ export default function MenuManagePage() {
             placeholder="Search items…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
-            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
-            onBlur={(e) => (e.target.style.borderColor = "")}
+            className="input input-bordered w-full pl-9 pr-8 text-sm"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs">✕</button>
@@ -972,14 +960,13 @@ export default function MenuManagePage() {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-          style={{ color: "var(--t-text)" }}
+          className="select select-bordered text-sm"
         >
           <option value="">All categories</option>
           {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
         </select>
 
-        <div className="flex rounded-xl border border-white/10 overflow-hidden text-xs font-semibold bg-white/5">
+        <div role="tablist" className="tabs tabs-boxed text-xs font-semibold">
           {[
             { value: "all", label: "All" },
             { value: "available", label: "Available" },
@@ -987,9 +974,9 @@ export default function MenuManagePage() {
           ].map((opt) => (
             <button
               key={opt.value}
+              role="tab"
               onClick={() => setAvailFilter(opt.value)}
-              className={`px-3 py-2 transition-all duration-150 ${availFilter === opt.value ? "text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
-              style={availFilter === opt.value ? { background: "var(--t-accent)" } : {}}
+              className={`tab text-xs font-semibold ${availFilter === opt.value ? 'tab-active' : ''}`}
             >
               {opt.label}
             </button>
@@ -1023,7 +1010,7 @@ export default function MenuManagePage() {
       <div ref={sentinelRef} className="h-1" />
       {loading && items.length > 0 && (
         <div className="flex justify-center py-4">
-          <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+          <span className="loading loading-spinner loading-sm" />
         </div>
       )}
       {!hasMore && items.length > 0 && (

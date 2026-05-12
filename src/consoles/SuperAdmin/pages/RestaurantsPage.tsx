@@ -100,8 +100,8 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = SUB_CONFIG[status] ?? SUB_CONFIG.trial;
   return (
     <span
-      className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border"
-      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+      className="badge badge-xs font-bold uppercase tracking-wide"
+      style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
     >
       {cfg.label}
     </span>
@@ -264,7 +264,7 @@ export default function RestaurantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 gap-3">
-        <div className="w-7 h-7 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+        <span className="loading loading-spinner loading-lg" />
         <span className="text-slate-300 text-sm">Loading…</span>
       </div>
     );
@@ -289,8 +289,7 @@ export default function RestaurantsPage() {
         </div>
         <button
           onClick={() => navigate("/superadmin/onboard")}
-          className="inline-flex items-center gap-2 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 text-sm shrink-0 active:scale-95"
-          style={{ background: "var(--t-accent)", boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}
+          className="btn btn-primary gap-2 text-sm shrink-0"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -363,13 +362,13 @@ export default function RestaurantsPage() {
         <div className="px-5 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div className="flex items-center gap-3">
             <p className="text-sm font-semibold text-white">All Restaurants</p>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-slate-400">
+            <span className="badge badge-sm">
               {search ? `${filtered.length} / ${restaurants.length}` : restaurants.length}
             </span>
           </div>
           <div className="relative sm:w-64">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none z-10"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8" />
@@ -380,7 +379,7 @@ export default function RestaurantsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or slug…"
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="input input-bordered input-sm pl-9 pr-8 w-full text-xs"
             />
             {search && (
               <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs">✕</button>
@@ -389,19 +388,19 @@ export default function RestaurantsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table table-zebra table-sm w-full">
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Restaurant</th>
-                <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Owner</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Tables</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Orders Today</th>
-                <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Onboarded</th>
-                <th className="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-300">Status</th>
-                <th className="px-4 py-3 w-10" />
+              <tr>
+                <th className="text-[10px] font-bold uppercase tracking-widest">Restaurant</th>
+                <th className="text-[10px] font-bold uppercase tracking-widest">Owner</th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Tables</th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Orders Today</th>
+                <th className="text-[10px] font-bold uppercase tracking-widest">Onboarded</th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Status</th>
+                <th className="w-10" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody>
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-16">
@@ -418,8 +417,8 @@ export default function RestaurantsPage() {
                     ? new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
                     : "—";
                   return (
-                    <tr key={r._id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-5 py-4">
+                    <tr key={r._id} className="hover cursor-pointer">
+                      <td>
                         <div className="flex items-center gap-2">
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
@@ -427,27 +426,27 @@ export default function RestaurantsPage() {
                             title={isActiveToday ? "Has orders today" : "No orders today"}
                           />
                           <div>
-                            <div className="font-semibold text-white group-hover:text-orange-400/90 transition-colors text-sm">{r.name}</div>
+                            <div className="font-semibold text-sm">{r.name}</div>
                             <div className="text-slate-300 text-xs mt-0.5 font-mono">/{r.slug}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="text-slate-200 text-sm">{r.owner?.name || "—"}</div>
+                      <td>
+                        <div className="text-sm">{r.owner?.name || "—"}</div>
                         <div className="text-slate-300 text-xs mt-0.5">{r.owner?.email}</div>
                       </td>
-                      <td className="px-4 py-4 text-center text-slate-300 text-sm">{r.table_count ?? 0}</td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="text-center">{r.table_count ?? 0}</td>
+                      <td className="text-center">
                         <span className="text-sm font-bold" style={{ color: isActiveToday ? "#22c55e" : "#475569" }}>
                           {r.orders_today ?? 0}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-slate-400 text-xs">{onboarded}</td>
-                      <td className="px-4 py-4 text-center"><StatusBadge status={r.subscription_status} /></td>
-                      <td className="px-4 py-4 text-right">
+                      <td className="text-xs">{onboarded}</td>
+                      <td className="text-center"><StatusBadge status={r.subscription_status} /></td>
+                      <td className="text-right">
                         <button
                           onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
-                          className="text-xs font-semibold text-slate-300 hover:text-orange-400 transition-colors whitespace-nowrap"
+                          className="btn btn-xs btn-ghost whitespace-nowrap"
                         >
                           View Orders →
                         </button>

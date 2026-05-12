@@ -57,22 +57,20 @@ interface FieldProps {
 
 function Field({ label, name, value, onChange, type = "text", placeholder, hint }: FieldProps) {
   return (
-    <div>
-      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
-        {label}
-      </label>
+    <label className="form-control w-full">
+      <div className="label pb-1">
+        <span className="label-text text-xs font-medium uppercase tracking-wider">{label}</span>
+      </div>
       <input
         type={type}
         name={name}
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-slate-600 focus:outline-none transition-colors"
-        onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
-        onBlur={(e) => (e.target.style.borderColor = "")}
+        className="input input-bordered w-full text-sm"
       />
-      {hint && <p className="text-xs text-slate-600 mt-1">{hint}</p>}
-    </div>
+      {hint && <div className="label pt-1"><span className="label-text-alt text-xs">{hint}</span></div>}
+    </label>
   );
 }
 
@@ -111,9 +109,7 @@ function Step1({ form, onChange, onNext, loading, error }: Step1Props) {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
-          {error}
-        </div>
+        <div role="alert" className="alert alert-error text-sm">{error}</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -323,17 +319,10 @@ function Step1({ form, onChange, onNext, loading, error }: Step1Props) {
         <button
           onClick={onNext}
           disabled={loading}
-          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
-          style={{ background: "var(--t-accent)" }}
+          className="btn btn-primary gap-2 disabled:opacity-50"
         >
-          {loading ? (
-            <>
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Creating…
-            </>
-          ) : (
-            "Next: Import Menu →"
-          )}
+          {loading && <span className="loading loading-spinner loading-sm" />}
+          {loading ? "Creating…" : "Next: Import Menu →"}
         </button>
       </div>
     </div>
@@ -503,9 +492,7 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
-          {error}
-        </div>
+        <div role="alert" className="alert alert-error text-sm">{error}</div>
       )}
 
       {/* Format reference */}
@@ -545,7 +532,7 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
         />
         {parsing ? (
           <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-            <span className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
+            <span className="loading loading-spinner loading-sm" />
             Reading file…
           </div>
         ) : fileName ? (
@@ -571,37 +558,25 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
       {preview.length > 0 && (
         <div>
           <p className="text-xs text-slate-300 mb-2">Preview — first {preview.length} rows</p>
-          <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--t-line)' }}>
+            <table className="table table-sm w-full text-xs">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left px-4 py-2.5 text-slate-300 uppercase tracking-wider font-semibold">
-                    Category
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-slate-300 uppercase tracking-wider font-semibold">
-                    Name
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-slate-300 uppercase tracking-wider font-semibold">
-                    Price
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-slate-300 uppercase tracking-wider font-semibold">
-                    Meal Tag
-                  </th>
-                  <th className="text-left px-4 py-2.5 text-slate-300 uppercase tracking-wider font-semibold">
-                    Veg/Non-Veg
-                  </th>
+                <tr>
+                  <th className="uppercase tracking-wider font-semibold">Category</th>
+                  <th className="uppercase tracking-wider font-semibold">Name</th>
+                  <th className="uppercase tracking-wider font-semibold">Price</th>
+                  <th className="uppercase tracking-wider font-semibold">Meal Tag</th>
+                  <th className="uppercase tracking-wider font-semibold">Veg/Non-Veg</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {preview.map((r, i) => (
-                  <tr key={i} className="hover:bg-white/[0.02]">
-                    <td className="px-4 py-2.5 text-slate-400">{r.category}</td>
-                    <td className="px-4 py-2.5 text-slate-200 font-medium">{r.name}</td>
-                    <td className="px-4 py-2.5 font-semibold" style={{ color: "var(--t-accent)" }}>
-                      {r.price}
-                    </td>
-                    <td className="px-4 py-2.5 text-slate-300">{r.meal_tag || "-"}</td>
-                    <td className="px-4 py-2.5 text-slate-300">{r.vegNonVeg || "-"}</td>
+                  <tr key={i} className="hover">
+                    <td>{r.category}</td>
+                    <td className="font-medium">{r.name}</td>
+                    <td className="font-semibold" style={{ color: "var(--t-accent)" }}>{r.price}</td>
+                    <td>{r.meal_tag || "-"}</td>
+                    <td>{r.vegNonVeg || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -620,17 +595,10 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
         <button
           onClick={handleImport}
           disabled={loading || parsing || !hasData}
-          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-150 disabled:opacity-50 active:scale-95 text-sm"
-          style={{ background: "var(--t-accent)" }}
+          className="btn btn-primary gap-2 disabled:opacity-50"
         >
-          {loading ? (
-            <>
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Importing…
-            </>
-          ) : (
-            "Import Menu →"
-          )}
+          {loading && <span className="loading loading-spinner loading-sm" />}
+          {loading ? "Importing…" : "Import Menu →"}
         </button>
       </div>
     </div>
@@ -683,17 +651,10 @@ function Step3({ restaurantId }: Step3Props) {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-        <button
-          onClick={downloadWithAuth}
-          className="inline-flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-150 active:scale-95"
-          style={{ background: "var(--t-accent)" }}
-        >
+        <button onClick={downloadWithAuth} className="btn btn-primary gap-2">
           📄 Download QR Codes PDF
         </button>
-        <button
-          onClick={() => navigate("/superadmin")}
-          className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium px-6 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 transition-all duration-150 text-sm"
-        >
+        <button onClick={() => navigate("/superadmin")} className="btn btn-ghost gap-2">
           ← Back to Restaurants
         </button>
       </div>

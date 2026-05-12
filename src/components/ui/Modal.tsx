@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,73 +8,44 @@ interface ModalProps {
   maxWidth?: string;
 }
 
-/**
- * Common accessible Modal component that applies a backdrop and body scroll lock.
- */
-export default function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  maxWidth = 'max-w-sm',
-}: ModalProps) {
-  // Prevent body scroll when open
+export default function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-sm' }: ModalProps) {
+  const ref = useRef<HTMLDialogElement>(null);
+
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
-    }
+    const el = ref.current;
+    if (!el) return;
+    if (isOpen) el.showModal();
+    else if (el.open) el.close();
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <dialog ref={ref} className="modal" onClose={onClose}>
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal Dialog */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        className={`relative w-full ${maxWidth} max-h-[90vh] rounded-2xl shadow-2xl flex flex-col`}
-        style={{
-          background: 'var(--t-bg)',
-          borderTop: '2.5px solid var(--t-accent)',
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className={`modal-box ${maxWidth} p-0 flex flex-col max-h-[90vh]`}
+        style={{ background: 'var(--t-bg)', borderTop: '2.5px solid var(--t-accent)' }}
       >
-        {/* Header */}
-        {(title || onClose) && (
-          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0">
-            {title && (
-              <h3 className="text-white font-bold text-lg leading-none tracking-wide">
-                {title}
-              </h3>
-            )}
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="w-8 h-8 -mr-2 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg cursor-pointer active:scale-95"
-                aria-label="Close modal"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Body */}
-        <div className="p-5 flex-1 min-h-0 overflow-y-auto">
-          {children}
+        <div
+          className="px-5 py-4 border-b flex items-center justify-between shrink-0"
+          style={{ borderColor: 'var(--t-line)' }}
+        >
+          {title && (
+            <h3 className="font-bold text-lg leading-none tracking-wide" style={{ color: 'var(--t-text)' }}>
+              {title}
+            </h3>
+          )}
+          <button
+            onClick={onClose}
+            className="btn btn-ghost btn-sm btn-circle ml-auto"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
         </div>
+        <div className="p-5 flex-1 min-h-0 overflow-y-auto">{children}</div>
       </div>
-    </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose} />
+      </form>
+    </dialog>
   );
 }

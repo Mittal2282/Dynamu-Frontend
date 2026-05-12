@@ -261,19 +261,11 @@ function OrderBatch({ order, sessionOrders, onStatusChange, updating }: OrderBat
             onClick={() => !ctaDisabled && onStatusChange(order._id, ctaStatus!)}
             disabled={updating === order._id || ctaDisabled}
             title={ctaTooltip ?? undefined}
-            className={`w-full sm:w-auto text-xs font-semibold text-white px-3 py-1.5 rounded-lg transition-all duration-150 active:scale-[0.98] ${
-              ctaDisabled ? "cursor-not-allowed" : ""
-            }`}
-            style={{
-              background: updating === order._id ? "var(--t-accent)" : ctaBg,
-              opacity: ctaDisabled ? 0.45 : 1,
-            }}
+            className={`btn btn-xs btn-primary w-full sm:w-auto ${ctaDisabled ? 'opacity-45 cursor-not-allowed' : ''}`}
+            style={ctaDisabled ? { background: '#475569', borderColor: '#475569' } : undefined}
           >
             {updating === order._id ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
-                Updating…
-              </span>
+              <><span className="loading loading-spinner loading-xs" />Updating…</>
             ) : (
               ctaLabel
             )}
@@ -383,17 +375,10 @@ function TableOrderCard({
           <button
             onClick={() => onCloseTable(sessionId)}
             disabled={closingTable === sessionId}
-            className="w-full py-2 rounded-lg text-[11px] font-bold text-slate-300 hover:text-white transition-all duration-150 disabled:opacity-40"
-            style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-            }}
+            className="btn btn-sm btn-ghost w-full text-[11px]"
           >
             {closingTable === sessionId ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <span className="w-3 h-3 border-2 border-slate-400/40 border-t-slate-400 rounded-full animate-spin inline-block" />
-                Closing…
-              </span>
+              <><span className="loading loading-spinner loading-xs" />Closing…</>
             ) : (
               "Close table"
             )}
@@ -607,8 +592,7 @@ export default function OrdersPage() {
                   const v = e.target.value;
                   setSelectedTable(v === "" ? null : v);
                 }}
-                className="rounded-lg border border-white/10 bg-white/5 text-white text-xs font-semibold py-1.5 pl-2 pr-8 min-w-[8.5rem] cursor-pointer focus:outline-none focus:ring-1 focus:ring-orange-500/50"
-                style={{ colorScheme: "dark" }}
+                className="select select-bordered select-sm min-w-[8.5rem] text-xs font-semibold"
               >
                 <option value="">All tables</option>
                 {tableNumbers.map((num) => (
@@ -661,12 +645,7 @@ export default function OrdersPage() {
           )}
 
           {activeCount > 0 && (
-            <span
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
-              style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}
-            >
-              {activeCount} active
-            </span>
+            <span className="badge badge-primary badge-sm shrink-0">{activeCount} active</span>
           )}
 
           <span className="text-[10px] text-slate-300 shrink-0">
@@ -684,11 +663,7 @@ export default function OrdersPage() {
             )}
           </span>
 
-          <button
-            type="button"
-            onClick={() => fetchOrders()}
-            className="ml-auto flex items-center gap-1 text-[11px] text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-lg transition-all duration-150 shrink-0"
-          >
+          <button type="button" onClick={() => fetchOrders()} className="btn btn-sm btn-ghost gap-1 ml-auto shrink-0">
             <span aria-hidden>↻</span> Refresh
           </button>
         </div>
@@ -702,11 +677,7 @@ export default function OrdersPage() {
           <span className="text-4xl">🍽️</span>
           <p className="text-white text-sm font-semibold">No orders yet</p>
           <p className="text-slate-300 text-xs">Waiting for customers to place orders…</p>
-          <button
-            type="button"
-            onClick={() => fetchOrders()}
-            className="mt-2 flex items-center gap-1 text-[11px] text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-lg transition-all duration-150"
-          >
+          <button type="button" onClick={() => fetchOrders()} className="btn btn-sm btn-ghost gap-1 mt-2">
             <span aria-hidden>↻</span> Refresh
           </button>
         </div>
@@ -735,12 +706,9 @@ export default function OrdersPage() {
                         {label}
                       </h2>
                     </div>
-                    <div
-                      className="min-w-[20px] h-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                      style={{ background: `${color}18`, color }}
-                    >
+                    <span className="badge badge-sm shrink-0" style={{ background: `${color}18`, color, border: 'none' }}>
                       {cols.length}
-                    </div>
+                    </span>
                   </div>
 
                   <div

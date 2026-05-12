@@ -10,13 +10,10 @@ interface CountBadgeProps {
   showZero?: boolean;
 }
 
-/**
- * VegBadge — green/red dot indicator for veg/non-veg items.
- */
+/** VegBadge — green/red dot indicator (kept custom — specific ◉ shape). */
 export function VegBadge({ isVeg, size = 'md', className = '' }: VegBadgeProps) {
   const dim = size === 'sm' ? 'w-2 h-2' : 'w-3 h-3';
 
-  // Mixed — item has both veg and non-veg variants; show green + red dots side-by-side
   if (isVeg === 'mixed') {
     return (
       <span
@@ -31,9 +28,9 @@ export function VegBadge({ isVeg, size = 'md', className = '' }: VegBadgeProps) 
   }
 
   const color =
-    isVeg === true  ? '#22c55e' :   // green
-    isVeg === false ? '#ef4444' :   // red
-                      '#94a3b8';   // unknown → slate
+    isVeg === true  ? '#22c55e' :
+    isVeg === false ? '#ef4444' :
+                      '#94a3b8';
 
   return (
     <span
@@ -45,20 +42,12 @@ export function VegBadge({ isVeg, size = 'md', className = '' }: VegBadgeProps) 
   );
 }
 
-/**
- * CountBadge — small numeric badge (e.g. cart count).
- */
+/** CountBadge — absolute-positioned numeric pill (e.g. cart count). */
 export function CountBadge({ count, className = '', showZero = false }: CountBadgeProps) {
   if (!showZero && count === 0) return null;
   return (
     <span
-      className={[
-        'absolute -top-2 -right-2',
-        'text-[10px] font-bold min-w-[1.25rem] h-5 px-0.5 rounded-full',
-        'flex items-center justify-center text-white',
-        className,
-      ].join(' ')}
-      style={{ backgroundColor: 'var(--t-accent)' }}
+      className={`badge badge-primary badge-sm absolute -top-2 -right-2 text-[10px] font-bold px-0.5 ${className}`}
     >
       {count > 99 ? '99+' : count}
     </span>

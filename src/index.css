@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "daisyui" { themes: false; }
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
@@ -44,6 +45,27 @@
   --t-success: #22c55e;
   --t-warning: #f59e0b;
   --t-error:   #ef4444;
+
+  /* ── daisyUI v5 semantic bridge → our theme tokens ───────────────────── */
+  --color-primary:         var(--t-accent);
+  --color-primary-content: #fff;
+  --color-secondary:       var(--t-accent2);
+  --color-accent:          var(--t-accent3);
+  --color-base-100:        var(--t-bg);
+  --color-base-200:        var(--t-surface);
+  --color-base-300:        var(--t-float);
+  --color-base-content:    var(--t-text);
+  --color-neutral:         var(--t-surface);
+  --color-neutral-content: var(--t-dim);
+  --color-error:           var(--t-error);
+  --color-success:         var(--t-success);
+  --color-warning:         var(--t-warning);
+  --color-info:            var(--t-accent2);
+
+  /* Match daisyUI radius to existing rounded-xl / rounded-2xl */
+  --radius-box:   1rem;
+  --radius-btn:   0.75rem;
+  --radius-badge: 9999px;
 }
 
 /* ─── Tailwind v4 theme ────────────────────────────────────────────────────── */
