@@ -172,3 +172,24 @@ export function applyCssTokens(tokens: Record<string, string>): void {
     root.style.setProperty(key, value);
   });
 }
+
+const LIGHT_NEUTRAL_OVERRIDES: Record<string, string> = {
+  '--t-bg':         '#F5F7FA',
+  '--t-surface':    '#FFFFFF',
+  '--t-float':      '#EBEEF2',
+  '--t-text':       '#111827',
+  '--t-dim':        '#6B7280',
+  '--t-line':       'rgba(0,0,0,0.09)',
+  '--t-nav-active': 'color-mix(in srgb, #F5F7FA 85%, black 15%)',
+  '--t-nav-muted':  'color-mix(in srgb, #F5F7FA 28%, black 72%)',
+};
+
+/**
+ * Apply light/dark mode neutral overrides on top of the current restaurant theme.
+ * Must be called AFTER applyCssTokens() so it wins over dark theme neutrals.
+ * Also sets data-color-mode on <html> for CSS utility-class overrides (.glass, .shimmer).
+ */
+export function applyColorMode(mode: 'light' | 'dark'): void {
+  document.documentElement.setAttribute('data-color-mode', mode);
+  if (mode === 'light') applyCssTokens(LIGHT_NEUTRAL_OVERRIDES);
+}

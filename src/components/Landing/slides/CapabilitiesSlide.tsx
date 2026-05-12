@@ -1,4 +1,4 @@
-import { CYAN, IMG, ORANGE, OVERLAY_CAPABILITIES, PURPLE } from '../../../constants/landingConstants';
+import { CARD_BG, CARD_BG_HOVER, CYAN, IMG, ORANGE, OVERLAY_CAPABILITIES, PURPLE } from '../../../constants/landingConstants';
 import { CAPABILITY_ITEMS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
@@ -42,17 +42,17 @@ export function CapabilitiesSlide() {
                 <div
                   className="group h-full flex items-start gap-4 p-6 rounded-xl transition-all duration-300 cursor-default"
                   style={{
-                    background: 'rgba(10,12,16,0.78)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: CARD_BG,
+                    border: '1px solid rgba(0,0,0,0.10)',
                     backdropFilter: 'blur(14px)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = `${color}40`;
-                    e.currentTarget.style.background = 'rgba(10,12,16,0.88)';
+                    e.currentTarget.style.background = CARD_BG_HOVER;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                    e.currentTarget.style.background = 'rgba(10,12,16,0.78)';
+                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.10)';
+                    e.currentTarget.style.background = CARD_BG;
                   }}
                 >
                   <div

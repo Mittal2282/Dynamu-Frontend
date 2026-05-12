@@ -145,3 +145,16 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Landing light-mode text overrides ────────────────────────────────────────
+   Scoped to .landing-page so these don't bleed into app routes.
+   Targets Tailwind text-* utilities which are in @layer utilities (lower
+   cascade priority than unlayered rules), so no !important needed.
+   ──────────────────────────────────────────────────────────────────────────── */
+.landing-page .text-white,
+.landing-page .text-slate-100 { color: #111827; }
+.landing-page .text-slate-200  { color: #1f2937; }
+.landing-page .text-slate-300  { color: #4b5563; }
+.landing-page .text-slate-400  { color: #6b7280; }
+.landing-page .text-slate-600  { color: #9ca3af; }
+.landing-page .hover\:text-white:hover { color: #111827; }

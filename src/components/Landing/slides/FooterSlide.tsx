@@ -3,8 +3,8 @@ import { ORANGE } from "../../../constants/landingConstants";
 export function FooterSlide() {
   return (
     <footer
-      className="border-t min-h-[100dvh] w-full flex flex-col justify-between shrink-0 relative overflow-hidden bg-[#0a0c10]"
-      style={{ borderColor: "rgba(255,255,255,0.05)" }}
+      className="border-t min-h-[100dvh] w-full flex flex-col justify-between shrink-0 relative overflow-hidden bg-[#F5F7FA]"
+      style={{ borderColor: "rgba(0,0,0,0.08)" }}
     >
       {/* Subtle background glow */}
       <div
@@ -40,7 +40,7 @@ export function FooterSlide() {
                 href="https://x.com/bhavyam"
                 target="_blank"
                 rel="noreferrer"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors text-slate-300"
+                className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center border border-black/10 hover:bg-black/10 transition-colors text-slate-500"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.008 4.15H5.078z" />
@@ -113,7 +113,7 @@ export function FooterSlide() {
 
       <div
         className="w-full border-t relative z-10"
-        style={{ borderColor: "rgba(255,255,255,0.05)" }}
+        style={{ borderColor: "rgba(0,0,0,0.08)" }}
       >
         <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[13px] font-medium text-slate-300">

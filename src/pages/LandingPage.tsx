@@ -25,8 +25,8 @@ export default function LandingPage() {
 
   return (
     <div
-      className="fixed inset-0 text-white overflow-hidden touch-pan-x"
-      style={{ background: BG as string, fontFamily: "'Outfit', sans-serif" }}
+      className="landing-page fixed inset-0 overflow-hidden touch-pan-x"
+      style={{ background: BG as string, color: '#111827', fontFamily: "'Outfit', sans-serif" }}
       ref={viewportRef as React.RefObject<HTMLDivElement>}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
