@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface ToastOptions {
   status?: 'success' | 'error' | 'info' | 'warning';
   title: string;
@@ -21,42 +20,29 @@ const ICONS: Record<string, string> = {
   warning: '⚠️',
 };
 
-const BG: Record<string, string> = {
-  success: 'border-green-500/30 bg-green-500/10 text-green-400',
-  error:   'border-red-500/30 bg-red-500/10 text-red-400',
-  info:    'border-blue-500/30 bg-blue-500/10 text-blue-300',
-  warning: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+const ALERT_CLASS: Record<string, string> = {
+  success: 'alert-success',
+  error:   'alert-error',
+  info:    'alert-info',
+  warning: 'alert-warning',
 };
 
-// ─── Context ──────────────────────────────────────────────────────────────────
 const ToastContext = createContext<ToastFn | null>(null);
 
-// ─── Toast Item ───────────────────────────────────────────────────────────────
-interface ToastItemProps extends ToastItem {
-  onDismiss: (id: number) => void;
-}
-
-function ToastItemComponent({ id, status = 'info', title, description, onDismiss }: ToastItemProps) {
+function ToastItemComponent({ id, status = 'info', title, description, onDismiss }: ToastItem & { onDismiss: (id: number) => void }) {
   return (
     <div
       role="alert"
-      className={[
-        'relative flex items-start gap-3 rounded-2xl border px-4 py-3',
-        'shadow-2xl backdrop-blur-xl w-full max-w-sm',
-        'animate-[fadeSlideIn_0.25s_ease-out]',
-        BG[status] ?? BG.info,
-      ].join(' ')}
+      className={`alert ${ALERT_CLASS[status] ?? ALERT_CLASS.info} shadow-2xl w-full max-w-sm animate-[fadeSlideIn_0.25s_ease-out]`}
     >
-      <span className="text-lg shrink-0 mt-0.5">{ICONS[status]}</span>
+      <span className="text-lg shrink-0">{ICONS[status]}</span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold leading-snug">{title}</p>
-        {description && (
-          <p className="text-xs opacity-80 mt-0.5 leading-relaxed">{description}</p>
-        )}
+        {description && <p className="text-xs opacity-80 mt-0.5 leading-relaxed">{description}</p>}
       </div>
       <button
         onClick={() => onDismiss(id)}
-        className="shrink-0 opacity-60 hover:opacity-100 transition-opacity text-lg leading-none"
+        className="btn btn-ghost btn-xs btn-circle shrink-0"
         aria-label="Dismiss notification"
       >
         ×
@@ -65,12 +51,7 @@ function ToastItemComponent({ id, status = 'info', title, description, onDismiss
   );
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-interface ToastProviderProps {
-  children: React.ReactNode;
-}
-
-export function ToastProvider({ children }: ToastProviderProps) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const idRef = useRef(0);
 
@@ -87,8 +68,6 @@ export function ToastProvider({ children }: ToastProviderProps) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-
-      {/* Portal-style stack — fixed top-right */}
       <div
         aria-live="polite"
         aria-atomic="false"
@@ -102,11 +81,6 @@ export function ToastProvider({ children }: ToastProviderProps) {
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-/**
- * Returns the toast dispatch function.
- * toast({ status, title, description?, duration? })
- */
 export function useToast(): ToastFn {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');

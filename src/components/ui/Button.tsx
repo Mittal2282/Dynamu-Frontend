@@ -1,45 +1,17 @@
 import React from 'react';
-import { Spinner } from './Spinner';
 
-interface VariantStyle {
-  base: string;
-  hover: string;
-  active: string;
-  disabled: string;
-}
-
-const VARIANTS: Record<string, VariantStyle> = {
-  primary: {
-    base:     'bg-brand text-white',
-    hover:    'hover:opacity-90',
-    active:   'active:scale-[0.97]',
-    disabled: 'opacity-50 cursor-not-allowed',
-  },
-  secondary: {
-    base:     'bg-white/10 text-white border border-white/20',
-    hover:    'hover:bg-white/20',
-    active:   'active:scale-[0.97]',
-    disabled: 'opacity-50 cursor-not-allowed',
-  },
-  ghost: {
-    base:     'bg-transparent text-white/70',
-    hover:    'hover:text-white hover:bg-white/10',
-    active:   'active:scale-[0.97]',
-    disabled: 'opacity-50 cursor-not-allowed',
-  },
-  danger: {
-    base:     'bg-red-500 text-white',
-    hover:    'hover:bg-red-600',
-    active:   'active:scale-[0.97]',
-    disabled: 'opacity-50 cursor-not-allowed',
-  },
+const VARIANT: Record<string, string> = {
+  primary:   'btn-primary',
+  secondary: 'btn-ghost border border-white/20',
+  ghost:     'btn-ghost',
+  danger:    'btn-error',
 };
 
-const SIZES: Record<string, string> = {
-  sm:  'px-3 py-1.5 text-xs rounded-lg',
-  md:  'px-5 py-2.5 text-sm rounded-xl',
-  lg:  'px-6 py-3.5 text-base rounded-2xl',
-  xl:  'px-8 py-4 text-base rounded-2xl',
+const SIZE: Record<string, string> = {
+  sm: 'btn-sm',
+  md: '',
+  lg: 'btn-lg',
+  xl: 'btn-xl',
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -51,25 +23,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
-/**
- * Consistent button component.
- */
 export default function Button({
-  variant    = 'primary',
-  size       = 'md',
-  loading    = false,
-  disabled   = false,
+  variant   = 'primary',
+  size      = 'md',
+  loading   = false,
+  disabled  = false,
   leftIcon,
   rightIcon,
-  fullWidth  = false,
-  className  = '',
+  fullWidth = false,
+  className = '',
   children,
-  type       = 'button',
+  type      = 'button',
   onClick,
   ...rest
 }: ButtonProps) {
-  const v = VARIANTS[variant] ?? VARIANTS.primary;
-  const s = SIZES[size]       ?? SIZES.md;
   const isDisabled = disabled || loading;
 
   return (
@@ -78,31 +45,23 @@ export default function Button({
       disabled={isDisabled}
       onClick={isDisabled ? undefined : onClick}
       className={[
-        'relative inline-flex items-center justify-center gap-2 font-semibold',
-        'transition-all duration-150',
-        v.base,
-        !isDisabled && v.hover,
-        !isDisabled && v.active,
-        isDisabled  && v.disabled,
-        fullWidth   && 'w-full',
-        !isDisabled && 'hover:cursor-pointer',
-        isDisabled && 'cursor-not-allowed',
-        s,
+        'btn active:scale-[0.97]',
+        VARIANT[variant] ?? VARIANT.primary,
+        SIZE[size]       ?? '',
+        fullWidth && 'w-full',
         className,
       ].filter(Boolean).join(' ')}
       {...rest}
     >
-      {/* Hidden content during loading (preserves button width) */}
       <span className={`inline-flex items-center gap-2 ${loading ? 'opacity-0' : ''}`}>
         {leftIcon && <span>{leftIcon}</span>}
         {children}
         {rightIcon && <span>{rightIcon}</span>}
       </span>
 
-      {/* Spinner overlay */}
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <Spinner size="sm" />
+          <span className="loading loading-spinner loading-sm" />
         </span>
       )}
     </button>

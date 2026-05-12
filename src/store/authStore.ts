@@ -23,6 +23,10 @@ interface AuthState {
   // Batch setter — used by LoginPage to set all admin fields at once
   setAdminTokens: (tokens: { accessToken: string; refreshToken: string; role: string; name: string }) => void;
 
+  // UI colour mode preference
+  colorMode: 'light' | 'dark';
+  setColorMode: (mode: 'light' | 'dark') => void;
+
   // Reset helpers
   resetAuth: () => void;
 }
@@ -58,6 +62,10 @@ export const authStore = create<AuthState>()(
             adminName:         name,
           })),
 
+        // UI colour mode preference
+        colorMode: 'light',
+        setColorMode: (colorMode) => set(() => ({ colorMode })),
+
         // Reset helpers
         resetAuth: () =>
           set(() => ({
@@ -67,6 +75,7 @@ export const authStore = create<AuthState>()(
             adminRefreshToken: null,
             adminRole: null,
             adminName: null,
+            colorMode: 'light',
           })),
       }),
       { name: 'AuthStore' }

@@ -395,12 +395,7 @@ function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
           <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
             Order Log
           </p>
-          <span
-            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "var(--t-accent-20)", color: "var(--t-accent)" }}
-          >
-            {orders.length}
-          </span>
+          <span className="badge badge-primary badge-sm">{orders.length}</span>
         </div>
         <p className="text-[11px]" style={{ color: "var(--t-dim)" }}>
           Today's activity
@@ -421,13 +416,13 @@ function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table table-zebra table-sm w-full">
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--t-line)" }}>
+              <tr>
                 {["Order #", "Table", "Items", "Amount", "Status"].map((h, i) => (
                   <th
                     key={h}
-                    className={`px-5 py-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap ${i === 3 ? "text-right" : i === 4 ? "text-center" : "text-left"}`}
+                    className={`text-[10px] font-bold uppercase tracking-widest whitespace-nowrap ${i === 3 ? "text-right" : i === 4 ? "text-center" : "text-left"}`}
                     style={{ color: "var(--t-dim)" }}
                   >
                     {h}
@@ -436,59 +431,40 @@ function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
               </tr>
             </thead>
             <tbody>
-              {orders.slice(0, 50).map((order, idx) => {
+              {orders.slice(0, 50).map((order) => {
                 const cfg = STATUS_CONFIG[order.status];
                 const itemSummary = order.items?.map((i) => i.name).join(", ") || "—";
                 return (
                   <tr
                     key={order._id}
-                    className="transition-colors duration-100 cursor-pointer"
-                    style={{
-                      borderBottom: idx < orders.length - 1 ? "1px solid var(--t-line)" : "none",
-                    }}
+                    className="hover cursor-pointer"
                     onClick={() => onOrderClick(order)}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <span
-                        className="font-mono text-xs font-semibold"
-                        style={{ color: "var(--t-accent)" }}
-                      >
+                    <td className="whitespace-nowrap">
+                      <span className="font-mono text-xs font-semibold" style={{ color: "var(--t-accent)" }}>
                         #{order.order_number}
                       </span>
                     </td>
 
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      <span
-                        className="text-xs font-semibold px-2 py-1 rounded-lg"
-                        style={{
-                          background: "var(--t-float)",
-                          color: "var(--t-text)",
-                          border: "1px solid var(--t-line)",
-                        }}
-                      >
+                    <td className="whitespace-nowrap">
+                      <span className="badge badge-sm badge-ghost">
                         T{order.table?.table_number ?? order.table_number ?? "—"}
                       </span>
                     </td>
 
-                    <td className="px-5 py-3 max-w-[200px]">
-                      <p
-                        className="text-xs truncate"
-                        style={{ color: "var(--t-dim)" }}
-                        title={itemSummary}
-                      >
+                    <td className="max-w-[200px]">
+                      <p className="text-xs truncate" style={{ color: "var(--t-dim)" }} title={itemSummary}>
                         {itemSummary}
                       </p>
                     </td>
 
-                    <td className="px-5 py-3 text-right whitespace-nowrap">
+                    <td className="text-right whitespace-nowrap">
                       <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
                         ₹{Math.round(order.total_amount || 0).toLocaleString()}
                       </span>
                     </td>
 
-                    <td className="px-5 py-3 text-center">
+                    <td className="text-center">
                       <span
                         className="inline-block text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap"
                         style={{
@@ -579,20 +555,13 @@ export default function StatsPage() {
           </p>
         </div>
 
-        <div
-          className="flex gap-1 p-1 rounded-xl self-start sm:self-auto"
-          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
-        >
+        <div role="tablist" className="tabs tabs-boxed self-start sm:self-auto">
           {RANGES.map((r) => (
             <button
               key={r.value}
+              role="tab"
               onClick={() => handleRangeChange(r.value)}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150"
-              style={
-                range === r.value
-                  ? { background: "var(--t-accent)", color: "#fff", boxShadow: "0 2px 8px var(--t-accent-20)" }
-                  : { color: "var(--t-dim)" }
-              }
+              className={`tab text-xs font-semibold ${range === r.value ? 'tab-active' : ''}`}
             >
               {r.label}
             </button>
@@ -602,10 +571,7 @@ export default function StatsPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div
-            className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: "var(--t-accent-20)", borderTopColor: "var(--t-accent)" }}
-          />
+          <span className="loading loading-spinner loading-lg" />
           <p className="text-sm" style={{ color: "var(--t-dim)" }}>Loading stats…</p>
         </div>
       ) : (

@@ -9,7 +9,7 @@ export function LandingNav({ onAdminLogin }: LandingNavProps) {
     <nav
       className="fixed top-0 left-0 right-0 z-50 border-b pointer-events-auto"
       style={{
-        background: 'rgba(10,12,16,0.82)',
+        background: 'rgba(245,247,250,0.92)',
         backdropFilter: 'blur(22px)',
         WebkitBackdropFilter: 'blur(22px)',
         borderColor: BORDER,

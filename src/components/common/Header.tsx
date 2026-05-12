@@ -4,6 +4,7 @@ import { CountBadge } from '../ui/Badge';
 import Text from '../ui/Text';
 import { useCartCount, useCartTotal } from '../../store/cartStore';
 import { restaurantStore } from '../../store/restaurantStore';
+import { authStore } from '../../store/authStore';
 import { formatCurrency } from '../../utils/formatters';
 
 interface IconProps {
@@ -43,8 +44,10 @@ interface HeaderProps {
 
 export default function Header({ onCartClick, variant = 'legacy', basePath = '', aiChatOpen = false, onAIClick }: HeaderProps) {
   const { name, tagline, currencySymbol, tableNumber, tableFloor, tableFloorName } = restaurantStore();
+  const { colorMode, setColorMode } = authStore();
   const count = useCartCount();
   const total = useCartTotal();
+  const toggleMode = () => setColorMode(colorMode === 'light' ? 'dark' : 'light');
 
   if (variant === 'customer') {
     const title = name || 'Restaurant';
@@ -117,6 +120,25 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
               Orders
             </NavLink>
           </nav>
+
+          {/* Light/dark toggle */}
+          <button
+            type="button"
+            onClick={toggleMode}
+            aria-label={colorMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors active:scale-95"
+            style={{ color: 'var(--t-dim)' }}
+          >
+            {colorMode === 'dark' ? (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+              </svg>
+            )}
+          </button>
 
           {/* Mobile cart button — opens drawer */}
           <button

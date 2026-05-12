@@ -1,4 +1,4 @@
-import { BORDER, IMG, ORANGE, OVERLAY_PROBLEM } from '../../../constants/landingConstants';
+import { BORDER, CARD_BG, IMG, ORANGE, OVERLAY_PROBLEM } from '../../../constants/landingConstants';
 import { PROBLEM_CARDS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
@@ -35,7 +35,7 @@ export function ProblemSlide() {
               <div
                 className="h-full p-6 rounded-xl"
                 style={{
-                  background: 'rgba(10,12,16,0.78)',
+                  background: CARD_BG,
                   border: `1px solid ${BORDER}`,
                   backdropFilter: 'blur(12px)',
                 }}

@@ -39,51 +39,30 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab bar */}
-      <div
-        className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto"
-        style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
-      >
-        {TABS.map((t) => {
-          const isActive = active === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => t.available && setActive(t.key)}
-              disabled={!t.available}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-              style={
-                isActive
-                  ? {
-                      background: "var(--t-surface)",
-                      color: "var(--t-text)",
-                      border: "1px solid var(--t-line)",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-                    }
-                  : { color: "var(--t-dim)", border: "1px solid transparent" }
-              }
-            >
-              {t.label}
-              {!t.available && <span className="ml-1.5 opacity-60">(soon)</span>}
-            </button>
-          );
-        })}
+      <div role="tablist" className="tabs tabs-boxed overflow-x-auto">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            onClick={() => t.available && setActive(t.key)}
+            disabled={!t.available}
+            className={`tab text-xs font-semibold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed ${active === t.key ? 'tab-active' : ''}`}
+          >
+            {t.label}
+            {!t.available && <span className="ml-1.5 opacity-60">(soon)</span>}
+          </button>
+        ))}
       </div>
 
       {active === "location" && (
         isOwner ? (
           <LocationPanel />
         ) : (
-          <div
-            className="flex items-center gap-4 px-5 py-4 rounded-2xl"
-            style={{
-              background: "rgba(234,179,8,0.07)",
-              border: "1px solid rgba(234,179,8,0.2)",
-            }}
-          >
+          <div role="alert" className="alert alert-warning gap-4">
             <span className="text-2xl">🔒</span>
             <div>
-              <p className="text-sm font-semibold text-yellow-300">Owner-only setting</p>
-              <p className="text-xs mt-0.5" style={{ color: "rgba(250,204,21,0.75)" }}>
+              <p className="text-sm font-semibold">Owner-only setting</p>
+              <p className="text-xs mt-0.5 opacity-75">
                 Only the restaurant owner can update location and proximity settings.
               </p>
             </div>

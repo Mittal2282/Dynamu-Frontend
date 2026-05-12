@@ -50,11 +50,11 @@ export function CtaSlide() {
             </a>
             <a
               href="mailto:founder@dynamu.ai"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm transition-all hover:bg-white/10"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm transition-all"
               style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                color: '#e2e8f0',
+                background: 'rgba(0,0,0,0.06)',
+                border: '1px solid rgba(0,0,0,0.15)',
+                color: '#374151',
                 backdropFilter: 'blur(8px)',
               }}
             >

@@ -5,7 +5,7 @@ import { restaurantStore } from "../../../store/restaurantStore";
 import { authStore } from "../../../store/authStore";
 import { disconnectSocket } from "../../../services/socketService";
 import { syncCart } from "../../../services/customerService";
-import { buildCssTokens, applyCssTokens, DEFAULT_THEME_NUMBER } from "../../../theme/tokens";
+import { buildCssTokens, applyCssTokens, applyColorMode, DEFAULT_THEME_NUMBER } from "../../../theme/tokens";
 import {
   getTrendingItems,
   getChefsSpecials,
@@ -46,10 +46,12 @@ export default function CustomerLayout() {
 
   // ── Theme ──
   const { themeNumber } = restaurantStore();
+  const { colorMode } = authStore();
   useEffect(() => {
     const tokens = buildCssTokens(themeNumber || DEFAULT_THEME_NUMBER);
     applyCssTokens(tokens);
-  }, [themeNumber]);
+    applyColorMode(colorMode ?? 'light');
+  }, [themeNumber, colorMode]);
 
   const { remove } = cartStore();
   const items = useCartItems();

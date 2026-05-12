@@ -67,8 +67,8 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
               key={label}
               className="px-6 py-3.5 rounded-xl text-center"
               style={{
-                background: 'rgba(255,255,255,0.14)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.82)',
+                border: '1px solid rgba(0,0,0,0.10)',
                 backdropFilter: 'blur(12px)',
               }}
             >
@@ -100,13 +100,12 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
           <button
             type="button"
             onClick={() => goToSlide(HOW_IT_WORKS_SLIDE_INDEX)}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-sm transition-all hover:bg-white/10"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-sm transition-all"
             style={{
-              background: 'rgba(255,255,255,0.12)',
-              border: '1px solid rgba(255,255,255,0.22)',
-              color: '#f1f5f9',
+              background: 'rgba(255,255,255,0.75)',
+              border: '1px solid rgba(0,0,0,0.12)',
+              color: '#374151',
               backdropFilter: 'blur(8px)',
-              textShadow: HERO_TEXT_SHADOW,
             }}
           >
             See How It Works

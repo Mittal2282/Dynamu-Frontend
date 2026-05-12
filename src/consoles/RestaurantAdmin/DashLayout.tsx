@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { getDashProfile } from "../../services/dashboardService";
 import { authStore } from "../../store/authStore";
+import { buildCssTokens, applyCssTokens, applyColorMode, DEFAULT_THEME_NUMBER } from "../../theme/tokens";
 
 interface NavItemData {
   to: string;
@@ -162,7 +163,7 @@ function NavItem({ item, collapsed, onClick }: NavItemProps) {
       className={({ isActive }) =>
         `relative flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-150 group/nav ${
           collapsed ? "lg:justify-center lg:gap-0 lg:px-2 lg:py-2.5" : "px-3 py-2.5"
-        } ${isActive ? "text-white" : "text-slate-400 hover:text-white hover:bg-white/[0.04]"}`
+        } ${isActive ? "" : "hover:bg-white/[0.04]"}`
       }
       style={({ isActive }) =>
         isActive
@@ -170,8 +171,9 @@ function NavItem({ item, collapsed, onClick }: NavItemProps) {
               background:
                 "linear-gradient(90deg, rgba(var(--t-accent-rgb, 249,115,22),0.15), rgba(var(--t-accent-rgb, 249,115,22),0.05))",
               boxShadow: "inset 0 0 0 1px rgba(249,115,22,0.18)",
+              color: "var(--t-accent)",
             }
-          : {}
+          : { color: "var(--t-dim)" }
       }
     >
       {({ isActive }) => (
@@ -210,7 +212,7 @@ export default function DashLayout() {
     }
   });
   const [restaurantName, setRestaurantName] = useState("");
-  const { adminName, adminRole, resetAuth } = authStore();
+  const { adminName, adminRole, resetAuth, colorMode, setColorMode } = authStore();
   const name = adminName || "Owner";
 
   useEffect(() => {
@@ -218,6 +220,11 @@ export default function DashLayout() {
       .then((data) => setRestaurantName(data?.name || ""))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    applyCssTokens(buildCssTokens(DEFAULT_THEME_NUMBER));
+    applyColorMode(colorMode ?? 'light');
+  }, [colorMode]);
 
 
   const toggleSidebarCollapsed = () => {
@@ -241,8 +248,8 @@ export default function DashLayout() {
 
   return (
     <div
-      className="h-screen overflow-hidden text-white flex"
-      style={{ fontFamily: "'Outfit', sans-serif", background: "var(--t-bg, #0a0c10)" }}
+      className="h-screen overflow-hidden flex"
+      style={{ fontFamily: "'Outfit', sans-serif", background: "var(--t-bg, #0a0c10)", color: "var(--t-text)" }}
     >
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -457,6 +464,37 @@ export default function DashLayout() {
               </p>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setColorMode(colorMode === 'light' ? 'dark' : 'light')}
+            title={colorMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            className={`w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-150 ${
+              sidebarCollapsed ? "lg:justify-center lg:px-2 lg:py-2.5" : "px-3 py-2.5"
+            }`}
+            style={{ color: "var(--t-dim)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--t-text)";
+              e.currentTarget.style.background = "rgba(128,128,128,0.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--t-dim)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            {colorMode === 'dark' ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
+                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+              </svg>
+            )}
+            <span className={`font-medium ${sidebarCollapsed ? "lg:sr-only" : ""}`}>
+              {colorMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
+          </button>
 
           <button
             type="button"

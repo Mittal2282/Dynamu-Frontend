@@ -24,7 +24,7 @@ export function SolutionSlide() {
               recommending combos, upselling intelligently, and remembering preferences for future visits.
             </p>
 
-            <div className="space-y-0 divide-y" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <div className="space-y-0 divide-y" style={{ borderColor: 'rgba(0,0,0,0.10)' }}>
               {SOLUTION_BULLETS.map(({ label, desc }, i) => (
                 <Reveal key={label} animation="revealFade" delay={0.1 + i * 0.1}>
                   <div className="py-4 flex items-start gap-4">
@@ -45,7 +45,7 @@ export function SolutionSlide() {
               <img
                 src="/images/DynamuChat.jpeg"
                 alt="Dynamu AI Chat Interface"
-                className="relative rounded-2xl shadow-2xl border border-white/10 w-full max-w-md lg:max-w-full mx-auto max-h-[580px] lg:max-h-[640px] object-cover object-top"
+                className="relative rounded-2xl shadow-2xl border border-black/10 w-full max-w-md lg:max-w-full mx-auto max-h-[580px] lg:max-h-[640px] object-cover object-top"
               />
             </div>
           </Reveal>

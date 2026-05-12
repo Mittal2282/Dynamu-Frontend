@@ -8,6 +8,9 @@
     <title>Dynamu.Ai</title>
   </head>
   <body>
+    <script>
+      (function(){try{var s=JSON.parse(localStorage.getItem('AuthStore')||'{}');document.documentElement.setAttribute('data-color-mode',(s.state||{}).colorMode||'light');}catch(e){}})();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

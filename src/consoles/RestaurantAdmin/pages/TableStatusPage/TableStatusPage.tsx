@@ -226,10 +226,7 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
             T{table.table_number}
           </span>
           <div className="flex items-center gap-1.5">
-            <span
-              className="text-[9px] font-bold tracking-[0.1em] uppercase px-2 py-0.5 rounded-full leading-none"
-              style={{ color: cfg.text, backgroundColor: cfg.pillBg }}
-            >
+            <span className="badge badge-xs font-bold tracking-[0.1em] uppercase" style={{ color: cfg.text, backgroundColor: cfg.pillBg, borderColor: 'transparent' }}>
               {cfg.label}
             </span>
             <div className="relative" ref={infoRef}>
@@ -274,15 +271,9 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                         await handleToggleActive(e);
                       }}
                       disabled={togglingActive}
-                      className="w-full py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-50"
-                      style={isUnserviceable
-                        ? { background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }
-                        : { background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
-                      }
+                      className={`btn btn-sm w-full text-[11px] disabled:opacity-50 ${isUnserviceable ? 'btn-success' : 'btn-error'}`}
                     >
-                      {togglingActive
-                        ? 'Updating…'
-                        : isUnserviceable ? 'Mark as Serviceable' : 'Mark as Unserviceable'}
+                      {togglingActive ? 'Updating…' : isUnserviceable ? 'Mark as Serviceable' : 'Mark as Unserviceable'}
                     </button>
                   </div>
                 </>
@@ -429,11 +420,11 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
                 type="button"
                 onClick={downloadBill}
                 disabled={billDlLoading}
-                className="w-full h-[30px] rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                className="btn btn-sm w-full gap-1.5 disabled:opacity-50"
                 style={{ backgroundColor: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)' }}
               >
                 {billDlLoading
-                  ? <span className="w-3 h-3 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+                  ? <span className="loading loading-spinner loading-xs" />
                   : <>
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -446,44 +437,16 @@ function TableCard({ table, onFree, onToggleActive }: TableCardProps) {
 
             <div style={{ height: '30px' }}>
               {!confirming ? (
-                <button
-                  type="button"
-                  onClick={startConfirm}
-                  className="w-full h-full rounded-lg text-[11px] font-medium transition-colors hover:bg-white/10"
-                  style={{
-                    color:           'var(--t-dim)',
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    border:          '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
+                <button type="button" onClick={startConfirm} className="btn btn-sm btn-ghost w-full h-full text-[11px]">
                   Free Table
                 </button>
               ) : (
                 <div className="flex gap-1.5 h-full">
-                  <button
-                    type="button"
-                    onClick={cancelConfirm}
-                    disabled={freeing}
-                    className="flex-1 rounded-lg text-[11px] font-medium transition-colors"
-                    style={{
-                      color:           'var(--t-dim)',
-                      backgroundColor: 'rgba(255,255,255,0.05)',
-                      border:          '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
+                  <button type="button" onClick={cancelConfirm} disabled={freeing} className="btn btn-sm btn-ghost flex-1 text-[11px]">
                     No
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleFree}
-                    disabled={freeing}
-                    className="flex-1 rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 disabled:opacity-50"
-                    style={{ backgroundColor: 'rgba(239,68,68,0.8)', color: '#fff', border: 'none' }}
-                  >
-                    {freeing
-                      ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      : 'Yes, Free'
-                    }
+                  <button type="button" onClick={handleFree} disabled={freeing} className="btn btn-sm btn-error flex-1 text-[11px] disabled:opacity-50">
+                    {freeing ? <span className="loading loading-spinner loading-xs" /> : 'Yes, Free'}
                   </button>
                 </div>
               )}
@@ -590,16 +553,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    background: 'var(--t-float)',
-    border: '1px solid var(--t-line)',
-    borderRadius: '10px',
-    color: 'var(--t-text)',
-    padding: '8px 12px',
-    fontSize: '13px',
-    width: '100%',
-    outline: 'none',
-  };
+  const inputStyle = 'input input-bordered input-sm w-full';
 
   return (
     <div
@@ -616,20 +570,16 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
           <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors text-lg leading-none">×</button>
         </div>
 
-        {error && (
-          <div className="text-xs px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">{error}</div>
-        )}
+        {error && <div role="alert" className="alert alert-error text-xs py-2">{error}</div>}
 
         {existingFloors.length > 0 && (
-          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--t-line)' }}>
+          <div role="tablist" className="tabs tabs-boxed">
             {[{ v: true, label: 'New Floor' }, { v: false, label: 'Existing Floor' }].map(({ v, label }) => (
               <button
                 key={String(v)}
+                role="tab"
                 onClick={() => handleChange('is_new_floor', v)}
-                className="flex-1 py-2 text-xs font-semibold transition-all"
-                style={form.is_new_floor === v
-                  ? { background: 'var(--t-accent)', color: '#fff' }
-                  : { background: 'transparent', color: 'var(--t-dim)' }}
+                className={`tab text-xs font-semibold flex-1 ${form.is_new_floor === v ? 'tab-active' : ''}`}
               >
                 {label}
               </button>
@@ -643,7 +593,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
             <select
               value={form.floor_number}
               onChange={(e) => handleChange('floor_number', e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
+              className="select select-bordered select-sm w-full cursor-pointer"
             >
               <option value="">Select floor…</option>
               {existingFloors.map(f => (
@@ -665,7 +615,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
                 value={form.floor_number}
                 onChange={(e) => handleChange('floor_number', e.target.value)}
                 placeholder="Auto"
-                style={inputStyle}
+                className={inputStyle}
               />
             </div>
             <div className="space-y-1">
@@ -675,7 +625,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
                 value={form.floor_name}
                 onChange={(e) => handleChange('floor_name', e.target.value)}
                 placeholder="e.g. Rooftop"
-                style={inputStyle}
+                className={inputStyle}
               />
             </div>
           </div>
@@ -689,7 +639,7 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
             max="100"
             value={form.table_count}
             onChange={(e) => handleChange('table_count', e.target.value)}
-            style={inputStyle}
+            className={inputStyle}
           />
           <p className="text-[10px]" style={{ color: 'var(--t-dim)', opacity: 0.6 }}>
             Will be numbered T{nextStartNumber} → T{nextStartNumber + Math.max(0, (parseInt(form.table_count) || 1) - 1)}
@@ -697,22 +647,9 @@ function AddTablesModal({ existingFloors, onClose, onSuccess }: AddTablesModalPr
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors"
-            style={{ color: 'var(--t-dim)', border: '1px solid var(--t-line)', background: 'transparent' }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-            style={{ background: 'var(--t-accent)' }}
-          >
-            {saving
-              ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : 'Add Tables'}
+          <button onClick={onClose} className="btn btn-sm btn-ghost flex-1 text-xs">Cancel</button>
+          <button onClick={handleSubmit} disabled={saving} className="btn btn-sm btn-primary flex-1 text-xs disabled:opacity-50">
+            {saving ? <span className="loading loading-spinner loading-xs" /> : 'Add Tables'}
           </button>
         </div>
       </div>
@@ -923,11 +860,7 @@ export default function TableStatusPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
-            style={{ background: 'var(--t-accent)', color: '#fff' }}
-          >
+          <button onClick={() => setAddModalOpen(true)} className="btn btn-sm btn-primary gap-1.5 text-xs">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -937,16 +870,11 @@ export default function TableStatusPage() {
           <button
             onClick={downloadQRPDF}
             disabled={pdfLoading || tables.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40"
-            style={{ color: 'var(--t-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="btn btn-sm btn-ghost gap-1.5 text-xs disabled:opacity-40"
           >
             {pdfLoading
-              ? <span className="w-3.5 h-3.5 border-2 border-slate-500 border-t-slate-300 rounded-full animate-spin" />
-              : (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              )
+              ? <span className="loading loading-spinner loading-xs" />
+              : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             }
             QR Codes PDF
           </button>
@@ -954,8 +882,7 @@ export default function TableStatusPage() {
           <button
             onClick={() => fetchTables()}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all disabled:opacity-40"
-            style={{ color: 'var(--t-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="btn btn-sm btn-ghost gap-2 text-xs disabled:opacity-40"
           >
             <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -966,11 +893,9 @@ export default function TableStatusPage() {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-red-400">{error}</p>
-          <button onClick={() => fetchTables()} className="text-xs font-semibold text-red-400 hover:text-red-300 underline">
-            Retry
-          </button>
+        <div role="alert" className="alert alert-error">
+          <p className="text-sm flex-1">{error}</p>
+          <button onClick={() => fetchTables()} className="btn btn-sm btn-ghost">Retry</button>
         </div>
       )}
 

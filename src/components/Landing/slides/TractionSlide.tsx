@@ -1,4 +1,4 @@
-import { BORDER, IMG, ORANGE, OVERLAY_TRACTION } from '../../../constants/landingConstants';
+import { BORDER, CARD_BG, IMG, ORANGE, OVERLAY_TRACTION } from '../../../constants/landingConstants';
 import { TRACTION_STATS } from '../../../constants/landingContent';
 import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
@@ -37,7 +37,7 @@ export function TractionSlide() {
                 <div
                   className="flex items-center justify-between px-5 py-4 rounded-xl"
                   style={{
-                    background: 'rgba(10,12,16,0.82)',
+                    background: CARD_BG,
                     border: `1px solid ${BORDER}`,
                     backdropFilter: 'blur(12px)',
                   }}

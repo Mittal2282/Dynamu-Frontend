@@ -54,7 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <div className="min-h-screen  flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Back to home */}
         <div className="text-center mb-4">
@@ -88,14 +88,12 @@ export default function LoginPage() {
           </Text>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl mb-5">
-              {error}
-            </div>
+            <div role="alert" className="alert alert-error text-sm mb-5 py-3">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs text-slate-200 block mb-1.5">Email address</label>
+            <label className="form-control w-full">
+              <div className="label pb-1"><span className="label-text text-xs text-slate-200">Email address</span></div>
               <input
                 name="email"
                 type="email"
@@ -103,12 +101,12 @@ export default function LoginPage() {
                 onChange={handleChange}
                 placeholder="admin@restaurant.com"
                 autoComplete="username"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-300 focus:outline-none focus:border-orange-500 transition-colors"
+                className="input input-bordered w-full text-sm"
               />
-            </div>
+            </label>
 
-            <div>
-              <label className="text-xs text-slate-200 block mb-1.5">Password</label>
+            <label className="form-control w-full">
+              <div className="label pb-1"><span className="label-text text-xs text-slate-200">Password</span></div>
               <input
                 name="password"
                 type="password"
@@ -116,9 +114,9 @@ export default function LoginPage() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-300 focus:outline-none focus:border-orange-500 transition-colors"
+                className="input input-bordered w-full text-sm"
               />
-            </div>
+            </label>
 
             <Button
               type="submit"

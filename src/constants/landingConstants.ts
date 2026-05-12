@@ -12,34 +12,38 @@ export const IMG: Record<string, string> = {
 export const ORANGE = '#FF6B00';
 export const CYAN = '#00F0FF';
 export const PURPLE = '#7B00FF';
-export const BG = '#0A0C10';
-export const BORDER = 'rgba(255,255,255,0.08)';
+export const BG = '#F5F7FA';
+export const BORDER = 'rgba(0,0,0,0.10)';
 
-/** Radial readbility well + vertical gradient (first layer on top in CSS). */
+/** Card glass background — used in slides */
+export const CARD_BG = 'rgba(255,255,255,0.88)';
+export const CARD_BG_HOVER = 'rgba(255,255,255,0.97)';
+
+/** White-tinted overlay lets photos show through while keeping dark text readable. */
 export const OVERLAY_HERO = [
-  'radial-gradient(ellipse 92% 72% at 50% 42%, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 55%, transparent 72%)',
-  'linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.58) 32%, rgba(0,0,0,0.66) 52%, rgba(10,12,16,0.95) 88%, #0A0C10 100%)',
+  'radial-gradient(ellipse 92% 72% at 50% 42%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 55%, transparent 72%)',
+  'linear-gradient(to bottom, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.48) 32%, rgba(255,255,255,0.58) 52%, rgba(245,247,250,0.93) 88%, #F5F7FA 100%)',
 ].join(', ');
 
 export const OVERLAY_PROBLEM =
-  'linear-gradient(to bottom, #0A0C10 0%, rgba(0,0,0,0.88) 15%, rgba(0,0,0,0.88) 85%, #0A0C10 100%)';
+  'linear-gradient(to bottom, #F5F7FA 0%, rgba(245,247,250,0.90) 15%, rgba(245,247,250,0.90) 85%, #F5F7FA 100%)';
 
 export const OVERLAY_HOW_IT_WORKS =
-  'linear-gradient(to bottom, #0A0C10 0%, rgba(0,0,0,0.86) 12%, rgba(0,0,0,0.84) 88%, #0A0C10 100%)';
+  'linear-gradient(to bottom, #F5F7FA 0%, rgba(245,247,250,0.88) 12%, rgba(245,247,250,0.88) 88%, #F5F7FA 100%)';
 
 export const OVERLAY_CAPABILITIES =
-  'linear-gradient(to bottom, #0A0C10 0%, rgba(10,12,16,0.92) 10%, rgba(10,12,16,0.92) 90%, #0A0C10 100%)';
+  'linear-gradient(to bottom, #F5F7FA 0%, rgba(245,247,250,0.92) 10%, rgba(245,247,250,0.92) 90%, #F5F7FA 100%)';
 
 export const OVERLAY_TRACTION =
-  'linear-gradient(to bottom, #0A0C10 0%, rgba(0,0,0,0.84) 12%, rgba(0,0,0,0.84) 88%, #0A0C10 100%)';
+  'linear-gradient(to bottom, #F5F7FA 0%, rgba(245,247,250,0.88) 12%, rgba(245,247,250,0.88) 88%, #F5F7FA 100%)';
 
 export const OVERLAY_CTA =
-  'linear-gradient(to bottom, #0A0C10 0%, rgba(0,0,0,0.84) 10%, rgba(0,0,0,0.84) 90%, #0A0C10 100%)';
+  'linear-gradient(to bottom, #F5F7FA 0%, rgba(245,247,250,0.88) 10%, rgba(245,247,250,0.88) 90%, #F5F7FA 100%)';
 
 export const SLIDE_LOCK_MS = 900;
 
 /** Index of "How it works" slide (for CTA from hero). */
 export const HOW_IT_WORKS_SLIDE_INDEX = 3;
 
-/** Legibility on busy photos */
-export const HERO_TEXT_SHADOW = '0 1px 3px rgba(0,0,0,0.9), 0 2px 14px rgba(0,0,0,0.45)';
+/** Light text shadow for dark text on photos */
+export const HERO_TEXT_SHADOW = '0 1px 2px rgba(255,255,255,0.7)';

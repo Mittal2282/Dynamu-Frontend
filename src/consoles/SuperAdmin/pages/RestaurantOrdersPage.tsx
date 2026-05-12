@@ -3,14 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getRestaurantOrders } from "../../../services/superAdminService";
 import { apiCaller } from "../../../api/apiCaller";
 
-const STATUS_BADGE: Record<string, string> = {
-  pending: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  confirmed: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  preparing: "bg-purple-500/15 text-purple-400 border-purple-500/20",
-  ready: "bg-green-500/15 text-green-400 border-green-500/20",
-  served: "bg-slate-500/15 text-slate-300 border-slate-500/20",
-  completed: "bg-slate-500/15 text-slate-300 border-slate-500/20",
-  cancelled: "bg-red-500/15 text-red-400 border-red-500/20",
+const STATUS_COLOR: Record<string, { color: string; bg: string }> = {
+  pending:   { color: "#eab308", bg: "rgba(234,179,8,0.15)" },
+  confirmed: { color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
+  preparing: { color: "#a855f7", bg: "rgba(168,85,247,0.15)" },
+  ready:     { color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
+  served:    { color: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
+  completed: { color: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
+  cancelled: { color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
 };
 
 const ALL_STATUSES = [
@@ -97,7 +97,7 @@ export default function RestaurantOrdersPage() {
       <div className="flex items-start gap-3">
         <button
           onClick={() => navigate("/superadmin")}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-xl transition-all duration-150 shrink-0 mt-0.5"
+          className="btn btn-sm btn-ghost gap-1.5 shrink-0 mt-0.5"
         >
           ← Back
         </button>
@@ -128,9 +128,7 @@ export default function RestaurantOrdersPage() {
           <select
             value={statusFilter}
             onChange={(e) => handleFilterChange(setStatusFilter, e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
-            onBlur={(e) => (e.target.style.borderColor = "")}
+            className="select select-bordered select-sm text-sm"
           >
             <option value="">All Statuses</option>
             {ALL_STATUSES.map((s) => (
@@ -148,9 +146,7 @@ export default function RestaurantOrdersPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => handleFilterChange(setDateFrom, e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
-            onBlur={(e) => (e.target.style.borderColor = "")}
+            className="input input-bordered input-sm text-sm"
           />
         </div>
 
@@ -161,9 +157,7 @@ export default function RestaurantOrdersPage() {
             type="date"
             value={dateTo}
             onChange={(e) => handleFilterChange(setDateTo, e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none transition-colors"
-            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
-            onBlur={(e) => (e.target.style.borderColor = "")}
+            className="input input-bordered input-sm text-sm"
           />
         </div>
 
@@ -191,35 +185,23 @@ export default function RestaurantOrdersPage() {
 
         {loading ? (
           <div className="flex items-center justify-center gap-3 h-40">
-            <div className="w-6 h-6 border-[3px] border-white/10 border-t-orange-500 rounded-full animate-spin" />
+            <span className="loading loading-spinner loading-md" />
             <span className="text-slate-300 text-sm">Loading orders…</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table table-zebra table-sm w-full">
               <thead>
-                <tr className="border-b border-white/5">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Order #
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Table
-                  </th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Items
-                  </th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Time
-                  </th>
+                <tr>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Order #</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Table</th>
+                  <th className="text-xs font-semibold uppercase tracking-wider">Items</th>
+                  <th className="text-right text-xs font-semibold uppercase tracking-wider">Total</th>
+                  <th className="text-center text-xs font-semibold uppercase tracking-wider">Status</th>
+                  <th className="text-right text-xs font-semibold uppercase tracking-wider">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {orders.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-16">
@@ -229,32 +211,34 @@ export default function RestaurantOrdersPage() {
                   </tr>
                 ) : (
                   orders.map((order) => (
-                    <tr key={order._id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-5 py-4 font-mono text-xs text-slate-400 group-hover:text-white transition-colors">
+                    <tr key={order._id} className="hover cursor-pointer">
+                      <td className="font-mono text-xs text-slate-400">
                         {order.order_number}
                       </td>
-                      <td className="px-5 py-4 text-slate-200">
+                      <td>
                         Table {order.table?.table_number ?? order.table_number ?? "—"}
                       </td>
-                      <td className="px-5 py-4 text-slate-300 max-w-[220px]">
+                      <td className="max-w-[220px]">
                         <span className="truncate block text-xs">
                           {order.items?.map((i) => `${i.name} ×${i.quantity}`).join(", ") || "—"}
                         </span>
                       </td>
-                      <td
-                        className="px-5 py-4 text-right font-semibold"
-                        style={{ color: "var(--t-accent)" }}
-                      >
+                      <td className="text-right font-semibold" style={{ color: "var(--t-accent)" }}>
                         ₹{Math.round(order.total_amount || 0)}
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="text-center">
                         <span
-                          className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_BADGE[order.status] ?? "bg-white/10 text-white border-white/10"}`}
+                          className="badge badge-sm font-semibold"
+                          style={{
+                            color: STATUS_COLOR[order.status]?.color ?? "#94a3b8",
+                            background: STATUS_COLOR[order.status]?.bg ?? "rgba(148,163,184,0.15)",
+                            borderColor: "transparent",
+                          }}
                         >
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-right text-slate-300 text-xs whitespace-nowrap">
+                      <td className="text-right text-xs whitespace-nowrap">
                         {timeAgo(order.createdAt)}
                       </td>
                     </tr>

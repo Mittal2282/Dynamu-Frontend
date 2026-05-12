@@ -1,4 +1,4 @@
-import { BG, BORDER, IMG, ORANGE, OVERLAY_HOW_IT_WORKS } from '../../../constants/landingConstants';
+import { BG, BORDER, CARD_BG, IMG, ORANGE, OVERLAY_HOW_IT_WORKS } from '../../../constants/landingConstants';
 import { HOW_IT_WORKS_STEPS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
@@ -31,7 +31,7 @@ export function HowItWorksSlide() {
               <div
                 className="relative h-full p-6 rounded-xl"
                 style={{
-                  background: 'rgba(10,12,16,0.78)',
+                  background: CARD_BG,
                   border: `1px solid ${BORDER}`,
                   backdropFilter: 'blur(14px)',
                 }}
