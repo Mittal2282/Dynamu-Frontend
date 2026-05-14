@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
-import { createRestaurant, importMenu } from "../../../services/superAdminService";
+import { createRestaurant, importMenu, updateSAPetpoojaConfig } from "../../../services/superAdminService";
 import { authStore } from "../../../store/authStore";
 
-const STEPS = ["Restaurant Details", "Import Menu", "Done"];
+const STEPS = ["Restaurant Details", "Import Menu", "Petpooja POS", "Done"];
 
 const CSV_SAMPLE = `Category,Item Name,Price (₹),Details,Taste Profile,Taste Level (1-5),Key Ingredients,Allergens / Choosy Items,GST Slab (%),Avg Prep Time (min),Meal Tag,Avg Rating (Future),Veg / Non-Veg,Image Reference URL
 Starters,Paneer Tikka,299,Marinated cottage cheese grilled in tandoor,Savory,2,"Paneer, Tandoori masala",Dairy,5,10,Popular,4.5,Veg,https://en.wikipedia.org/wiki/Paneer
@@ -605,7 +605,162 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
   );
 }
 
-/* ─── Step 3: Done ───────────────────────────────────────────────────────── */
+/* ─── Step 3: Petpooja POS (optional) ───────────────────────────────────── */
+interface Step3PetpoojaProps {
+  restaurantId: string | null;
+  onNext: () => void;
+  onSkip: () => void;
+}
+
+function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
+  const [form, setForm] = useState({ enabled: false, app_key: "", app_secret: "", access_token: "", rest_id: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [savedUrls, setSavedUrls] = useState<{ callback_url: string; menu_push_url: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    });
+  };
+
+  const handleSave = async () => {
+    if (!form.enabled) { onNext(); return; }
+    if (!form.app_key || !form.app_secret || !form.access_token || !form.rest_id) {
+      setError("All fields are required when enabling Petpooja.");
+      return;
+    }
+    if (!restaurantId) return;
+    setError("");
+    setLoading(true);
+    try {
+      const result = await updateSAPetpoojaConfig(restaurantId, {
+        enabled: true,
+        app_key: form.app_key,
+        app_secret: form.app_secret,
+        access_token: form.access_token,
+        rest_id: form.rest_id,
+      });
+      setSavedUrls({ callback_url: result.callback_url, menu_push_url: result.menu_push_url });
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setError(e.response?.data?.message ?? "Failed to save. Please try from restaurant settings later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (savedUrls) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <div className="text-4xl">✅</div>
+          <h2 className="text-lg font-bold text-white">Petpooja Configured</h2>
+          <p className="text-sm text-slate-400">Paste these URLs into your Petpooja sandbox Configuration page.</p>
+        </div>
+        <UrlRow label="Menu Sharing Endpoint" value={savedUrls.menu_push_url} copied={copied} onCopy={copy} id="menu" />
+        <UrlRow label="Callback URL" value={savedUrls.callback_url} copied={copied} onCopy={copy} id="callback" />
+        <p className="text-xs text-slate-500 text-center">
+          After saving, trigger a Menu Push from Petpooja to map item IDs. Orders will relay when customers request the bill.
+        </p>
+        <div className="flex justify-end">
+          <button onClick={onNext} className="btn btn-primary">Continue →</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-white">Petpooja POS Integration</h2>
+        <p className="text-sm text-slate-400 mt-1">
+          When enabled, orders will be sent to Petpooja when the customer requests the final bill.
+          You can also configure this later from restaurant Settings.
+        </p>
+      </div>
+
+      {/* Enable toggle */}
+      <label className="flex items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer">
+        <div>
+          <p className="text-sm font-semibold text-white">Enable Petpooja POS</p>
+          <p className="text-xs text-slate-400">Connect this restaurant to Petpooja POS.</p>
+        </div>
+        <input
+          type="checkbox"
+          checked={form.enabled}
+          onChange={(e) => { setForm((f) => ({ ...f, enabled: e.target.checked })); setError(""); }}
+          className="toggle toggle-warning"
+        />
+      </label>
+
+      {form.enabled && (
+        <div className="space-y-3">
+          {(["app_key", "app_secret", "access_token", "rest_id"] as const).map((key) => (
+            <label key={key} className="form-control w-full">
+              <div className="label pb-1">
+                <span className="label-text text-xs font-medium uppercase tracking-wider">
+                  {key === "rest_id" ? "Restaurant ID (restID / mapping code)" : key.replace(/_/g, " ")}
+                </span>
+              </div>
+              <input
+                type={key === "app_key" || key === "rest_id" ? "text" : "password"}
+                value={form[key]}
+                onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                placeholder={key === "rest_id" ? "oqxwni2t" : `Enter ${key.replace(/_/g, " ")}`}
+                className="input input-bordered w-full text-sm"
+              />
+            </label>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
+
+      <div className="flex items-center justify-between pt-2">
+        <button onClick={onSkip} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+          Skip for now
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="btn btn-primary"
+        >
+          {loading ? <span className="loading loading-spinner loading-sm" /> : null}
+          {form.enabled ? "Save & Continue" : "Continue →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function UrlRow({ label, value, copied, onCopy, id }: { label: string; value: string; copied: string | null; onCopy: (v: string, id: string) => void; id: string }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-slate-300 truncate">
+          {value}
+        </div>
+        <button
+          onClick={() => onCopy(value, id)}
+          className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
+          style={{
+            background: copied === id ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+            border: `1px solid ${copied === id ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.1)"}`,
+            color: copied === id ? "#4ade80" : "#94a3b8",
+          }}
+        >
+          {copied === id ? "Copied!" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Step 4: Done ───────────────────────────────────────────────────────── */
 interface Step3Props {
   restaurantId: string | null;
 }
@@ -822,7 +977,10 @@ export default function OnboardPage() {
         {step === 1 && (
           <Step2 restaurantId={restaurantId} onNext={() => setStep(2)} onSkip={() => setStep(2)} />
         )}
-        {step === 2 && <Step3 restaurantId={restaurantId} />}
+        {step === 2 && (
+          <Step3Petpooja restaurantId={restaurantId} onNext={() => setStep(3)} onSkip={() => setStep(3)} />
+        )}
+        {step === 3 && <Step3 restaurantId={restaurantId} />}
       </div>
     </div>
   );

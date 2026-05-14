@@ -78,3 +78,31 @@ export async function getRestaurantOrders(restaurantId: string): Promise<Order[]
   });
   return data.data ?? [];
 }
+
+export async function getSAPetpoojaConfig(restaurantId: string): Promise<Record<string, unknown>> {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.SA_PETPOOJA(restaurantId),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function updateSAPetpoojaConfig(
+  restaurantId: string,
+  payload: {
+    enabled: boolean;
+    app_key?: string;
+    app_secret?: string;
+    access_token?: string;
+    rest_id?: string;
+  }
+): Promise<{ message: string; callback_url: string; menu_push_url: string }> {
+  const data = await apiCaller({
+    method:   'PUT',
+    endpoint: ENDPOINTS.SA_PETPOOJA(restaurantId),
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}

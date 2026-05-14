@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { authStore } from "../../../store/authStore";
 import LocationPanel from "./settings/LocationPanel";
+import PetpoojaPanel from "./settings/PetpoojaPanel";
 
 interface Tab {
   key: string;
@@ -10,10 +11,23 @@ interface Tab {
 
 const TABS: Tab[] = [
   { key: "location", label: "Location & Proximity", available: true },
+  { key: "petpooja", label: "Petpooja POS",         available: true },
   { key: "general",  label: "General",              available: false },
   { key: "branding", label: "Branding",             available: false },
   { key: "ai",       label: "AI Assistant",         available: false },
 ];
+
+function OwnerOnlyAlert() {
+  return (
+    <div role="alert" className="alert alert-warning gap-4">
+      <span className="text-2xl">🔒</span>
+      <div>
+        <p className="text-sm font-semibold">Owner-only setting</p>
+        <p className="text-xs mt-0.5 opacity-75">Only the restaurant owner can update these settings.</p>
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const [active, setActive] = useState("location");
@@ -58,15 +72,15 @@ export default function SettingsPage() {
         isOwner ? (
           <LocationPanel />
         ) : (
-          <div role="alert" className="alert alert-warning gap-4">
-            <span className="text-2xl">🔒</span>
-            <div>
-              <p className="text-sm font-semibold">Owner-only setting</p>
-              <p className="text-xs mt-0.5 opacity-75">
-                Only the restaurant owner can update location and proximity settings.
-              </p>
-            </div>
-          </div>
+          <OwnerOnlyAlert />
+        )
+      )}
+
+      {active === "petpooja" && (
+        isOwner ? (
+          <PetpoojaPanel />
+        ) : (
+          <OwnerOnlyAlert />
         )
       )}
     </div>

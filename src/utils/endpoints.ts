@@ -46,7 +46,7 @@ export const ENDPOINTS = {
   DASH_MENU_IMAGE_UPLOAD:  '/api/restaurant-dash/menu/upload-image',
   DASH_CATEGORIES:         '/api/restaurant-dash/categories',
   DASH_TABLES:             '/api/restaurant-dash/tables',
-  DASH_TABLES_QR_PDF:      'api/restaurant-dash/tables/qr-pdf',
+  DASH_TABLES_QR_PDF:      '/api/restaurant-dash/tables/qr-pdf',
   DASH_TABLES_BULK:        '/api/restaurant-dash/tables/bulk',
   DASH_TABLE_FREE:         (id: string): string => `/api/restaurant-dash/tables/${id}/free`,
   DASH_TABLE_TOGGLE_ACTIVE:(id: string): string => `/api/restaurant-dash/tables/${id}/toggle-active`,
@@ -71,4 +71,8 @@ export const ENDPOINTS = {
   SA_MENU:         (id: string): string => `/api/superadmin/restaurants/${id}/menu`,
   SA_QR_PDF:       (id: string): string => `/api/superadmin/restaurants/${id}/qr-pdf`,
   SA_REST_ORDERS:  (id: string): string => `/api/superadmin/restaurants/${id}/orders`,
+  SA_PETPOOJA:     (id: string): string => `/api/superadmin/restaurants/${id}/petpooja`,
+
+  // Petpooja — restaurant dash
+  DASH_PETPOOJA_CONFIG: '/api/petpooja/config',
 };

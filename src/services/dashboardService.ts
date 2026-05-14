@@ -434,3 +434,41 @@ export async function updateRestaurantLocation(payload: {
   });
   return data.data;
 }
+
+// ─── Petpooja ─────────────────────────────────────────────────────────────────
+
+export interface PetpoojaConfig {
+  enabled: boolean;
+  app_key: string;
+  has_secret: boolean;
+  has_token: boolean;
+  rest_id: string;
+  menu_synced_at: string | null;
+  callback_url: string | null;
+  menu_push_url: string | null;
+}
+
+export async function getPetpoojaConfig(): Promise<PetpoojaConfig> {
+  const data = await apiCaller({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_PETPOOJA_CONFIG,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function updatePetpoojaConfig(payload: {
+  enabled: boolean;
+  app_key?: string;
+  app_secret?: string;
+  access_token?: string;
+  rest_id?: string;
+}): Promise<{ message: string; callback_url: string; menu_push_url: string }> {
+  const data = await apiCaller({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_PETPOOJA_CONFIG,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
