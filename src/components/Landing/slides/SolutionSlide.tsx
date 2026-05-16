@@ -1,14 +1,22 @@
-import { BG, ORANGE } from '../../../constants/landingConstants';
+import { BG, BG_DARK, ORANGE } from '../../../constants/landingConstants';
 import { SOLUTION_BULLETS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
 import { Reveal } from '../Reveal';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 export function SolutionSlide() {
+  const { isDark } = useLandingTheme();
+  const bg = isDark ? BG_DARK : BG;
+  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
+  const labelColor = isDark ? '#f1f5f9' : '#111827';
+  const descColor = isDark ? '#64748b' : '#9ca3af';
+  const dividerColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+
   return (
     <section
       className="min-h-[100dvh] w-full shrink-0 flex flex-col justify-center px-6 py-12 sm:py-16"
-      style={{ background: BG }}
+      style={{ background: bg }}
     >
       <div className="max-w-6xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -19,19 +27,19 @@ export function SolutionSlide() {
               <br />
               <span style={{ color: ORANGE }}>sales rep at every table</span>
             </H2>
-            <p className="text-slate-300 text-[15px] leading-relaxed mb-10">
+            <p className="text-[15px] leading-relaxed mb-10" style={{ color: bodyColor }}>
               A conversational AI that greets every guest the moment they scan the QR code — guiding through the menu,
               recommending combos, upselling intelligently, and remembering preferences for future visits.
             </p>
 
-            <div className="space-y-0 divide-y" style={{ borderColor: 'rgba(0,0,0,0.10)' }}>
+            <div className="space-y-0 divide-y" style={{ borderColor: dividerColor }}>
               {SOLUTION_BULLETS.map(({ label, desc }, i) => (
                 <Reveal key={label} animation="revealFade" delay={0.1 + i * 0.1}>
                   <div className="py-4 flex items-start gap-4">
                     <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-[7px]" style={{ background: ORANGE }} />
                     <div>
-                      <p className="font-semibold text-white text-sm">{label}</p>
-                      <p className="text-slate-400 text-xs mt-1 leading-relaxed">{desc}</p>
+                      <p className="font-semibold text-sm" style={{ color: labelColor }}>{label}</p>
+                      <p className="text-xs mt-1 leading-relaxed" style={{ color: descColor }}>{desc}</p>
                     </div>
                   </div>
                 </Reveal>

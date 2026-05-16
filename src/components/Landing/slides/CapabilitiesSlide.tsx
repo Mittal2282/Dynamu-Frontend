@@ -1,18 +1,28 @@
-import { CARD_BG, CARD_BG_HOVER, CYAN, IMG, ORANGE, OVERLAY_CAPABILITIES, PURPLE } from '../../../constants/landingConstants';
+import { CARD_BG, CARD_BG_DARK, CARD_BG_DARK_HOVER, CARD_BG_HOVER, CYAN, IMG, ORANGE, OVERLAY_CAPABILITIES, OVERLAY_CAPABILITIES_DARK, PURPLE } from '../../../constants/landingConstants';
 import { CAPABILITY_ITEMS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
 import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 const COLOR_MAP: Record<string, string> = { orange: ORANGE, cyan: CYAN, purple: PURPLE };
 
 export function CapabilitiesSlide() {
+  const { isDark } = useLandingTheme();
+  const cardBg = isDark ? CARD_BG_DARK : CARD_BG;
+  const cardBgHover = isDark ? CARD_BG_DARK_HOVER : CARD_BG_HOVER;
+  const borderColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+  const titleColor = isDark ? '#f1f5f9' : '#111827';
+  const descColor = isDark ? '#cbd5e1' : '#4b5563';
+  const subColor = isDark ? '#94a3b8' : '#6b7280';
+
   return (
     <ParallaxSection
       disableParallax
       imageUrl={IMG.capabilities}
       overlay={OVERLAY_CAPABILITIES}
+      overlayDark={OVERLAY_CAPABILITIES_DARK}
       className="min-h-[100dvh] w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
     >
       <div className="max-w-6xl mx-auto px-6">
@@ -26,7 +36,7 @@ export function CapabilitiesSlide() {
             </H2>
           </Reveal>
           <Reveal animation="revealRight" delay={0.1}>
-            <p className="text-slate-300 text-sm max-w-xs leading-relaxed sm:text-right">
+            <p className="text-sm max-w-xs leading-relaxed sm:text-right" style={{ color: subColor }}>
               Six capabilities. One unified platform.
               <br />
               No new hardware required.
@@ -42,17 +52,17 @@ export function CapabilitiesSlide() {
                 <div
                   className="group h-full flex items-start gap-4 p-6 rounded-xl transition-all duration-300 cursor-default"
                   style={{
-                    background: CARD_BG,
-                    border: '1px solid rgba(0,0,0,0.10)',
+                    background: cardBg,
+                    border: `1px solid ${borderColor}`,
                     backdropFilter: 'blur(14px)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = `${color}40`;
-                    e.currentTarget.style.background = CARD_BG_HOVER;
+                    e.currentTarget.style.background = cardBgHover;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.10)';
-                    e.currentTarget.style.background = CARD_BG;
+                    e.currentTarget.style.borderColor = borderColor;
+                    e.currentTarget.style.background = cardBg;
                   }}
                 >
                   <div
@@ -62,8 +72,8 @@ export function CapabilitiesSlide() {
                     {letter}
                   </div>
                   <div>
-                    <p className="font-semibold text-white text-sm mb-1.5">{label}</p>
-                    <p className="text-slate-300 text-xs leading-relaxed">{desc}</p>
+                    <p className="font-semibold text-sm mb-1.5" style={{ color: titleColor }}>{label}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: descColor }}>{desc}</p>
                   </div>
                 </div>
               </Reveal>

@@ -1,15 +1,23 @@
-import { IMG, ORANGE, OVERLAY_CTA } from '../../../constants/landingConstants';
+import { IMG, ORANGE, OVERLAY_CTA, OVERLAY_CTA_DARK } from '../../../constants/landingConstants';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
 import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 export function CtaSlide() {
+  const { isDark } = useLandingTheme();
+  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
+  const secondaryBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const secondaryBorder = isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.15)';
+  const secondaryColor = isDark ? '#e2e8f0' : '#374151';
+
   return (
     <ParallaxSection
       disableParallax
       imageUrl={IMG.cta}
       overlay={OVERLAY_CTA}
+      overlayDark={OVERLAY_CTA_DARK}
       className="min-h-[100dvh] w-full shrink-0 flex flex-col justify-center py-12 sm:py-20"
     >
       <div className="max-w-3xl mx-auto px-6 text-center w-full">
@@ -24,7 +32,7 @@ export function CtaSlide() {
           </H2>
         </Reveal>
         <Reveal animation="revealUp" delay={0.22}>
-          <p className="text-slate-300 text-[15px] leading-relaxed mb-10">
+          <p className="text-[15px] leading-relaxed mb-10" style={{ color: bodyColor }}>
             Schedule a demo or reach out directly. Your AI waiter can be live within 24 hours of onboarding.
           </p>
         </Reveal>
@@ -52,9 +60,9 @@ export function CtaSlide() {
               href="mailto:founder@dynamu.ai"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm transition-all"
               style={{
-                background: 'rgba(0,0,0,0.06)',
-                border: '1px solid rgba(0,0,0,0.15)',
-                color: '#374151',
+                background: secondaryBg,
+                border: secondaryBorder,
+                color: secondaryColor,
                 backdropFilter: 'blur(8px)',
               }}
             >

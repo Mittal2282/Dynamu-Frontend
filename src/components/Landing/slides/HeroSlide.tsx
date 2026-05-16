@@ -4,8 +4,10 @@ import {
   IMG,
   ORANGE,
   OVERLAY_HERO,
+  OVERLAY_HERO_DARK,
 } from '../../../constants/landingConstants';
 import { HERO_STATS } from '../../../constants/landingContent';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 export interface HeroSlideProps {
   activeIndex: number;
@@ -14,6 +16,15 @@ export interface HeroSlideProps {
 }
 
 export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps) {
+  const { isDark } = useLandingTheme();
+  const overlay = isDark ? OVERLAY_HERO_DARK : OVERLAY_HERO;
+  const statCardBg = isDark ? 'rgba(15,23,42,0.75)' : 'rgba(255,255,255,0.82)';
+  const statCardBorder = isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)';
+  const statLabelColor = isDark ? '#94a3b8' : '#64748b';
+  const secondaryBtnBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.75)';
+  const secondaryBtnBorder = isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,0,0,0.12)';
+  const secondaryBtnColor = isDark ? '#e2e8f0' : '#374151';
+
   return (
     <section className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col shrink-0">
       <img
@@ -23,7 +34,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
         fetchPriority="high"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
       />
-      <div className="absolute inset-0" style={{ background: OVERLAY_HERO }} />
+      <div className="absolute inset-0" style={{ background: overlay }} />
       <div
         className="absolute inset-0 pointer-events-none glow-drift"
         style={{
@@ -54,7 +65,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
         </h1>
 
         <p
-          className="hero-sub text-lg sm:text-xl leading-relaxed max-w-2xl mb-11 text-slate-100"
+          className="hero-sub text-lg sm:text-xl leading-relaxed max-w-2xl mb-11 text-white"
           style={{ textShadow: HERO_TEXT_SHADOW }}
         >
           An AI-native ordering layer that turns every restaurant menu into a conversational sales representative —
@@ -67,15 +78,15 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
               key={label}
               className="px-6 py-3.5 rounded-xl text-center"
               style={{
-                background: 'rgba(255,255,255,0.82)',
-                border: '1px solid rgba(0,0,0,0.10)',
+                background: statCardBg,
+                border: statCardBorder,
                 backdropFilter: 'blur(12px)',
               }}
             >
               <p className="text-[22px] font-black tabular-nums" style={{ color: ORANGE }}>
                 {value}
               </p>
-              <p className="text-[11px] mt-0.5 font-medium text-slate-200">{label}</p>
+              <p className="text-[11px] mt-0.5 font-medium" style={{ color: statLabelColor }}>{label}</p>
             </div>
           ))}
         </div>
@@ -102,9 +113,9 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
             onClick={() => goToSlide(HOW_IT_WORKS_SLIDE_INDEX)}
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-sm transition-all"
             style={{
-              background: 'rgba(255,255,255,0.75)',
-              border: '1px solid rgba(0,0,0,0.12)',
-              color: '#374151',
+              background: secondaryBtnBg,
+              border: secondaryBtnBorder,
+              color: secondaryBtnColor,
               backdropFilter: 'blur(8px)',
             }}
           >

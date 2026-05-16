@@ -1,16 +1,25 @@
-import { BORDER, CARD_BG, IMG, ORANGE, OVERLAY_PROBLEM } from '../../../constants/landingConstants';
+import { BORDER, BORDER_DARK, CARD_BG, CARD_BG_DARK, IMG, ORANGE, OVERLAY_PROBLEM, OVERLAY_PROBLEM_DARK } from '../../../constants/landingConstants';
 import { PROBLEM_CARDS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { H2 } from '../H2';
 import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 export function ProblemSlide() {
+  const { isDark } = useLandingTheme();
+  const cardBg = isDark ? CARD_BG_DARK : CARD_BG;
+  const borderColor = isDark ? BORDER_DARK : BORDER;
+  const titleColor = isDark ? '#f1f5f9' : '#111827';
+  const descColor = isDark ? '#cbd5e1' : '#4b5563';
+  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
+
   return (
     <ParallaxSection
       disableParallax
       imageUrl={IMG.problem}
       overlay={OVERLAY_PROBLEM}
+      overlayDark={OVERLAY_PROBLEM_DARK}
       className="min-h-[100dvh] w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
     >
       <div className="max-w-6xl mx-auto px-6">
@@ -22,7 +31,7 @@ export function ProblemSlide() {
               <br />
               <span style={{ color: ORANGE }}>because menus don&apos;t sell.</span>
             </H2>
-            <p className="text-slate-300 mt-5 text-[15px] leading-relaxed">
+            <p className="mt-5 text-[15px] leading-relaxed" style={{ color: bodyColor }}>
               15M+ restaurants worldwide treat menus as static information sheets. The result: untapped upsells,
               overwhelmed staff, and customers who leave without spending their full potential.
             </p>
@@ -35,16 +44,16 @@ export function ProblemSlide() {
               <div
                 className="h-full p-6 rounded-xl"
                 style={{
-                  background: CARD_BG,
-                  border: `1px solid ${BORDER}`,
+                  background: cardBg,
+                  border: `1px solid ${borderColor}`,
                   backdropFilter: 'blur(12px)',
                 }}
               >
                 <p className="text-[36px] font-black tabular-nums mb-4 leading-none" style={{ color: ORANGE, opacity: 0.5 }}>
                   {num}
                 </p>
-                <p className="font-semibold text-white text-sm mb-2 leading-snug">{title}</p>
-                <p className="text-slate-300 text-xs leading-relaxed">{desc}</p>
+                <p className="font-semibold text-sm mb-2 leading-snug" style={{ color: titleColor }}>{title}</p>
+                <p className="text-xs leading-relaxed" style={{ color: descColor }}>{desc}</p>
               </div>
             </Reveal>
           ))}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ToastProvider } from './components/ui/Toast';
+import { LandingThemeProvider } from './context/LandingThemeContext';
 
 export interface CustomProviderProps {
   children: React.ReactNode;
@@ -11,8 +12,10 @@ export interface CustomProviderProps {
  */
 export default function CustomProvider({ children }: CustomProviderProps) {
   return (
-    <ToastProvider>
-      {children}
-    </ToastProvider>
+    <LandingThemeProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    </LandingThemeProvider>
   );
 }

@@ -1,14 +1,23 @@
-import { BORDER, CARD_BG, IMG, ORANGE, OVERLAY_TRACTION } from '../../../constants/landingConstants';
+import { BORDER, BORDER_DARK, CARD_BG, CARD_BG_DARK, IMG, ORANGE, OVERLAY_TRACTION, OVERLAY_TRACTION_DARK } from '../../../constants/landingConstants';
 import { TRACTION_STATS } from '../../../constants/landingContent';
 import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
+import { useLandingTheme } from '../../../context/LandingThemeContext';
 
 export function TractionSlide() {
+  const { isDark } = useLandingTheme();
+  const cardBg = isDark ? CARD_BG_DARK : CARD_BG;
+  const borderColor = isDark ? BORDER_DARK : BORDER;
+  const headingColor = isDark ? '#f1f5f9' : '#111827';
+  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
+  const labelColor = isDark ? '#cbd5e1' : '#4b5563';
+
   return (
     <ParallaxSection
       disableParallax
       imageUrl={IMG.traction}
       overlay={OVERLAY_TRACTION}
+      overlayDark={OVERLAY_TRACTION_DARK}
       className="min-h-[100dvh] w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
     >
       <div className="max-w-6xl mx-auto px-6">
@@ -19,12 +28,12 @@ export function TractionSlide() {
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Pilot Live</span>
               </div>
-              <p className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
+              <p className="text-3xl sm:text-4xl font-bold mb-4 leading-tight" style={{ color: headingColor }}>
                 Heeralal Hotel,
                 <br />
                 Bikaner
               </p>
-              <p className="text-slate-300 text-[15px] leading-relaxed max-w-lg">
+              <p className="text-[15px] leading-relaxed max-w-lg" style={{ color: bodyColor }}>
                 First flagship deployment at one of Bikaner&apos;s most established dining destinations. Real tables. Real
                 guests. Measurable revenue impact.
               </p>
@@ -37,12 +46,12 @@ export function TractionSlide() {
                 <div
                   className="flex items-center justify-between px-5 py-4 rounded-xl"
                   style={{
-                    background: CARD_BG,
-                    border: `1px solid ${BORDER}`,
+                    background: cardBg,
+                    border: `1px solid ${borderColor}`,
                     backdropFilter: 'blur(12px)',
                   }}
                 >
-                  <p className="text-xs text-slate-300">{label}</p>
+                  <p className="text-xs" style={{ color: labelColor }}>{label}</p>
                   <p className="text-xs font-bold" style={{ color: ORANGE }}>
                     {value}
                   </p>

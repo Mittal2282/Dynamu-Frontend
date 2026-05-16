@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
+import { useLandingTheme } from '../../context/LandingThemeContext';
 
 export interface ParallaxSectionProps {
   imageUrl: string;
   overlay: string;
+  overlayDark?: string;
   children?: React.ReactNode;
   className?: string;
   minHeight?: string | number;
@@ -13,12 +15,15 @@ export interface ParallaxSectionProps {
 export function ParallaxSection({
   imageUrl,
   overlay,
+  overlayDark,
   children,
   className = '',
   minHeight,
   disableParallax = false,
   id,
 }: ParallaxSectionProps) {
+  const { isDark } = useLandingTheme();
+  const activeOverlay = isDark && overlayDark ? overlayDark : overlay;
   const sectionRef = useRef<HTMLElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -59,7 +64,7 @@ export function ParallaxSection({
         className="absolute w-full object-cover will-change-transform pointer-events-none select-none"
         style={{ top: '-8%', height: '116%' }}
       />
-      <div className="absolute inset-0" style={{ background: overlay }} />
+      <div className="absolute inset-0" style={{ background: activeOverlay }} />
       <div className="relative z-10 flex-1 flex flex-col justify-center w-full">{children}</div>
     </section>
   );
