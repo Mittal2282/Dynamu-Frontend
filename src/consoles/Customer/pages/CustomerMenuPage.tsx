@@ -76,11 +76,7 @@ function CategorySection({ name, items, currencySymbol, innerRef }: CategorySect
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.map((item) => (
-          <MenuItemCard
-            key={item._id}
-            item={item}
-            currencySymbol={currencySymbol}
-          />
+          <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
         ))}
       </div>
     </div>
@@ -139,8 +135,17 @@ function VegToggle({ vegFilter, onChange }: VegToggleProps) {
 // ── Icons ──────────────────────────────────────────────────────────────────────
 function SearchIcon() {
   return (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+    <svg
+      className="w-4 h-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
     </svg>
   );
 }
@@ -148,7 +153,7 @@ function SearchIcon() {
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function CustomerMenuPage() {
   const menuFromStore = restaurantStore((s) => s.menu) as Record<string, MenuItem[]> | undefined;
-  const { menu: menuFromOutlet } = (useOutletContext<CustomerOutletContext>() ?? {});
+  const { menu: menuFromOutlet } = useOutletContext<CustomerOutletContext>() ?? {};
   const menu = useMemo<Record<string, MenuItem[]>>(() => {
     return menuFromStore && Object.keys(menuFromStore).length > 0
       ? menuFromStore
@@ -160,13 +165,12 @@ export default function CustomerMenuPage() {
 
   const categories = useMemo(() => sortCategories(Object.keys(menu)), [menu]);
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(
-    () => categories[0] ?? null,
-  );
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => categories[0] ?? null);
   const [searchQuery, setSearchQuery] = useState("");
   const [vegFilter, setVegFilter] = useState<boolean | null>(null);
 
   const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const sliderCategoryRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const isScrollingToRef = useRef(false);
@@ -180,22 +184,23 @@ export default function CustomerMenuPage() {
   const filteredItems = useMemo<MenuItem[]>(() => {
     if (!isSearchActive) return [];
     const q = searchQuery.trim().toLowerCase();
-    return (allMenuItems
-      .map((item) => {
-        if (vegFilter !== null && item.is_veg !== vegFilter) return null;
-        if (!q) return { ...item, _score: 0 };
-        const iName = (item.name || "").toLowerCase();
-        const iDesc = (item.description || "").toLowerCase();
-        const iCat = (item.category || "").toLowerCase();
-        if (iName === q) return { ...item, _score: 100 };
-        if (iName.startsWith(q)) return { ...item, _score: 80 };
-        if (iName.includes(q)) return { ...item, _score: 60 };
-        if (iCat.includes(q)) return { ...item, _score: 40 };
-        if (iDesc.includes(q)) return { ...item, _score: 20 };
-        return null;
-      })
-      .filter(Boolean) as MenuItem[])
-      .sort((a, b) => (b._score ?? 0) - (a._score ?? 0));
+    return (
+      allMenuItems
+        .map((item) => {
+          if (vegFilter !== null && item.is_veg !== vegFilter) return null;
+          if (!q) return { ...item, _score: 0 };
+          const iName = (item.name || "").toLowerCase();
+          const iDesc = (item.description || "").toLowerCase();
+          const iCat = (item.category || "").toLowerCase();
+          if (iName === q) return { ...item, _score: 100 };
+          if (iName.startsWith(q)) return { ...item, _score: 80 };
+          if (iName.includes(q)) return { ...item, _score: 60 };
+          if (iCat.includes(q)) return { ...item, _score: 40 };
+          if (iDesc.includes(q)) return { ...item, _score: 20 };
+          return null;
+        })
+        .filter(Boolean) as MenuItem[]
+    ).sort((a, b) => (b._score ?? 0) - (a._score ?? 0));
   }, [allMenuItems, isSearchActive, searchQuery, vegFilter]);
 
   // ── Scroll spy ────────────────────────────────────────────────────────────
@@ -211,10 +216,7 @@ export default function CustomerMenuPage() {
 
       const obs = new IntersectionObserver(
         ([entry]) => {
-          ratioMap.set(
-            cat,
-            entry.isIntersecting ? entry.intersectionRatio : -1,
-          );
+          ratioMap.set(cat, entry.isIntersecting ? entry.intersectionRatio : -1);
           if (isScrollingToRef.current) return;
 
           // Pick the category with the highest intersection ratio
@@ -245,13 +247,13 @@ export default function CustomerMenuPage() {
   const scrollToCategory = useCallback((cat: string) => {
     setActiveCategory(cat);
     const el = categoryRefs.current[cat];
-    if (!el) return;
+    const contentEl = contentRef.current;
+    if (!el || !contentEl) return;
 
     isScrollingToRef.current = true;
-    const headerHeight = (headerRef.current?.offsetHeight ?? 100) + 16;
     const elementTop =
-      el.getBoundingClientRect().top + window.scrollY - headerHeight;
-    window.scrollTo({ top: Math.max(0, elementTop), behavior: "smooth" });
+      el.getBoundingClientRect().top - contentEl.getBoundingClientRect().top + contentEl.scrollTop;
+    contentEl.scrollTo({ top: Math.max(0, elementTop - 16), behavior: "smooth" });
 
     setTimeout(() => {
       isScrollingToRef.current = false;
@@ -280,30 +282,34 @@ export default function CustomerMenuPage() {
   useEffect(() => {
     if (categories.length > 0 && !categories.includes(activeCategory ?? "")) {
       setTimeout(() => {
-        setActiveCategory((prev) =>
-          categories.includes(prev ?? "") ? prev : categories[0],
-        );
+        setActiveCategory((prev) => (categories.includes(prev ?? "") ? prev : categories[0]));
       }, 0);
     }
   }, [categories, activeCategory]);
 
   return (
     <div
-      className={`flex-1 flex flex-col ${count > 0 ? "pb-40 md:pb-16" : "pb-24 md:pb-10"}`}
+      className="flex-1 min-h-0 flex flex-col overflow-hidden"
       style={{
         backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
       }}
     >
-      {/* ── Sticky header ─────────────────────────────────────────────────── */}
+      {/* ── Search + category bar — always visible, never scrolls ─────────── */}
       <div
         ref={headerRef}
-        className="sticky top-[57px] z-20 border-b"
-        style={{ background: "color-mix(in srgb, var(--t-bg) 96%, black)", borderColor: "var(--t-line)" }}
+        className="border-b shrink-0"
+        style={{
+          background: "color-mix(in srgb, var(--t-bg) 96%, black)",
+          borderColor: "var(--t-line)",
+        }}
       >
         {/* Search bar + veg toggle in one row */}
-        <div className="px-4 md:px-6 pt-3 pb-2.5 flex items-center gap-2">
+        <div className="px-4 md:px-6 py-2 flex items-center gap-2">
           <div className="relative flex-1">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--t-dim)" }}>
+            <span
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: "var(--t-dim)" }}
+            >
               <SearchIcon />
             </span>
             <input
@@ -334,13 +340,15 @@ export default function CustomerMenuPage() {
 
         {/* Category slider — always visible */}
         {!isSearchActive && (
-          <div className="px-4 md:px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-4 md:px-6 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
             {categories.map((cat) => {
               const active = activeCategory === cat;
               return (
                 <button
                   key={cat}
-                  ref={(el) => { sliderCategoryRefs.current[cat] = el; }}
+                  ref={(el) => {
+                    sliderCategoryRefs.current[cat] = el;
+                  }}
                   onClick={() => scrollToCategory(cat)}
                   className="relative px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0"
                   style={
@@ -365,8 +373,11 @@ export default function CustomerMenuPage() {
         )}
       </div>
 
-      {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="px-4 md:px-6 lg:px-8 py-4">
+      {/* ── Content — scrolls independently below the fixed search bar ───── */}
+      <div
+        ref={contentRef}
+        className={`flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 ${count > 0 ? "pb-40 md:pb-16" : "pb-24 md:pb-10"}`}
+      >
         {isSearchActive ? (
           /* Search results */
           filteredItems.length === 0 ? (
@@ -390,11 +401,7 @@ export default function CustomerMenuPage() {
                 {filteredItems.length !== 1 ? "s" : ""}
               </Text>
               {filteredItems.map((item) => (
-                <MenuItemCard
-                  key={item._id}
-                  item={item}
-                  currencySymbol={currencySymbol}
-                />
+                <MenuItemCard key={item._id} item={item} currencySymbol={currencySymbol} />
               ))}
             </div>
           )

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cartStore } from "../../store/cartStore";
 import { formatCurrency } from "../../utils/formatters";
 import { variantEffectivePrice } from "../../utils/vegStatus";
 import type { MenuItem, Variant } from "../../types/menu";
@@ -24,6 +25,7 @@ export default function VariantSelector({ item, currencySymbol, onAdd }: Variant
 
   const defaultVariant = availableVariants.find((v) => (v as Variant & { isDefault?: boolean }).isDefault) ?? availableVariants[0] ?? null;
   const [selected, setSelected] = useState<Variant | null>(defaultVariant);
+  const syncing = cartStore((s) => s.syncing);
 
   if (!item.variants?.length) return null;
 
@@ -126,25 +128,35 @@ export default function VariantSelector({ item, currencySymbol, onAdd }: Variant
       {/* Add to Cart button */}
       <button
         type="button"
-        onClick={() => selected && onAdd(selected)}
-        disabled={!selected}
-        className="mt-4 w-full py-3 rounded-xl font-bold text-white text-sm tracking-wide transition-all active:scale-[0.98]"
+        onClick={() => selected && !syncing && onAdd(selected)}
+        disabled={!selected || syncing}
+        className="relative mt-4 w-full py-3 rounded-xl font-bold text-white text-sm tracking-wide transition-all active:scale-[0.98]"
         style={{
           background: selected ? "var(--t-accent)" : "var(--t-line)",
-          boxShadow: selected ? "0 4px 14px var(--t-accent-40)" : "none",
+          boxShadow: selected && !syncing ? "0 4px 14px var(--t-accent-40)" : "none",
           opacity: selected ? 1 : 0.5,
-          cursor: selected ? "pointer" : "not-allowed",
+          cursor: !selected || syncing ? "not-allowed" : "pointer",
         }}
       >
-        {selected ? (
-          <>
-            Add to Cart
-            <span className="ml-2 font-black">
-              · {formatCurrency(variantEffectivePrice(selected), currencySymbol)}
-            </span>
-          </>
-        ) : (
-          "All options unavailable"
+        <span className={syncing ? "opacity-0" : ""}>
+          {selected ? (
+            <>
+              Add to Cart
+              <span className="ml-2 font-black">
+                · {formatCurrency(variantEffectivePrice(selected), currencySymbol)}
+              </span>
+            </>
+          ) : (
+            "All options unavailable"
+          )}
+        </span>
+        {syncing && (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span
+              className="w-4 h-4 rounded-full border-2 animate-spin"
+              style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }}
+            />
+          </span>
         )}
       </button>
     </div>

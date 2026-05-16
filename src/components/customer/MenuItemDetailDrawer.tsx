@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import LazyImage from "../ui/LazyImage";
 import { VegBadge } from "../ui/Badge";
 import CartControl from "./CartControl";
 import VariantDrawer from "./VariantDrawer";
 import { LevelDots } from "./MenuItemCard";
+import { cartStore } from "../../store/cartStore";
+import { syncCart } from "../../services/customerService";
 import { restaurantStore } from "../../store/restaurantStore";
 import { formatCurrency } from "../../utils/formatters";
 import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
-import type { MenuItem } from "../../types/menu";
+import type { MenuItem, Variant } from "../../types/menu";
 
 interface MenuItemDetailDrawerProps {
   item: MenuItem;
@@ -84,7 +86,9 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
 
       {/* Details */}
       <div className="p-2.5 flex flex-col flex-1 gap-2">
-        <p className="text-xs font-bold text-white leading-snug line-clamp-2">{item.name}</p>
+        <p className="text-xs font-bold leading-snug line-clamp-2" style={{ color: "var(--t-text)" }}>
+          {item.name}
+        </p>
 
         {/* Price */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -148,13 +152,58 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
 
 /* ─── Menu Item Detail Drawer (bottom sheet portal) ─────────────────────────── */
 export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDrawerProps) {
-  const [variantDrawerOpen, setVariantDrawerOpen] = useState(false);
   const { currencySymbol, menu } = restaurantStore();
+
+  // Variant selection — initialised after mount via effect so hooks stay unconditional
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [addLoading, setAddLoading] = useState(false);
+
+  // Drag-to-close state
+  const [dragDelta, setDragDelta] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; delta: number; active: boolean }>({
+    startY: 0, delta: 0, active: false,
+  });
+
+  const CLOSE_THRESHOLD = 100;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    dragRef.current = { startY: e.touches[0].clientY, delta: 0, active: true };
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragRef.current.active) return;
+    const delta = Math.max(0, e.touches[0].clientY - dragRef.current.startY);
+    dragRef.current.delta = delta;
+    setDragDelta(delta);
+  };
+
+  const handleTouchEnd = () => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    setIsDragging(false);
+    if (dragRef.current.delta >= CLOSE_THRESHOLD) {
+      setDragDelta(window.innerHeight);
+      setTimeout(onClose, 280);
+    } else {
+      setDragDelta(0);
+    }
+  };
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  // Pre-select the default variant once we know the item
+  useEffect(() => {
+    if (!item?.has_variants) return;
+    const variants = (item.variants ?? []).filter((v) => v.isAvailable !== false);
+    const def = variants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? variants[0] ?? null;
+    setSelectedVariant(def);
+  }, [item]);
 
   if (!item) return null;
 
@@ -167,6 +216,35 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
   const defaultVariant = item.has_variants
     ? (availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? availableVariants[0] ?? null)
     : null;
+  const groupName = item.has_variants
+    ? ((item.variants?.[0] as { groupName?: string })?.groupName ?? "Options")
+    : null;
+
+  const handleAddToCart = async () => {
+    setAddLoading(true);
+    try {
+      if (item.has_variants) {
+        if (!selectedVariant) return;
+        const effectiveVariant = { ...selectedVariant, price: variantEffectivePrice(selectedVariant) };
+        for (let i = 0; i < quantity; i++) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cartStore.getState().add({ ...item, selectedVariant: effectiveVariant } as any);
+        }
+      } else {
+        for (let i = 0; i < quantity; i++) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cartStore.getState().add(item as any);
+        }
+      }
+      await syncCart(Object.values(cartStore.getState().cart));
+      onClose();
+    } catch {
+      // keep drawer open on failure
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   const displayPrice = item.has_variants
     ? (defaultVariant ? variantEffectivePrice(defaultVariant) : item.price)
     : item.price;
@@ -195,32 +273,33 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
 
   const content = (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — fades as user drags sheet down */}
       <div
         className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.65)" }}
+        style={{
+          background: "rgba(0,0,0,0.65)",
+          opacity: 1 - dragDelta / (window.innerHeight * 0.6),
+          transition: isDragging ? "none" : "opacity 0.28s ease",
+        }}
         onClick={onClose}
       />
 
       {/* Bottom sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl flex flex-col"
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl overflow-hidden flex flex-col"
         style={{
           background: "var(--t-bg)",
           maxHeight: "92vh",
+          transform: `translateY(${dragDelta}px)`,
+          transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.32,0.72,0,1)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full" style={{ background: "var(--t-line)" }} />
-        </div>
-
-        {/* Close button */}
+        {/* Close button — always visible, overlaid on top of sheet */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer z-10 transition-colors"
-          style={{ background: "var(--t-float)", color: "var(--t-dim)" }}
+          className="absolute top-3 right-4 w-8 h-8 rounded-full flex items-center justify-center text-sm cursor-pointer z-20 transition-opacity hover:opacity-80 active:scale-95"
+          style={{ background: "rgba(0,0,0,0.45)", color: "#fff" }}
           aria-label="Close"
         >
           ✕
@@ -228,7 +307,7 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
 
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1">
-          {/* Hero image */}
+          {/* Hero image — flush to top */}
           <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
             <LazyImage
               src={item.image_url}
@@ -244,7 +323,8 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 </div>
               }
             />
-            <div className="absolute top-3 left-3 p-1 rounded-md bg-white/90 shadow">
+            {/* Veg badge */}
+            <div className="absolute bottom-3 left-3 p-1 rounded-md bg-white/90 shadow">
               <VegBadge isVeg={vegStatus === "mixed" ? "mixed" : vegStatus === "veg"} size="md" />
             </div>
           </div>
@@ -252,7 +332,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
           <div className="px-5 pt-4 pb-6 space-y-4">
             {/* Name + badges */}
             <div>
-              <h2 className="text-xl font-bold text-white leading-snug">{item.name}</h2>
+              <h2 className="text-xl font-bold leading-snug" style={{ color: "var(--t-text)" }}>
+                {item.name}
+              </h2>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {item.category && (
                   <span
@@ -310,9 +392,55 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
               )}
             </div>
 
+            {/* Inline variant picker */}
+            {item.has_variants && availableVariants.length > 0 && (
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--t-dim)" }}>
+                  {groupName}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {availableVariants.map((v) => {
+                    const isActive = selectedVariant?.name === v.name;
+                    const effPrice = variantEffectivePrice(v);
+                    return (
+                      <button
+                        key={v.name}
+                        type="button"
+                        onClick={() => setSelectedVariant(v)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl border transition-all text-left"
+                        style={{
+                          borderColor: isActive ? "var(--t-accent)" : "var(--t-line)",
+                          background: isActive
+                            ? "color-mix(in srgb, var(--t-accent) 10%, transparent)"
+                            : "var(--t-surface)",
+                        }}
+                      >
+                        <div
+                          className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                          style={{ borderColor: isActive ? "var(--t-accent)" : "var(--t-line)" }}
+                        >
+                          {isActive && <div className="w-2 h-2 rounded-full" style={{ background: "var(--t-accent)" }} />}
+                        </div>
+                        <span className="flex-1 text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+                          {v.name}
+                        </span>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ background: v.isVeg !== false ? "#22c55e" : "#ef4444" }}
+                        />
+                        <span className="text-sm font-bold" style={{ color: isActive ? "var(--t-accent)" : "var(--t-dim)" }}>
+                          {formatCurrency(effPrice, currencySymbol)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             {item.description && (
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(245,246,250,0.7)" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--t-dim)" }}>
                 {item.description}
               </p>
             )}
@@ -340,7 +468,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
                       Serves
                     </p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{extItem.serves}</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
+                      {extItem.serves}
+                    </p>
                   </div>
                 )}
                 {extItem.preparation_time && (
@@ -351,7 +481,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
                       Prep time
                     </p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{extItem.preparation_time} min</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
+                      {extItem.preparation_time} min
+                    </p>
                   </div>
                 )}
                 {extItem.taste_profile && (
@@ -362,7 +494,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
                       Taste
                     </p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{extItem.taste_profile}</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
+                      {extItem.taste_profile}
+                    </p>
                   </div>
                 )}
                 {extItem.allergens && (
@@ -373,7 +507,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ef4444" }}>
                       Allergens
                     </p>
-                    <p className="text-sm font-semibold text-white mt-0.5">{extItem.allergens}</p>
+                    <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
+                      {extItem.allergens}
+                    </p>
                   </div>
                 )}
               </div>
@@ -423,7 +559,12 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
             {/* Similar items */}
             {similarItems.length > 0 && (
               <div>
-                <p className="text-sm font-bold text-white mb-3">More from {item.category}</p>
+                <p
+                  className="text-sm font-bold mb-3"
+                  style={{ color: "var(--t-text)" }}
+                >
+                  More from {item.category}
+                </p>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 no-scrollbar">
                   {similarItems.map((sim) => (
                     <div key={sim._id} className="shrink-0 w-[170px]">
@@ -438,45 +579,92 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
 
         {/* Sticky CTA */}
         <div
-          className="shrink-0 px-5 py-4"
+          className="shrink-0 px-5 py-4 flex items-center gap-3"
           style={{ borderTop: "1px solid var(--t-line)", background: "var(--t-bg)" }}
         >
-          {!item.has_variants ? (
-            <CartControl item={item} />
-          ) : (
+          {/* Quantity stepper */}
+          <div
+            className="flex items-stretch rounded-xl overflow-hidden shrink-0"
+            style={{
+              border: "1.5px solid var(--t-accent-40)",
+              background: "var(--t-accent-10)",
+              height: "52px",
+            }}
+          >
             <button
               type="button"
-              onClick={() => !allVariantsUnavailable && setVariantDrawerOpen(true)}
-              disabled={allVariantsUnavailable}
-              className="w-full flex items-center justify-center gap-2 rounded-xl font-bold text-white text-sm tracking-wide transition-all active:scale-95 cursor-pointer"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="flex items-center justify-center transition-colors"
+              style={{ width: "44px", color: "var(--t-accent)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              aria-label="Decrease quantity"
+            >
+              <span style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>−</span>
+            </button>
+            <div
+              className="flex items-center justify-center"
               style={{
-                background: allVariantsUnavailable ? "var(--t-line)" : "var(--t-accent)",
-                boxShadow: allVariantsUnavailable ? "none" : "0 4px 14px var(--t-accent-40)",
-                height: "48px",
-                opacity: allVariantsUnavailable ? 0.55 : 1,
-                cursor: allVariantsUnavailable ? "not-allowed" : "pointer",
+                minWidth: "36px",
+                borderLeft: "1px solid var(--t-accent-40)",
+                borderRight: "1px solid var(--t-accent-40)",
               }}
             >
-              {allVariantsUnavailable ? "Unavailable" : (
-                <>
-                  <span style={{ fontSize: "16px", fontWeight: 900 }}>+</span>
-                  Choose Options
-                </>
-              )}
+              <span className="font-black text-base tabular-nums select-none" style={{ color: "var(--t-accent)" }}>
+                {quantity}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuantity((q) => q + 1)}
+              className="flex items-center justify-center transition-colors"
+              style={{ width: "44px", color: "var(--t-accent)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              aria-label="Increase quantity"
+            >
+              <span style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>+</span>
             </button>
-          )}
+          </div>
+
+          {/* Add to Cart button */}
+          {(() => {
+            const disabled = allVariantsUnavailable || (item.has_variants && !selectedVariant) || addLoading;
+            const unitPrice = item.has_variants && selectedVariant
+              ? variantEffectivePrice(selectedVariant)
+              : (discountedPrice ?? displayPrice);
+            const totalPrice = unitPrice * quantity;
+            return (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={disabled}
+                className="relative flex-1 flex items-center justify-center gap-2 rounded-xl font-bold text-white text-sm tracking-wide transition-all active:scale-[0.98]"
+                style={{
+                  background: disabled && !addLoading ? "var(--t-line)" : "var(--t-accent)",
+                  boxShadow: disabled ? "none" : "0 4px 14px var(--t-accent-40)",
+                  height: "52px",
+                  opacity: allVariantsUnavailable ? 0.55 : 1,
+                  cursor: disabled ? "not-allowed" : "pointer",
+                }}
+              >
+                {addLoading ? (
+                  <span
+                    className="w-5 h-5 rounded-full border-2 animate-spin"
+                    style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }}
+                  />
+                ) : allVariantsUnavailable ? (
+                  "Unavailable"
+                ) : item.has_variants && !selectedVariant ? (
+                  "Select an option"
+                ) : (
+                  `Add to Cart · ${formatCurrency(totalPrice, currencySymbol)}`
+                )}
+              </button>
+            );
+          })()}
         </div>
       </div>
-
-      {/* Variant drawer (for variant items) */}
-      {item.has_variants && (
-        <VariantDrawer
-          item={item}
-          open={variantDrawerOpen}
-          onClose={() => setVariantDrawerOpen(false)}
-          currencySymbol={currencySymbol}
-        />
-      )}
     </>
   );
 

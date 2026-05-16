@@ -181,9 +181,10 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
 
   return (
     <article
-      className="relative rounded-2xl overflow-hidden border border-white/[0.06]"
+      className="relative rounded-2xl overflow-hidden border"
       style={{
         backgroundColor: "color-mix(in srgb, var(--t-bg) 88%, white 4%)",
+        borderColor: "var(--t-line)",
       }}
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.stripeSolid}`} aria-hidden />
@@ -280,7 +281,7 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
                             {isVeg ? "Veg" : "Non-Veg"}
                           </span>
                         </div>
-                        <p className="text-[11px] font-bold leading-snug line-clamp-2" style={{ color: "#ffffff" }}>
+                        <p className="text-[11px] font-bold leading-snug line-clamp-2" style={{ color: "var(--t-text)" }}>
                           {item.name}
                         </p>
                         {item.variant_name && (
@@ -310,7 +311,7 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
 
         {order.notes && (
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}>
             <span className="text-[13px] shrink-0" aria-hidden>📝</span>
             <p className="text-[11px] italic leading-snug" style={{ color: "var(--t-nav-muted)" }}>
               {order.notes}
@@ -318,14 +319,14 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1 gap-3 border-t border-white/[0.06]">
+        <div className="flex items-center justify-between pt-1 gap-3 border-t" style={{ borderColor: "var(--t-line)" }}>
           <div className="flex items-center gap-2.5 min-w-0">
             <phaseInfo.Icon className="w-4 h-4 shrink-0" style={{ color: phaseInfo.color }} />
             <span className="text-[11px] font-bold uppercase tracking-wide truncate" style={{ color: phaseInfo.color }}>
               {phaseInfo.label}
             </span>
           </div>
-          <span className="text-base font-bold text-white tabular-nums shrink-0">
+          <span className="text-base font-bold tabular-nums shrink-0" style={{ color: "var(--t-text)" }}>
             {formatCurrency(order.total_amount || 0, currencySymbol)}
           </span>
         </div>
@@ -420,7 +421,7 @@ export default function CustomerOrdersPage() {
       >
         <div className="text-7xl">🙏</div>
         <div className="space-y-3 max-w-sm">
-          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight" style={{ color: "var(--t-text)" }}>
             Thank You!
           </h1>
           <p className="text-base leading-relaxed" style={{ color: "var(--t-dim)" }}>
@@ -477,8 +478,8 @@ export default function CustomerOrdersPage() {
         </span>
         <div className="space-y-3 max-w-sm">
           <p
-            className="text-xl md:text-2xl font-bold text-white tracking-wide uppercase"
-            style={{ color: "#ffffff" }}
+            className="text-xl md:text-2xl font-bold tracking-wide uppercase"
+            style={{ color: "var(--t-text)" }}
           >
             No orders yet
           </p>
@@ -528,8 +529,8 @@ export default function CustomerOrdersPage() {
           className="flex-1 py-2 !rounded-xl text-xs font-bold uppercase tracking-wider transition-opacity active:opacity-90"
           style={{
             backgroundColor: "transparent",
-            color: "white",
-            border: "1.5px solid color-mix(in srgb, white 30%, var(--t-bg))",
+            color: "var(--t-text)",
+            border: "1.5px solid var(--t-line)",
           }}
         >
           + Order more
@@ -560,7 +561,7 @@ export default function CustomerOrdersPage() {
 
   return (
     <div
-      className="px-5 md:px-6 lg:px-8 pt-6 pb-[22rem] md:pb-[16rem] lg:pb-10"
+      className="flex-1 min-h-0 overflow-y-auto px-5 md:px-6 lg:px-8 pt-6 pb-88 md:pb-64 lg:pb-10"
       style={{
         backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)",
       }}
@@ -571,7 +572,7 @@ export default function CustomerOrdersPage() {
         <div className="flex-1 space-y-8">
           <div className="flex flex-row items-center justify-between gap-4">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-[1.1]">
-              <span className="text-white">Current </span>
+              <span style={{ color: "var(--t-text)" }}>Current </span>
               <span style={{ color: "var(--t-accent)" }}>Orders</span>
             </h1>
 
@@ -603,9 +604,10 @@ export default function CustomerOrdersPage() {
         {/* Right: sticky bill card — desktop only */}
         <div className="hidden lg:block w-80 xl:w-96 shrink-0">
           <div
-            className="sticky top-20 rounded-2xl border border-white/[0.08] shadow-2xl p-6 space-y-5"
+            className="sticky top-20 rounded-2xl border shadow-2xl p-6 space-y-5"
             style={{
               backgroundColor: "color-mix(in srgb, var(--t-bg) 92%, black)",
+              borderColor: "var(--t-line)",
               borderTop: "2px solid var(--t-accent)",
               boxShadow: "0 0 24px var(--t-accent2-20)",
             }}
@@ -624,7 +626,7 @@ export default function CustomerOrdersPage() {
       {/* ── Mobile/tablet: fixed bottom bill panel ─────────────────────────── */}
       <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none bottom-[72px] md-bottom-5 mb-3">
         <div
-          className="w-full md:max-w-3xl rounded-2xl border-t border-white/[0.08] shadow-2xl p-5 space-y-4 pointer-events-auto"
+          className="w-full md:max-w-3xl rounded-2xl shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{
             backgroundColor: "color-mix(in srgb, var(--t-bg) 92%, black)",
             borderTop: "2px solid var(--t-accent)",

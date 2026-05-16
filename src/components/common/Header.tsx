@@ -56,14 +56,17 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
     const navLinkClass = (isActive: boolean) => [
       'px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap',
       isActive
-        ? 'text-[var(--t-accent)] bg-[var(--t-accent-10)]'
-        : 'text-[var(--t-dim)] hover:text-white hover:bg-white/5',
+        ? 'text-(--t-accent) bg-(--t-accent-10)'
+        : 'text-[var(--t-dim)] hover:text-[var(--t-text)] hover:bg-[var(--t-float)]',
     ].join(' ');
 
     return (
       <header
-        className="px-5 py-3.5 sticky top-0 z-30 border-b border-white/[0.08]"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--t-bg) 96%, black)' }}
+        className="px-5 py-3.5 sticky top-0 z-30 border-b"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--t-bg) 96%, black)',
+          borderColor: 'var(--t-line)',
+        }}
       >
         <div className="flex items-center justify-between gap-3">
           {/* Logo + name */}
@@ -77,11 +80,11 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
             </h1>
             {tableNumber && (
               <span
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-widest shrink-0"
+                className="table-num-badge text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-widest shrink-0"
                 style={{
                   color: 'var(--t-accent2)',
                   borderColor: 'var(--t-accent2-40)',
-                  background: 'var(--t-accent2-10)',
+                  background: 'var(--t-accent2-20)',
                 }}
               >
                 {(tableFloor as number) > 1 || (tableFloor && tableFloorName)
@@ -121,76 +124,82 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
             </NavLink>
           </nav>
 
-          {/* Light/dark toggle */}
-          <button
-            type="button"
-            onClick={toggleMode}
-            aria-label={colorMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors active:scale-95"
-            style={{ color: 'var(--t-dim)' }}
-          >
-            {colorMode === 'dark' ? (
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-              </svg>
-            )}
-          </button>
-
-          {/* Mobile cart button — opens drawer */}
-          <button
-            type="button"
-            onClick={onCartClick}
-            className="relative w-11 h-11 md:hidden rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition-transform"
-            style={{
-              background: 'color-mix(in srgb, var(--t-bg) 70%, white 8%)',
-              border: '1px solid color-mix(in srgb, white 12%, var(--t-bg))',
-            }}
-            aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
-          >
-            <IconCartBag className="w-5 h-5" style={{ color: 'var(--t-accent)' }} />
-            <CountBadge count={count} />
-          </button>
-
-          {/* Desktop cart — NavLink to cart page, shows count + total when non-empty */}
-          <NavLink
-            to={`${base}/cart`}
-            className={({ isActive }) => [
-              'hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95',
-              count > 0
-                ? 'border'
-                : 'opacity-60 hover:opacity-100',
-              isActive
-                ? 'text-[var(--t-accent)] bg-[var(--t-accent-10)] border-[var(--t-accent-40)]'
-                : count > 0
-                  ? 'text-white border-[var(--t-accent-40)] bg-[var(--t-accent-10)] hover:bg-[var(--t-accent-20)]'
-                  : 'text-[var(--t-dim)] hover:text-white hover:bg-white/5',
-            ].join(' ')}
-            aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
-          >
-            <div className="relative">
-              <IconCartBag className="w-4 h-4" style={{ color: count > 0 ? 'var(--t-accent)' : 'currentColor' }} />
-              {count > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 w-4 h-4 rounded-full flex items-center justify-center text-white font-bold"
-                  style={{ background: 'var(--t-accent)', fontSize: '9px' }}
-                >
-                  {count > 9 ? '9+' : count}
-                </span>
+          {/* Right group: toggle + cart — always pinned to top-right */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Light/dark toggle */}
+            <button
+              type="button"
+              onClick={toggleMode}
+              aria-label={colorMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              className="p-2 rounded-lg flex items-center justify-center shrink-0 transition-all active:scale-[0.96]"
+              style={{
+                background: colorMode === 'dark' ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)',
+                color: 'var(--t-dim)',
+              }}
+            >
+              {colorMode === 'dark' ? (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
               )}
-            </div>
-            {count > 0 && (
-              <div className="flex items-center gap-1.5 leading-tight">
-                <span className="text-xs font-bold whitespace-nowrap" style={{ color: 'var(--t-accent)' }}>
-                  {formatCurrency(total, currencySymbol)}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--t-accent)', opacity: 0.7 }}>→</span>
+            </button>
+
+            {/* Mobile cart button — opens drawer */}
+            <button
+              type="button"
+              onClick={onCartClick}
+              className="relative w-11 h-11 md:hidden rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+              style={{
+                background: colorMode === 'dark'
+                  ? 'color-mix(in srgb, var(--t-bg) 70%, white 8%)'
+                  : 'var(--t-float)',
+                border: '1px solid var(--t-line)',
+              }}
+              aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
+            >
+              <IconCartBag className="w-5 h-5" style={{ color: 'var(--t-accent)' }} />
+              <CountBadge count={count} />
+            </button>
+
+            {/* Desktop cart — NavLink to cart page */}
+            <NavLink
+              to={`${base}/cart`}
+              className={({ isActive }) => [
+                'hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl shrink-0 transition-all active:scale-95',
+                count > 0 ? 'border' : 'opacity-60 hover:opacity-100',
+                isActive
+                  ? 'text-(--t-accent) bg-(--t-accent-10) border-(--t-accent-40)'
+                  : count > 0
+                    ? 'text-(--t-accent) border-(--t-accent-40) bg-(--t-accent-10) hover:bg-(--t-accent-20)'
+                    : 'text-[var(--t-dim)] hover:text-[var(--t-text)] hover:bg-[var(--t-float)]',
+              ].join(' ')}
+              aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
+            >
+              <div className="relative">
+                <IconCartBag className="w-4 h-4" style={{ color: count > 0 ? 'var(--t-accent)' : 'currentColor' }} />
+                {count > 0 && (
+                  <span
+                    className="absolute -top-2 -right-2 w-4 h-4 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{ background: 'var(--t-accent)', fontSize: '9px' }}
+                  >
+                    {count > 9 ? '9+' : count}
+                  </span>
+                )}
               </div>
-            )}
-          </NavLink>
+              {count > 0 && (
+                <div className="flex items-center gap-1.5 leading-tight">
+                  <span className="text-xs font-bold whitespace-nowrap" style={{ color: 'var(--t-accent)' }}>
+                    {formatCurrency(total, currencySymbol)}
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--t-accent)', opacity: 0.7 }}>→</span>
+                </div>
+              )}
+            </NavLink>
+          </div>
         </div>
       </header>
     );

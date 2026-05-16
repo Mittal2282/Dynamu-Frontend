@@ -125,14 +125,14 @@ function MarkdownMessage({ text }: { text: string }) {
     if (t.startsWith("### ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-bold text-white text-sm mt-2.5 mb-1 first:mt-0">
+        <p key={i} className="font-bold text-sm mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
           {renderInline(t.slice(4), `h3-${i}`)}
         </p>,
       );
     } else if (t.startsWith("## ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-semibold text-white text-[15px] mt-2.5 mb-1 first:mt-0">
+        <p key={i} className="font-semibold text-[15px] mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
           {renderInline(t.slice(3), `h2-${i}`)}
         </p>,
       );
@@ -175,30 +175,25 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }: WelcomeScreenProps) {
       </div>
 
       <h2
-        className="text-2xl sm:text-[1.65rem] font-bold text-white leading-tight text-center ai-chat-fade-in-up"
-        style={{ animationDelay: "60ms" }}
+        className="text-2xl sm:text-[1.65rem] font-bold leading-tight text-center ai-chat-fade-in-up"
+        style={{ animationDelay: "60ms", color: "var(--t-text)" }}
       >
         Hello! I&apos;m your <span className="ai-chat-gradient-text">AI Sommelier.</span>
       </h2>
 
-      <Text
-        as="p"
-        size="sm"
-        color="muted"
-        className="text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
-        style={{ animationDelay: "120ms" }}
+      <p
+        className="text-sm text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
+        style={{ animationDelay: "120ms", color: "var(--t-dim)" }}
       >
         {welcomeParagraph || WELCOME_FALLBACK}
-      </Text>
+      </p>
 
-      <Text
-        as="p"
-        size="xs"
-        className="mt-10 mb-3 text-white/35 uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
-        style={{ animationDelay: "180ms" }}
+      <p
+        className="mt-10 mb-3 text-[10px] uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
+        style={{ animationDelay: "180ms", color: "var(--t-dim)", opacity: 0.6 }}
       >
         TRY THESE SUGGESTIONS
-      </Text>
+      </p>
 
       <div className="flex flex-col gap-2.5">
         {QUICK_CHAT_CHIPS.map((chip, i) => (
@@ -206,8 +201,13 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }: WelcomeScreenProps) {
             key={chip.label}
             type="button"
             onClick={() => onSuggest(chip.text)}
-            className="w-full text-left px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-sm text-white/90 hover:bg-white/10 hover:border-white/15 active:scale-[0.99] transition-all ai-chat-fade-in-up"
-            style={{ animationDelay: `${220 + i * 50}ms` }}
+            className="w-full text-left px-4 py-3.5 rounded-xl text-sm active:scale-[0.99] transition-all ai-chat-fade-in-up"
+            style={{
+              animationDelay: `${220 + i * 50}ms`,
+              background: "var(--t-float)",
+              border: "1px solid var(--t-line)",
+              color: "var(--t-text)",
+            }}
           >
             {chip.label}
           </button>
@@ -223,25 +223,24 @@ interface ChatHeaderProps {
 
 function ChatHeader({ onClose }: ChatHeaderProps) {
   return (
-    <div className="px-4 py-3.5 flex items-center justify-between border-b border-white/10 shrink-0">
+    <div className="px-4 py-3.5 flex items-center justify-between border-b shrink-0"
+      style={{ borderColor: "var(--t-line)" }}>
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-[var(--t-accent2)] shrink-0">
           <BotIcon />
         </span>
-        <Text
-          as="h2"
-          size="md"
-          weight="bold"
-          color="white"
-          className="truncate uppercase tracking-wide"
+        <h2
+          className="truncate uppercase tracking-wide text-sm font-bold"
+          style={{ color: "var(--t-text)" }}
         >
           AI Assistant
-        </Text>
+        </h2>
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg shrink-0 cursor-pointer active:scale-95"
+        className="w-9 h-9 rounded-full flex items-center justify-center transition-colors text-lg shrink-0 cursor-pointer active:scale-95"
+        style={{ color: "var(--t-dim)" }}
         aria-label="Close chat"
       >
         ✕
@@ -311,7 +310,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
       })
       .catch(() => {
         setMessages([]);
-        setWelcomeText("Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️");
+        setWelcomeText("Welcome! I'm here to help you discover delicious food. What are you in the mood for today?");
       });
   }, [isOpen, initialized, setInitialized, setMessages]);
 
@@ -457,9 +456,17 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                       "max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
                       isUser
                         ? "bg-brand text-white rounded-tr-sm"
-                        : "bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4",
+                        : "rounded-tl-sm border-l-4",
                     ].join(" ")}
-                    style={!isUser ? { borderLeftColor: "var(--t-accent2)" } : undefined}
+                    style={!isUser ? {
+                      background: "var(--t-surface)",
+                      color: "var(--t-text)",
+                      borderColor: "var(--t-line)",
+                      borderLeftColor: "var(--t-accent2)",
+                      borderStyle: "solid",
+                      borderWidth: "1px",
+                      borderLeftWidth: "4px",
+                    } : undefined}
                   >
                     {isUser ? (
                       m.text
@@ -477,13 +484,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                   </div>
 
                   {t && (
-                    <Text
-                      as="span"
-                      size="xs"
-                      className="mt-1.5 px-1 uppercase tracking-wide text-white/35"
+                    <span
+                      className="mt-1.5 px-1 uppercase tracking-wide text-xs"
+                      style={{ color: "var(--t-dim)", opacity: 0.6 }}
                     >
                       {isUser ? "YOU" : "ASSISTANT"} · {t}
-                    </Text>
+                    </span>
                   )}
 
                   {!isUser && Array.isArray(m.items) && m.items.length > 0 && (
@@ -542,8 +548,15 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                   </Text>
                 </div>
                 <div
-                  className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-sm border border-white/10 border-l-4"
-                  style={{ borderLeftColor: "var(--t-accent2)" }}
+                  className="px-4 py-3 rounded-2xl rounded-tl-sm border-l-4"
+                  style={{
+                    background: "var(--t-surface)",
+                    borderColor: "var(--t-line)",
+                    borderLeftColor: "var(--t-accent2)",
+                    borderStyle: "solid",
+                    borderWidth: "1px",
+                    borderLeftWidth: "4px",
+                  }}
                 >
                   <div className="flex gap-1 items-center">
                     {[0, 150, 300].map((delay) => (
@@ -562,7 +575,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
         )}
       </div>
 
-      <div className="px-4 pt-3 pb-5 border-t border-white/10 shrink-0">
+      <div className="px-4 pt-3 pb-5 border-t shrink-0" style={{ borderColor: "var(--t-line)" }}>
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -574,7 +587,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
             }}
             placeholder={inputPlaceholder}
             disabled={isBusy}
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--t-accent)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
+            className="flex-1 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-colors disabled:opacity-60"
+            style={{
+              background: "var(--t-float)",
+              border: "1.5px solid var(--t-line)",
+              color: "var(--t-text)",
+            }}
           />
           {SpeechRecognitionAvailable && (
             <button
@@ -582,10 +600,13 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
               onClick={isListening ? stopListening : startListening}
               disabled={isBusy}
               className={`w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
-                isListening
-                  ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse"
-                  : "bg-white/5 border border-white/10 text-slate-400 hover:text-white"
+                isListening ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse" : ""
               }`}
+              style={!isListening ? {
+                background: "var(--t-float)",
+                border: "1.5px solid var(--t-line)",
+                color: "var(--t-dim)",
+              } : undefined}
               title={isListening ? "Stop listening" : "Speak your order"}
             >
               🎙️
@@ -614,7 +635,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
               type="button"
               onClick={() => send(chip.text)}
               disabled={isBusy}
-              className="px-3 py-1.5 bg-transparent border border-white/15 rounded-full text-xs text-white/85 whitespace-nowrap active:scale-95 transition-transform hover:border-white/25 hover:bg-white/5 disabled:opacity-50 shrink-0"
+              className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap active:scale-95 transition-transform disabled:opacity-50 shrink-0"
+              style={{
+                background: "var(--t-float)",
+                border: "1px solid var(--t-line)",
+                color: "var(--t-dim)",
+              }}
             >
               {chip.label}
             </button>
@@ -645,9 +671,9 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           </button>
         )}
 
-        <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
+        <p className="text-[10px] text-center mt-3 uppercase tracking-widest" style={{ color: "var(--t-dim)", opacity: 0.4 }}>
           {INFRA_FOOTER}
-        </Text>
+        </p>
       </div>
     </>
   );

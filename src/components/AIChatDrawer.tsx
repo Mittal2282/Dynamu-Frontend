@@ -305,7 +305,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
       })
       .catch(() => {
         setMessages([]);
-        setWelcomeText("Hi! I'm your AI menu assistant. What are you in the mood for today? 🍽️");
+        setWelcomeText("Welcome! I'm here to help you discover delicious food. What are you in the mood for today?");
       });
   }, [isOpen, initialized, setInitialized, setMessages]);
 

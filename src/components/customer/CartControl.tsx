@@ -37,39 +37,69 @@ function TrashIcon() {
  * qty = 0  →  accent "Add to Cart" button
  * qty ≥ 1  →  3-cell stepper [ 🗑/− | qty | + ]
  *
- * For variant items, pass selectedVariant so the correct cart key is used.
- * Each interaction optimistically updates the store, then awaits syncCart.
+ * Global syncing lock: while any cart API call is in flight, every CartControl
+ * instance disables its buttons so simultaneous calls can't race each other.
+ *
+ * Delete (qty → 0) is pessimistic: the item stays in the UI until the API
+ * confirms removal. Add / decrement (qty > 1) stay optimistic for fast UX.
  */
 export default function CartControl({ item, selectedVariant, showDelete = false }: CartControlProps) {
+  // Local flag drives the loading indicator on THIS instance's qty cell.
   const [loading, setLoading] = useState(false);
 
-  // Build the item object that carries the variant (if any)
+  // Global flag disables ALL CartControl buttons during any in-flight sync.
+  const syncing = cartStore((s) => s.syncing);
+
   const itemWithVariant = selectedVariant ? { ...item, selectedVariant } : item;
   const key = cartKey(itemWithVariant);
-
   const q = cartStore((s) => s.cart[key]?.qty ?? 0);
+  const isDisabled = syncing;
 
-  const sync = async () => {
+  const beginSync = () => {
     setLoading(true);
-    try {
-      await syncCart(Object.values(cartStore.getState().cart));
-    } catch {
-      // silently fail — CustomerLayout's useEffect will retry
-    } finally {
-      setLoading(false);
-    }
+    cartStore.getState().setSyncing(true);
+  };
+
+  const endSync = () => {
+    setLoading(false);
+    cartStore.getState().setSyncing(false);
   };
 
   const handleAdd = async () => {
-    if (loading) return;
-    cartStore.getState().add(itemWithVariant);
-    await sync();
+    if (isDisabled) return;
+    // Optimistic: update store first, then sync
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cartStore.getState().add(itemWithVariant as any);
+    beginSync();
+    try {
+      await syncCart(Object.values(cartStore.getState().cart));
+    } catch { /* silently fail */ }
+    finally { endSync(); }
   };
 
   const handleRemove = async () => {
-    if (loading) return;
-    cartStore.getState().remove(itemWithVariant);
-    await sync();
+    if (isDisabled) return;
+
+    if (q === 1) {
+      // Pessimistic delete: don't touch the store until the API confirms
+      const pendingEntries = Object.values(cartStore.getState().cart).filter(
+        (e) => cartKey(e) !== key,
+      );
+      beginSync();
+      try {
+        await syncCart(pendingEntries);
+        cartStore.getState().remove(itemWithVariant); // only remove after success
+      } catch { /* keep item if API fails */ }
+      finally { endSync(); }
+    } else {
+      // Optimistic decrement for qty > 1
+      cartStore.getState().remove(itemWithVariant);
+      beginSync();
+      try {
+        await syncCart(Object.values(cartStore.getState().cart));
+      } catch { /* silently fail */ }
+      finally { endSync(); }
+    }
   };
 
   const inCart = q > 0;
@@ -83,14 +113,16 @@ export default function CartControl({ item, selectedVariant, showDelete = false 
       <button
         type="button"
         onClick={handleAdd}
+        disabled={isDisabled}
         aria-label="Add to cart"
-        className="absolute inset-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-white text-xs tracking-wide transition-all duration-200 ease-out cursor-pointer active:scale-95"
+        className="absolute inset-0 flex items-center justify-center gap-1.5 rounded-xl font-bold text-white text-xs tracking-wide transition-all duration-200 ease-out active:scale-95"
         style={{
           background: "var(--t-accent)",
-          boxShadow: "0 4px 14px var(--t-accent-40)",
-          opacity: inCart ? 0 : 1,
+          boxShadow: inCart || isDisabled ? "none" : "0 4px 14px var(--t-accent-40)",
+          opacity: inCart ? 0 : isDisabled ? 0.4 : 1,
           transform: inCart ? "scale(0.92)" : "scale(1)",
           pointerEvents: inCart ? "none" : "auto",
+          cursor: isDisabled ? "not-allowed" : "pointer",
           paddingLeft: "14px",
           paddingRight: "14px",
           whiteSpace: "nowrap",
@@ -119,23 +151,26 @@ export default function CartControl({ item, selectedVariant, showDelete = false 
         <button
           type="button"
           onClick={handleRemove}
-          disabled={loading}
+          disabled={isDisabled}
           aria-label={q === 1 ? "Remove from cart" : "Decrease quantity"}
-          className="flex items-center justify-center transition-all cursor-pointer"
+          className="flex items-center justify-center transition-all"
           style={{
             width: "36px",
             color: "var(--t-accent)",
-            opacity: loading ? 0.35 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
+            opacity: isDisabled ? 0.35 : 1,
+            cursor: isDisabled ? "not-allowed" : "pointer",
           }}
           onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.background = "var(--t-accent-20)";
+            if (!isDisabled) e.currentTarget.style.background = "var(--t-accent-20)";
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
-          {q === 1 && showDelete ? (
+          {loading && q === 1 ? (
+            <span
+              className="w-3.5 h-3.5 rounded-full border-2 animate-spin"
+              style={{ borderColor: "var(--t-accent-40)", borderTopColor: "var(--t-accent)" }}
+            />
+          ) : q === 1 && showDelete ? (
             <TrashIcon />
           ) : (
             <span style={{ fontSize: "16px", fontWeight: 700, lineHeight: 1 }}>−</span>
@@ -151,7 +186,7 @@ export default function CartControl({ item, selectedVariant, showDelete = false 
             minWidth: "36px",
           }}
         >
-          {loading ? (
+          {loading && q > 1 ? (
             <span
               className="w-2 h-2 rounded-full animate-pulse"
               style={{ background: "var(--t-accent)" }}
@@ -159,7 +194,7 @@ export default function CartControl({ item, selectedVariant, showDelete = false 
           ) : (
             <span
               className="font-black text-xs tabular-nums select-none"
-              style={{ color: "#ffffff" }}
+              style={{ color: "var(--t-accent)" }}
             >
               {q}
             </span>
@@ -170,21 +205,19 @@ export default function CartControl({ item, selectedVariant, showDelete = false 
         <button
           type="button"
           onClick={handleAdd}
-          disabled={loading}
+          disabled={isDisabled}
           aria-label="Increase quantity"
-          className="flex items-center justify-center transition-all cursor-pointer"
+          className="flex items-center justify-center transition-all"
           style={{
             width: "36px",
             color: "var(--t-accent)",
-            opacity: loading ? 0.35 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
+            opacity: isDisabled ? 0.35 : 1,
+            cursor: isDisabled ? "not-allowed" : "pointer",
           }}
           onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.background = "var(--t-accent-20)";
+            if (!isDisabled) e.currentTarget.style.background = "var(--t-accent-20)";
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           <span style={{ fontSize: "16px", fontWeight: 700, lineHeight: 1 }}>+</span>
         </button>

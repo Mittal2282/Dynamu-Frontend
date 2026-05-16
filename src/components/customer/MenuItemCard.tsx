@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import CartControl from "./CartControl";
-import VariantDrawer from "./VariantDrawer";
 import MenuItemDetailDrawer from "./MenuItemDetailDrawer";
 import { VegBadge } from "../ui/Badge";
 import LazyImage from "../ui/LazyImage";
@@ -8,7 +7,7 @@ import { formatCurrency } from "../../utils/formatters";
 import { cartStore, cartKey } from "../../store/cartStore";
 import { syncCart } from "../../services/customerService";
 import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
-import type { MenuItem } from "../../types/menu";
+import type { MenuItem, Variant } from "../../types/menu";
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -68,18 +67,29 @@ interface VariantQtyRowProps {
 function VariantQtyRow({ cartItem, currencySymbol: _currencySymbol }: VariantQtyRowProps) {
   const key = cartItem._cartKey;
   const qty = cartStore((s) => s.cart[key]?.qty ?? 0);
+  const syncing = cartStore((s) => s.syncing);
+  const [loading, setLoading] = useState(false);
   const variant = cartItem.selectedVariant;
 
+  const beginSync = () => { setLoading(true); cartStore.getState().setSyncing(true); };
+  const endSync   = () => { setLoading(false); cartStore.getState().setSyncing(false); };
+
   const handleAdd = async () => {
+    if (syncing) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cartStore.getState().add(cartItem as any);
+    beginSync();
     try { await syncCart(Object.values(cartStore.getState().cart)); } catch { /* ignore */ }
+    finally { endSync(); }
   };
 
   const handleRemove = async () => {
+    if (syncing) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cartStore.getState().remove(cartItem as any);
+    beginSync();
     try { await syncCart(Object.values(cartStore.getState().cart)); } catch { /* ignore */ }
+    finally { endSync(); }
   };
 
   if (qty === 0) return null;
@@ -94,7 +104,7 @@ function VariantQtyRow({ cartItem, currencySymbol: _currencySymbol }: VariantQty
       {/* Variant name */}
       <span
         className="flex-1 text-[11px] font-semibold truncate"
-        style={{ color: "rgba(245,246,250,0.85)" }}
+        style={{ color: "var(--t-text)" }}
       >
         {variant?.name ?? "Default"}
       </span>
@@ -106,11 +116,12 @@ function VariantQtyRow({ cartItem, currencySymbol: _currencySymbol }: VariantQty
         <button
           type="button"
           onClick={handleRemove}
-          className="flex items-center justify-center cursor-pointer transition-colors"
-          style={{ width: "26px", color: "var(--t-accent)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          disabled={syncing}
           aria-label="Decrease"
+          className="flex items-center justify-center transition-colors"
+          style={{ width: "26px", color: "var(--t-accent)", opacity: syncing ? 0.35 : 1, cursor: syncing ? "not-allowed" : "pointer" }}
+          onMouseEnter={(e) => { if (!syncing) e.currentTarget.style.background = "var(--t-accent-20)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           <span style={{ fontSize: "14px", fontWeight: 700, lineHeight: 1 }}>−</span>
         </button>
@@ -118,18 +129,23 @@ function VariantQtyRow({ cartItem, currencySymbol: _currencySymbol }: VariantQty
           className="flex items-center justify-center"
           style={{ minWidth: "24px", borderLeft: "1px solid var(--t-accent-40)", borderRight: "1px solid var(--t-accent-40)" }}
         >
-          <span className="font-black text-[11px] tabular-nums select-none" style={{ color: "#fff" }}>
-            {qty}
-          </span>
+          {loading ? (
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--t-accent)" }} />
+          ) : (
+            <span className="font-black text-[11px] tabular-nums select-none" style={{ color: "var(--t-accent)" }}>
+              {qty}
+            </span>
+          )}
         </div>
         <button
           type="button"
           onClick={handleAdd}
-          className="flex items-center justify-center cursor-pointer transition-colors"
-          style={{ width: "26px", color: "var(--t-accent)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          disabled={syncing}
           aria-label="Increase"
+          className="flex items-center justify-center transition-colors"
+          style={{ width: "26px", color: "var(--t-accent)", opacity: syncing ? 0.35 : 1, cursor: syncing ? "not-allowed" : "pointer" }}
+          onMouseEnter={(e) => { if (!syncing) e.currentTarget.style.background = "var(--t-accent-20)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           <span style={{ fontSize: "14px", fontWeight: 700, lineHeight: 1 }}>+</span>
         </button>
@@ -142,13 +158,34 @@ function VariantQtyRow({ cartItem, currencySymbol: _currencySymbol }: VariantQty
 export default function MenuItemCard({ item, currencySymbol, size = "md" }: MenuItemCardProps) {
   const extItem = item as ExtendedMenuItem;
   const isSmall = size === "sm";
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
 
   // Only available variants are shown to the customer
   const availableVariants = item.has_variants
     ? (item.variants ?? []).filter(v => v.isAvailable !== false)
     : [];
+
+  const [variantExpanded, setVariantExpanded] = useState(false);
+  const [selectedInlineVariant, setSelectedInlineVariant] = useState<Variant | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const openVariantPicker = () => {
+    const def = availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? availableVariants[0] ?? null;
+    setSelectedInlineVariant(def);
+    setVariantExpanded(true);
+  };
+
+  const handleInlineAdd = async () => {
+    if (!selectedInlineVariant || cartStore.getState().syncing) return;
+    const effectiveVariant = { ...selectedInlineVariant, price: variantEffectivePrice(selectedInlineVariant) };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    cartStore.getState().add({ ...item, selectedVariant: effectiveVariant } as any);
+    cartStore.getState().setSyncing(true);
+    try {
+      await syncCart(Object.values(cartStore.getState().cart));
+      setVariantExpanded(false);
+    } catch { /* ignore */ }
+    finally { cartStore.getState().setSyncing(false); }
+  };
   const allVariantsUnavailable = item.has_variants && availableVariants.length === 0;
 
   // Price for display — use effective (post-discount) price of first available variant
@@ -179,6 +216,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
 
   // ── Zustand subscriptions ────────────────────────────────────────────────────
   const cart = cartStore((s) => s.cart);
+  const syncing = cartStore((s) => s.syncing);
 
   const variantTotalQty = useMemo(() => {
     if (!item.has_variants) return 0;
@@ -210,9 +248,9 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
 
   return (
     <div
-      className="rounded-2xl overflow-hidden border transition-transform duration-150 active:scale-[0.99] h-full flex flex-col cursor-pointer"
-      style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
-      onClick={() => setDetailOpen(true)}
+      className={`rounded-2xl overflow-hidden border h-full flex flex-col cursor-pointer ${!variantExpanded ? "transition-transform duration-150 active:scale-[0.99]" : ""}`}
+      style={{ background: "var(--t-surface)", borderColor: variantExpanded ? "var(--t-accent)" : "var(--t-line)" }}
+      onClick={() => { if (!variantExpanded) setDetailOpen(true); }}
     >
       <div className={`${isSmall ? "p-2.5" : "p-3"} flex gap-3 flex-1`}>
         {/* ── Image + Price ──────────────────────────────────────────────── */}
@@ -286,7 +324,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 flex flex-col">
-          <h3 className="font-bold text-sm md:text-base leading-snug line-clamp-2" style={{ color: "#ffffff" }}>
+          <h3 className="font-bold text-sm md:text-base leading-snug line-clamp-2" style={{ color: "var(--t-text)" }}>
             {item.name}
           </h3>
 
@@ -306,7 +344,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
           {item.description && (
             <p
               className="text-[11px] mt-1 leading-relaxed line-clamp-2"
-              style={{ color: "rgba(245,246,250,0.6)" }}
+              style={{ color: "var(--t-dim)" }}
             >
               {item.description}
             </p>
@@ -332,11 +370,11 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
                 <CartControl item={item} />
               </div>
             ) : variantTotalQty === 0 ? (
-              /* Variant item, nothing in cart: "Choose" button opens drawer */
+              /* Variant item, nothing in cart: "Choose" button expands inline */
               <div className="flex items-center justify-end">
                 <button
                   type="button"
-                  onClick={() => !allVariantsUnavailable && setDrawerOpen(true)}
+                  onClick={() => !allVariantsUnavailable && openVariantPicker()}
                   disabled={allVariantsUnavailable}
                   className="flex items-center justify-center gap-1.5 rounded-xl font-bold text-white text-xs tracking-wide transition-all active:scale-95"
                   style={{
@@ -372,7 +410,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
                 ))}
                 <button
                   type="button"
-                  onClick={() => setDrawerOpen(true)}
+                  onClick={() => openVariantPicker()}
                   className="self-end text-[11px] font-semibold cursor-pointer transition-opacity hover:opacity-70 mt-0.5"
                   style={{ color: "var(--t-accent)" }}
                 >
@@ -414,14 +452,88 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
         </div>
       )}
 
-      {/* Variant drawer (portal) */}
-      {item.has_variants && (
-        <VariantDrawer
-          item={item}
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          currencySymbol={currencySymbol}
-        />
+      {/* ── Inline variant picker ─────────────────────────────────────────── */}
+      {item.has_variants && variantExpanded && (
+        <div
+          className="border-t px-3 pb-4 pt-3"
+          style={{ borderColor: "var(--t-line)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--t-dim)" }}>
+              {groupName}
+            </p>
+            <button
+              type="button"
+              onClick={() => setVariantExpanded(false)}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors"
+              style={{ color: "var(--t-dim)", background: "var(--t-float)" }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-1.5 mb-3">
+            {availableVariants.map((v) => {
+              const isActive = selectedInlineVariant?.name === v.name;
+              return (
+                <button
+                  key={v.name}
+                  type="button"
+                  onClick={() => setSelectedInlineVariant(v)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left"
+                  style={{
+                    borderColor: isActive ? "var(--t-accent)" : "var(--t-line)",
+                    background: isActive
+                      ? "color-mix(in srgb, var(--t-accent) 10%, transparent)"
+                      : "var(--t-surface)",
+                  }}
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                    style={{ borderColor: isActive ? "var(--t-accent)" : "var(--t-line)" }}
+                  >
+                    {isActive && <div className="w-2 h-2 rounded-full" style={{ background: "var(--t-accent)" }} />}
+                  </div>
+                  <span className="flex-1 text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+                    {v.name}
+                  </span>
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: v.isVeg !== false ? "#22c55e" : "#ef4444" }} />
+                  <span className="text-sm font-bold" style={{ color: isActive ? "var(--t-accent)" : "var(--t-dim)" }}>
+                    {formatCurrency(variantEffectivePrice(v), currencySymbol)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleInlineAdd}
+            disabled={!selectedInlineVariant || syncing}
+            className="relative w-full py-2.5 rounded-xl font-bold text-white text-sm tracking-wide transition-all active:scale-[0.98]"
+            style={{
+              background: selectedInlineVariant ? "var(--t-accent)" : "var(--t-line)",
+              boxShadow: selectedInlineVariant && !syncing ? "0 4px 14px var(--t-accent-40)" : "none",
+              cursor: syncing || !selectedInlineVariant ? "not-allowed" : "pointer",
+            }}
+          >
+            <span className={syncing ? "opacity-0" : ""}>
+              {selectedInlineVariant
+                ? `Add to Cart · ${formatCurrency(variantEffectivePrice(selectedInlineVariant), currencySymbol)}`
+                : "Select an option"}
+            </span>
+            {syncing && (
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span
+                  className="w-4 h-4 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "rgba(255,255,255,0.3)", borderTopColor: "#fff" }}
+                />
+              </span>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Detail drawer (portal) */}

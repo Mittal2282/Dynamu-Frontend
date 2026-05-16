@@ -42,13 +42,14 @@ export default function Button({
   return (
     <button
       type={type}
-      disabled={isDisabled}
+      disabled={disabled}
       onClick={isDisabled ? undefined : onClick}
       className={[
-        'btn active:scale-[0.97]',
+        'relative btn rounded-xl active:scale-[0.97]',
         VARIANT[variant] ?? VARIANT.primary,
         SIZE[size]       ?? '',
         fullWidth && 'w-full',
+        loading && 'pointer-events-none',
         className,
       ].filter(Boolean).join(' ')}
       {...rest}
@@ -61,7 +62,8 @@ export default function Button({
 
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <span className="loading loading-spinner loading-sm" />
+          <span className="w-5 h-5 rounded-full border-2 animate-spin"
+            style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
         </span>
       )}
     </button>

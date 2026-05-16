@@ -5,7 +5,12 @@ import { restaurantStore } from "../../../store/restaurantStore";
 import { authStore } from "../../../store/authStore";
 import { disconnectSocket } from "../../../services/socketService";
 import { syncCart } from "../../../services/customerService";
-import { buildCssTokens, applyCssTokens, applyColorMode, DEFAULT_THEME_NUMBER } from "../../../theme/tokens";
+import {
+  buildCssTokens,
+  applyCssTokens,
+  applyColorMode,
+  DEFAULT_THEME_NUMBER,
+} from "../../../theme/tokens";
 import {
   getTrendingItems,
   getChefsSpecials,
@@ -50,7 +55,7 @@ export default function CustomerLayout() {
   useEffect(() => {
     const tokens = buildCssTokens(themeNumber || DEFAULT_THEME_NUMBER);
     applyCssTokens(tokens);
-    applyColorMode(colorMode ?? 'light');
+    applyColorMode(colorMode ?? "light");
   }, [themeNumber, colorMode]);
 
   const { remove } = cartStore();
@@ -111,10 +116,12 @@ export default function CustomerLayout() {
         getTrendingItems().then(setTrendingItems),
         getChefsSpecials().then(setChefsSpecials),
         getFeaturedItems().then(setFeaturedItems),
-        getTimeBasedMenu().then(({ items, meal_time }: { items: MenuItem[]; meal_time: string }) => {
-          setTimeBasedItems(items);
-          setMealTime(meal_time);
-        }),
+        getTimeBasedMenu().then(
+          ({ items, meal_time }: { items: MenuItem[]; meal_time: string }) => {
+            setTimeBasedItems(items);
+            setMealTime(meal_time);
+          },
+        ),
       ]).finally(() => setSectionsLoading(false));
 
       setGateComplete(true);
@@ -154,7 +161,9 @@ export default function CustomerLayout() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
         <Spinner size="xl" />
-        <Text size="sm" color="muted">Loading menu…</Text>
+        <Text size="sm" color="muted">
+          Loading menu…
+        </Text>
       </div>
     );
   }
@@ -163,7 +172,9 @@ export default function CustomerLayout() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4 px-6 text-center">
         <div className="text-5xl">🔄</div>
-        <Text as="h1" size="xl" weight="bold">Session Ended</Text>
+        <Text as="h1" size="xl" weight="bold">
+          Session Ended
+        </Text>
         <Text size="sm" color="muted">
           A new session has been started at this table. Please scan the QR code again to continue.
         </Text>
@@ -184,7 +195,7 @@ export default function CustomerLayout() {
 
   return (
     <div
-      className="w-full md:max-w-3xl lg:max-w-full mx-auto min-h-screen bg-slate-950 text-white flex flex-col"
+      className="w-full md:max-w-3xl lg:max-w-full mx-auto h-screen bg-slate-950 text-white flex flex-col"
       style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
     >
       <Header
@@ -197,20 +208,22 @@ export default function CustomerLayout() {
 
       <div className="flex-1 flex flex-col min-h-0">
         <Outlet
-          context={{
-            menu,
-            featuredItems,
-            chefsSpecials,
-            trendingItems,
-            timeBasedItems,
-            mealTime,
-            orderVersion,
-            basePath,
-            sectionsLoading,
-            onPlaceOrder: handlePlaceOrder,
-            orderingCart: ordering,
-            onOpenAI: toggleAI,
-          } satisfies Partial<CustomerOutletContext> & Record<string, unknown>}
+          context={
+            {
+              menu,
+              featuredItems,
+              chefsSpecials,
+              trendingItems,
+              timeBasedItems,
+              mealTime,
+              orderVersion,
+              basePath,
+              sectionsLoading,
+              onPlaceOrder: handlePlaceOrder,
+              orderingCart: ordering,
+              onOpenAI: toggleAI,
+            } satisfies Partial<CustomerOutletContext> & Record<string, unknown>
+          }
         />
       </div>
 
@@ -220,7 +233,9 @@ export default function CustomerLayout() {
 
       <JoinRequestsPanel
         requests={pendingJoinRequests}
-        onResolve={(id: string) => setPendingJoinRequests((prev) => prev.filter((r) => r.request_id !== id))}
+        onResolve={(id: string) =>
+          setPendingJoinRequests((prev) => prev.filter((r) => r.request_id !== id))
+        }
       />
 
       {/* Bottom navigator — mobile only */}
@@ -229,7 +244,10 @@ export default function CustomerLayout() {
           basePath={basePath}
           aiChatOpen={aiChatOpen}
           onChatClick={toggleAI}
-          onNavigate={() => { setAiChatOpen(false); setDrawerOpen(false); }}
+          onNavigate={() => {
+            setAiChatOpen(false);
+            setDrawerOpen(false);
+          }}
         />
       </div>
 

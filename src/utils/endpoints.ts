@@ -23,7 +23,7 @@ export const ENDPOINTS = {
 
   // AI Chat
   CHAT:            '/api/ai/chat',
-  CHAT_STREAM:     '/api/ai/chat/stream',
+  CHAT_STREAM:     'api/ai/chat/stream',
   CHAT_HISTORY:    '/api/ai/chat/history',
   CHAT_WELCOME:    '/api/ai/chat/welcome',
 

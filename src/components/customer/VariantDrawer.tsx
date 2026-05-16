@@ -35,14 +35,14 @@ export default function VariantDrawer({ item, open, onClose, currencySymbol }: V
   const vegStatus = getItemVegStatus(item);
 
   const handleAdd = async (variant: Variant & { groupName?: string }) => {
-    // Bake the effective (post-discount) price into selectedVariant.price so the
-    // cart and cart total always reflect the discounted amount.
     const effectiveVariant = { ...variant, price: variantEffectivePrice(variant) };
     cartStore.getState().add({ ...item, selectedVariant: effectiveVariant });
     onClose();
+    cartStore.getState().setSyncing(true);
     try {
       await syncCart(Object.values(cartStore.getState().cart));
     } catch { /* silently fail — layout useEffect will retry */ }
+    finally { cartStore.getState().setSyncing(false); }
   };
 
   const itemHeader = (

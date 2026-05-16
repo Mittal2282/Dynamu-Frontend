@@ -76,11 +76,13 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
   const handleSave = async () => {
     cartStore.getState().setInstruction(itemKey, draft.trim());
     setInstructionOpen(false);
-    // Sync to server so instruction is included when order is placed
+    cartStore.getState().setSyncing(true);
     try {
       await syncCart(Object.values(cartStore.getState().cart));
     } catch {
       /* ignore — layout retries on next interaction */
+    } finally {
+      cartStore.getState().setSyncing(false);
     }
   };
 
@@ -258,7 +260,7 @@ export default function CustomerCartPage() {
 
   return (
     <div
-      className="flex-1 pb-12"
+      className="flex-1 min-h-0 overflow-y-auto pb-12"
       style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
     >
       <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 pt-6">

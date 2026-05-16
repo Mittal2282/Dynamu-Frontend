@@ -247,6 +247,13 @@ button { cursor: pointer; }
 /* ─── Light mode utility overrides ──────────────────────────────────────────── */
 [data-color-mode="light"] { color-scheme: light; }
 
+/* Table number badge — accent2 colors (e.g. cyan) are near-invisible on light bg */
+[data-color-mode="light"] .table-num-badge {
+  color: color-mix(in srgb, var(--t-accent2) 65%, #000) !important;
+  background: color-mix(in srgb, var(--t-accent2) 12%, var(--t-float)) !important;
+  border-color: color-mix(in srgb, var(--t-accent2) 35%, var(--t-line)) !important;
+}
+
 [data-color-mode="light"] ::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.18);
 }

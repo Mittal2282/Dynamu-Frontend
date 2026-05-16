@@ -34,10 +34,12 @@ export function loadVariantCache(): Record<string, Variant & { groupName?: strin
 
 interface CartState {
   cart: Record<string, CartEntry>;
+  syncing: boolean;
   add: (item: CartEntry) => void;
   remove: (item: { _id: string; selectedVariant?: { name?: string } }) => void;
   clear: () => void;
   setCart: (cart: Record<string, CartEntry>) => void;
+  setSyncing: (syncing: boolean) => void;
   setInstruction: (key: string, instruction: string) => void;
   getQty: (itemOrId: string | { _id: string; selectedVariant?: { name?: string } }) => number;
 }
@@ -51,6 +53,8 @@ export const cartStore = create<CartState>()(
   devtools(
     (set, get) => ({
       cart: {},
+      syncing: false,
+      setSyncing: (syncing) => set({ syncing }),
 
       add: (item) => {
         const key = cartKey(item);

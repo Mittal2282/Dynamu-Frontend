@@ -40,12 +40,15 @@ interface MenuItem {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 animate-pulse">
-      <div className="w-full h-[88px] rounded-xl bg-white/10 mb-2" />
-      <div className="h-2 bg-white/10 rounded w-1/2 mb-1.5" />
-      <div className="h-3 bg-white/10 rounded w-full mb-1.5" />
-      <div className="h-3 bg-white/10 rounded w-2/5 mb-2" />
-      <div className="h-7 bg-white/10 rounded-lg w-full" />
+    <div
+      className="rounded-2xl p-3 animate-pulse border"
+      style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
+    >
+      <div className="w-full h-[88px] rounded-xl mb-2" style={{ background: "var(--t-float)" }} />
+      <div className="h-2 rounded w-1/2 mb-1.5" style={{ background: "var(--t-float)" }} />
+      <div className="h-3 rounded w-full mb-1.5" style={{ background: "var(--t-float)" }} />
+      <div className="h-3 rounded w-2/5 mb-2" style={{ background: "var(--t-float)" }} />
+      <div className="h-7 rounded-lg w-full" style={{ background: "var(--t-float)" }} />
     </div>
   );
 }
@@ -125,7 +128,7 @@ function HeroSection({ tagline, customerName }: HeroSectionProps) {
             filter: "drop-shadow(0 0 40px var(--t-accent-40))",
           }}
         >
-          {customerName ? `Welcome, ${customerName}` : "Welcome"}
+          {customerName ? `Welcome ${customerName}!` : "Welcome"}
         </h1>
         {tagline && (
           <p
@@ -202,14 +205,11 @@ function ExploreMenuCard({ onClick }: ActionCardProps) {
         <div className="flex-1 min-w-0">
           <p
             className="text-sm md:text-base font-black uppercase tracking-wide"
-            style={{ color: "#ffffff" }}
+            style={{ color: "var(--t-text)" }}
           >
             Explore Menu
           </p>
-          <p
-            className="text-xs md:text-sm mt-0.5 leading-snug"
-            style={{ color: "rgba(245,246,250,0.65)" }}
-          >
+          <p className="text-xs md:text-sm mt-0.5 leading-snug" style={{ color: "var(--t-dim)" }}>
             Browse curated selections &amp; seasonal signatures
           </p>
         </div>
@@ -285,8 +285,8 @@ function AskAICard({ onClick }: ActionCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             <p
-              className="text-sm md:text-base font-black uppercase tracking-wide text-white"
-              style={{ color: "#ffffff" }}
+              className="text-sm md:text-base font-black uppercase tracking-wide"
+              style={{ color: "var(--t-text)" }}
             >
               AI Assistant
             </p>
@@ -301,10 +301,7 @@ function AskAICard({ onClick }: ActionCardProps) {
               AI
             </span>
           </div>
-          <p
-            className="text-xs md:text-sm leading-snug"
-            style={{ color: "rgba(245,246,250,0.65)" }}
-          >
+          <p className="text-xs md:text-sm leading-snug" style={{ color: "var(--t-dim)" }}>
             Personalized pairings &amp; recommendations
           </p>
         </div>
@@ -515,15 +512,29 @@ export default function CustomerHomePage() {
 
   return (
     <div
-      className={`flex-1 ${count > 0 ? "pb-40 md:pb-16 lg:pb-12" : "pb-24 md:pb-16 lg:pb-12"}`}
+      className={`flex-1 min-h-0 overflow-y-auto ${count > 0 ? "pb-40 md:pb-16 lg:pb-12" : "pb-24 md:pb-16 lg:pb-12"}`}
       style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
     >
       {/* Hero */}
       <HeroSection tagline={tagline} customerName={guestName} />
 
       {/* Action cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 px-4 md:px-6 lg:px-8 mb-2">
-        <ExploreMenuCard onClick={() => navigate(`${basePath}/menu`)} />
+      <div className="px-4 md:px-6 lg:px-8 mb-2">
+        {/* Desktop: side-by-side grid */}
+        <div className="hidden md:grid md:grid-cols-2 gap-4">
+          <ExploreMenuCard onClick={() => navigate(`${basePath}/menu`)} />
+          <AskAICard onClick={onOpenAI} />
+        </div>
+        {/* Mobile: stacked — Explore stays in place, AI sticks on scroll */}
+        <div className="flex flex-col gap-3 md:hidden">
+          <ExploreMenuCard onClick={() => navigate(`${basePath}/menu`)} />
+        </div>
+      </div>
+      {/* AI card — mobile sticky, outside grid so it sticks through all scroll sections */}
+      <div
+        className="sticky md:hidden top-[5px] z-20 px-4 mb-2 -mt-1"
+        style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
+      >
         <AskAICard onClick={onOpenAI} />
       </div>
 
