@@ -17,11 +17,11 @@ export function FooterSlide() {
 
   return (
     <footer
-      className="border-t min-h-[100dvh] w-full flex flex-col justify-between shrink-0 relative overflow-hidden"
+      className="border-t min-h-dvh w-full flex flex-col justify-between shrink-0 relative overflow-hidden"
       style={{ background: bg, borderColor }}
     >
       <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] pointer-events-none opacity-20"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-100 pointer-events-none opacity-20"
         style={{
           background: `radial-gradient(ellipse at top, ${ORANGE} 0%, transparent 70%)`,
         }}

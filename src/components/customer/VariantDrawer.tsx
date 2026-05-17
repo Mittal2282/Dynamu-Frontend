@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import ReactDOM from "react-dom";
-import { cartStore } from "../../store/cartStore";
 import { syncCart } from "../../services/customerService";
+import { cartStore } from "../../store/cartStore";
+import type { MenuItem, Variant } from "../../types/menu";
+import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
 import LazyImage from "../ui/LazyImage";
 import VariantSelector from "./VariantSelector";
-import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
-import type { MenuItem, Variant } from "../../types/menu";
 
 interface VariantDrawerProps {
   item: MenuItem;
@@ -61,7 +61,7 @@ export default function VariantDrawer({ item, open, onClose, currencySymbol }: V
         />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-base text-white leading-snug">{item.name}</h3>
+        <h3 className="font-bold text-base leading-snug">{item.name}</h3>
         {item.description && (
           <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "rgba(245,246,250,0.55)" }}>
             {item.description}
@@ -128,7 +128,7 @@ export default function VariantDrawer({ item, open, onClose, currencySymbol }: V
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/10 shrink-0">
-            <h3 className="text-white font-bold text-base leading-none">Customise</h3>
+            <h3 className="font-bold text-base leading-none">Customise</h3>
             <button
               onClick={onClose}
               className="w-7 h-7 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-sm cursor-pointer"

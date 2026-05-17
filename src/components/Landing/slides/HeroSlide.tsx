@@ -26,7 +26,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
   const secondaryBtnColor = isDark ? '#e2e8f0' : '#374151';
 
   return (
-    <section className="relative min-h-[100dvh] w-full overflow-hidden flex flex-col shrink-0">
+    <section className="relative min-h-dvh w-full overflow-hidden flex flex-col shrink-0">
       <img
         src={IMG.hero}
         alt=""
@@ -39,15 +39,13 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
         className="absolute inset-0 pointer-events-none glow-drift"
         style={{
           background:
-            'radial-gradient(ellipse 60% 40% at 50% 38%, rgba(255,107,0,0.12) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 40% at 50% 38%, rgba(255,107,0,0.12) 0%, transparent 100%)',
         }}
       />
 
-      <div className="relative z-10 h-16 w-full shrink-0 pointer-events-none" aria-hidden />
-
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center px-6 py-20 w-full max-w-5xl mx-auto rounded-3xl sm:bg-black/20 sm:backdrop-blur-[2px] sm:px-8 sm:py-6">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center px-6 py-20 w-full max-w-5xl mx-auto rounded-3xl sm:px-8 sm:py-6">
         <h1 className="hero-title text-5xl sm:text-6xl lg:text-[76px] font-black leading-[1.03] tracking-tight mb-7 max-w-4xl">
-          <span className="text-white" style={{ textShadow: HERO_TEXT_SHADOW }}>
+          <span style={{ textShadow: HERO_TEXT_SHADOW }}>
             The AI Revenue
           </span>
           <br />
@@ -65,7 +63,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
         </h1>
 
         <p
-          className="hero-sub text-lg sm:text-xl leading-relaxed max-w-2xl mb-11 text-white"
+          className="hero-sub text-lg sm:text-xl leading-relaxed max-w-2xl mb-11"
           style={{ textShadow: HERO_TEXT_SHADOW }}
         >
           An AI-native ordering layer that turns every restaurant menu into a conversational sales representative —
@@ -80,7 +78,7 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
               style={{
                 background: statCardBg,
                 border: statCardBorder,
-                backdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(50px)',
               }}
             >
               <p className="text-[22px] font-black tabular-nums" style={{ color: ORANGE }}>
@@ -132,13 +130,13 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
           style={{ textShadow: HERO_TEXT_SHADOW }}
           aria-label="Next section"
         >
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/90">Next</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest">Next</span>
           <svg
             width="16"
             height="16"
             viewBox="0 0 16 16"
             fill="none"
-            className="text-white/85 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
+            className="drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
           >
             <path
               d="M3 6l5 5 5-5"

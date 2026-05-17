@@ -1,26 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-import type { CartEntry } from "../types";
-import { getCartSuggestions } from "../services/customerService";
-import { restaurantStore } from "../store/restaurantStore";
-import { formatCurrency } from "../utils/formatters";
-import CartControl from "./customer/CartControl";
-import MenuItemCard from "./customer/MenuItemCard";
-import { VegBadge } from "./ui/Badge";
-import Button from "./ui/Button";
-import Drawer from "./ui/Drawer";
-import LazyImage from "./ui/LazyImage";
-import Text from "./ui/Text";
-
-export interface CartDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  items?: CartEntry[];
-  onPlaceOrder: (orderNote: string) => void;
-  count?: number;
-  loading?: boolean;
-  subtitle?: string;
-}
+import { getCartSuggestions } from "../../services/customerService";
+import { restaurantStore } from "../../store/restaurantStore";
+import type { CartEntry } from "../../types/cart";
+import type { MenuItem } from "../../types/menu";
+import { formatCurrency } from "../../utils/formatters";
+import CartControl from "../customer/CartControl";
+import MenuItemCard from "../customer/MenuItemCard";
+import { VegBadge } from "../ui/Badge";
+import Button from "../ui/Button";
+import Drawer from "../ui/Drawer";
+import LazyImage from "../ui/LazyImage";
+import Text from "../ui/Text";
 
 /* ─── Constants ────────────────────────────────────────────────────────────── */
 const SERVICE_CHARGE = 10; // fixed ₹10
@@ -28,16 +19,14 @@ const SERVICE_CHARGE = 10; // fixed ₹10
 /* ─── Cart item row ────────────────────────────────────────────────────────── */
 interface CartItemProps {
   item: CartEntry;
-  currencySymbol: string;
+  currencySymbol?: string;
 }
 
 function CartItem({ item, currencySymbol }: CartItemProps) {
   // Variant-aware price and veg status
   const basePrice = item.selectedVariant?.price ?? item.price;
   const effectivePrice =
-    (item.discount_percentage ?? 0) > 0
-      ? basePrice * (1 - (item.discount_percentage ?? 0) / 100)
-      : basePrice;
+    (item.discount_percentage ?? 0) > 0 ? basePrice * (1 - (item.discount_percentage ?? 0) / 100) : basePrice;
   const displayIsVeg = item.selectedVariant ? item.selectedVariant.isVeg : item.is_veg;
 
   return (
@@ -62,15 +51,15 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
               </div>
             }
           />
-          <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+          <div className="absolute top-1.5 left-1.5 p-0.75 rounded-sm bg-white/90 shadow-sm">
             <VegBadge isVeg={displayIsVeg} size="sm" />
           </div>
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <Text as="p" size="sm" weight="semibold" color="white" className="leading-snug">
+          <p className="text-sm font-semibold leading-snug" style={{ color: "var(--t-text)" }}>
             {item.name}
-          </Text>
+          </p>
           {/* Variant label */}
           {item.selectedVariant && (
             <p className="text-[11px] mt-0.5 font-medium" style={{ color: "var(--t-accent)" }}>
@@ -79,14 +68,14 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
                 : item.selectedVariant.name}
             </p>
           )}
-          {!item.selectedVariant && (item as Record<string, unknown>).description && (
-            <Text as="p" size="xs" color="white" className="opacity-40 mt-0.5 line-clamp-1">
-              {String((item as Record<string, unknown>).description)}
-            </Text>
+          {!item.selectedVariant && (item as CartEntry & { description?: string }).description && (
+            <p className="text-xs mt-0.5 line-clamp-1" style={{ color: "var(--t-dim)" }}>
+              {(item as CartEntry & { description?: string }).description}
+            </p>
           )}
           {(item.discount_percentage ?? 0) > 0 ? (
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              <span className="line-through text-slate-300 text-xs">
+              <span className="line-through text-xs" style={{ color: "var(--t-dim)" }}>
                 {formatCurrency(basePrice, currencySymbol)}
               </span>
               <Text as="span" size="sm" weight="bold" color="brand">
@@ -103,7 +92,7 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
           )}
         </div>
 
-        <CartControl item={item} selectedVariant={item.selectedVariant} showDelete={true} />
+        <CartControl item={item as unknown as MenuItem} selectedVariant={item.selectedVariant} showDelete={true} />
       </div>
     </div>
   );
@@ -118,24 +107,28 @@ interface BillRowProps {
 
 function BillRow({ label, value, muted }: BillRowProps) {
   return (
-    <div className="flex items-center justify-between py-2 px-3 -mx-3 hover:bg-white/5 rounded-xl transition-colors cursor-default">
-      <Text as="span" size="sm" color="white" className={muted ? "opacity-50" : "opacity-70"}>
+    <div className="flex items-center justify-between py-2 px-3 -mx-3 rounded-xl transition-colors cursor-default hover:bg-(--t-float)">
+      <span className="text-sm" style={{ color: "var(--t-dim)", opacity: muted ? 0.7 : 1 }}>
         {label}
-      </Text>
-      <Text
-        as="span"
-        size="sm"
-        weight="semibold"
-        color="white"
-        className={muted ? "opacity-50" : "opacity-90"}
-      >
+      </span>
+      <span className="text-sm font-semibold" style={{ color: "var(--t-text)", opacity: muted ? 0.7 : 1 }}>
         {value}
-      </Text>
+      </span>
     </div>
   );
 }
 
 /* ─── CartDrawer ────────────────────────────────────────────────────────────── */
+interface CartDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  items?: CartEntry[];
+  onPlaceOrder: (note: string) => void;
+  count?: number;
+  loading?: boolean;
+  subtitle?: string;
+}
+
 export default function CartDrawer({
   isOpen,
   onClose,
@@ -149,7 +142,7 @@ export default function CartDrawer({
   const navigate = useNavigate();
   const outlet = useOutletContext<{ basePath?: string } | null>();
   const { basePath: baseFromOutlet } = outlet || {};
-  const { qrCodeId, tableNumber } = useParams();
+  const { qrCodeId, tableNumber } = useParams<{ qrCodeId: string; tableNumber: string }>();
   const basePath =
     baseFromOutlet ||
     (qrCodeId != null && tableNumber != null ? `/${qrCodeId}/${tableNumber}` : "/");
@@ -158,7 +151,7 @@ export default function CartDrawer({
   const [orderNote, setOrderNote] = useState("");
 
   // AI suggestions — stale-while-revalidate, no loader
-  const [suggestions, setSuggestions] = useState<CartEntry[]>([]);
+  const [suggestions, setSuggestions] = useState<MenuItem[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
 
@@ -179,10 +172,10 @@ export default function CartDrawer({
     // Keep stale suggestions visible while refreshing, but refresh quickly.
     debounceRef.current = setTimeout(() => {
       getCartSuggestions(items.map((i) => i._id))
-        .then((data) => {
+        .then((data: MenuItem[]) => {
           if (requestIdRef.current !== currentRequestId) return;
           const latestCartIds = new Set(items.map((i) => i._id));
-          setSuggestions((data || []).filter((item: CartEntry) => !latestCartIds.has(item._id)));
+          setSuggestions((data || []).filter((item) => !latestCartIds.has(item._id)));
         })
         .catch(() => {});
     }, 250);
@@ -196,9 +189,7 @@ export default function CartDrawer({
   const subtotal = items.reduce((s, i) => {
     const basePrice = i.selectedVariant?.price ?? i.price;
     const effectivePrice =
-      (i.discount_percentage ?? 0) > 0
-        ? basePrice * (1 - (i.discount_percentage ?? 0) / 100)
-        : basePrice;
+      (i.discount_percentage ?? 0) > 0 ? basePrice * (1 - (i.discount_percentage ?? 0) / 100) : basePrice;
     return s + effectivePrice * i.qty;
   }, 0);
   const total = subtotal + SERVICE_CHARGE;
@@ -206,25 +197,21 @@ export default function CartDrawer({
   return (
     <Drawer isOpen={isOpen} onClose={onClose} height={items.length > 0 ? "85vh" : undefined}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="px-5 pt-2 pb-4 border-b border-white/10 shrink-0">
+      <div className="px-5 pt-2 pb-4 border-b shrink-0" style={{ borderColor: "var(--t-line)" }}>
         <div className="flex items-start justify-between">
           <div>
-            <Text as="h2" size="xl" weight="bold" color="white" className="tracking-wide uppercase">
+            <h2 className="text-xl font-bold tracking-wide uppercase" style={{ color: "var(--t-text)" }}>
               My Cart
-            </Text>
-            <Text
-              as="p"
-              size="xs"
-              color="white"
-              className="opacity-40 mt-0.5 uppercase tracking-widest"
-            >
+            </h2>
+            <p className="text-xs mt-0.5 uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
               {count} {count === 1 ? "item" : "items"} selected
               {subtitle ? ` · ${subtitle}` : ""}
-            </Text>
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg mt-0.5 cursor-pointer active:scale-95"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors text-lg mt-0.5 cursor-pointer active:scale-95"
+            style={{ color: "var(--t-dim)" }}
             aria-label="Close cart"
           >
             ✕
@@ -237,16 +224,16 @@ export default function CartDrawer({
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <span className="text-5xl">🛒</span>
-            <Text as="p" size="sm" color="white" className="opacity-50">
+            <p className="text-sm" style={{ color: "var(--t-dim)" }}>
               Your cart is empty
-            </Text>
+            </p>
             <Button
               variant="secondary"
               onClick={() => {
                 onClose();
                 navigate(`${basePath}/menu`);
               }}
-              className="mt-2 border-[color:var(--t-accent-40)] text-[color:var(--t-accent)] hover:bg-[color:var(--t-accent-10)] active:bg-[color:var(--t-accent-20)]"
+              className="mt-2 border-(--t-accent-40) text-(--t-accent) hover:bg-(--t-accent-10) active:bg-(--t-accent-20)"
             >
               Browse Menu
             </Button>
@@ -276,9 +263,14 @@ export default function CartDrawer({
                 rows={3}
                 maxLength={500}
                 value={orderNote}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOrderNote(e.target.value)}
+                onChange={(e) => setOrderNote(e.target.value)}
                 placeholder="Add special instructions for the kitchen... (e.g. less spicy, allergies)"
-                className="w-full bg-white/[0.03] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[var(--t-accent)] focus:bg-white/[0.06] transition-colors placeholder:text-white/30 resize-none shadow-inner"
+                className="w-full rounded-xl p-3 text-sm focus:outline-none transition-colors resize-none"
+                style={{
+                  background: "var(--t-float)",
+                  border: "1.5px solid var(--t-line)",
+                  color: "var(--t-text)",
+                }}
               />
               <div className="mt-1 flex justify-end">
                 <span className="text-[10px]" style={{ color: "var(--t-nav-muted)" }}>
@@ -308,7 +300,7 @@ export default function CartDrawer({
             )}
 
             {/* Divider */}
-            <div className="mx-5 my-2 border-t border-white/10" />
+            <div className="mx-5 my-2 border-t" style={{ borderColor: "var(--t-line)" }} />
 
             {/* Bill breakdown */}
             <div className="px-5">
@@ -321,14 +313,14 @@ export default function CartDrawer({
             </div>
 
             {/* Divider */}
-            <div className="mx-5 my-2 border-t border-white/10" />
+            <div className="mx-5 my-2 border-t" style={{ borderColor: "var(--t-line)" }} />
 
             {/* Total */}
             <div className="px-5 pb-10">
-              <div className="flex items-baseline justify-between py-2 mt-1 cursor-default px-2 -mx-2 hover:bg-white/5 rounded-lg transition-colors">
-                <Text as="span" size="lg" weight="bold" color="white">
+              <div className="flex items-baseline justify-between py-2 mt-1 cursor-default px-2 -mx-2 hover:bg-(--t-float) rounded-lg transition-colors">
+                <span className="text-lg font-bold" style={{ color: "var(--t-text)" }}>
                   Total Amount
-                </Text>
+                </span>
                 <Text as="span" size="2xl" weight="bold" color="brand">
                   {formatCurrency(total, currencySymbol, 2)}
                 </Text>
@@ -358,7 +350,7 @@ export default function CartDrawer({
             className="uppercase tracking-widest shadow-[0_8px_32px_-4px_var(--t-accent-40)]"
           >
             Place Order
-            <span className="text-base ml-1">→</span>
+            <span className="text-white ml-1">→</span>
           </Button>
         </div>
       )}

@@ -1,36 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Drawer from "../components/ui/Drawer";
-import { Spinner } from "../components/ui/Spinner";
-import Text from "../components/ui/Text";
-import { getChatHistory, getWelcomeMessage, streamChatMessage } from "../services/chatService";
-import { chatStore } from "../store/chatStore";
-import { useCartCount } from "../store/cartStore";
-import { restaurantStore } from "../store/restaurantStore";
-import { QUICK_CHAT_CHIPS } from "../utils/constants";
-import MenuItemCard from "./customer/MenuItemCard";
-
-export interface AIChatDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onGoToCart?: () => void;
-}
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  getChatHistory,
+  getWelcomeMessage,
+  streamChatMessage,
+} from "../../services/chatService";
+import { useCartCount } from "../../store/cartStore";
+import { chatStore } from "../../store/chatStore";
+import { restaurantStore } from "../../store/restaurantStore";
+import { QUICK_CHAT_CHIPS } from "../../utils/constants";
+import MenuItemCard from "../customer/MenuItemCard";
+import Drawer from "../ui/Drawer";
+import { Spinner } from "../ui/Spinner";
+import Text from "../ui/Text";
 
 const WELCOME_FALLBACK =
   "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?";
 
 const SpeechRecognitionAvailable = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
-const INFRA_FOOTER = "SECURE AI INFRASTRUCTURE v2.4.0";
+const INFRA_FOOTER = "SECURE AI INFRASTRUCTURE v1.4.0";
+
+interface ChatMessage {
+  role: 'user' | 'ai';
+  text: string;
+  items?: unknown[];
+  timestamp?: number;
+  streaming?: boolean;
+  mode?: string;
+  options?: string[];
+}
 
 function parseChatTimestamp(m: Record<string, unknown>): number | undefined {
-  const raw = (m.created_at ?? m.createdAt ?? m.timestamp ?? m.time) as
-    | number
-    | string
-    | null
-    | undefined;
+  const raw = m.created_at ?? m.createdAt ?? m.timestamp ?? m.time;
   if (raw == null) return undefined;
-  const t = typeof raw === "number" ? raw : new Date(raw).getTime();
-  return Number.isFinite(t) ? t : undefined;
+  const t = typeof raw === "number" ? raw : new Date(raw as string).getTime();
+  return Number.isFinite(t) ? (t as number) : undefined;
 }
 
 function formatMessageTime(ts: number | undefined | null): string | null {
@@ -82,7 +86,7 @@ function renderInline(text: string, keyPrefix = ""): React.ReactNode[] {
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <span key={`${keyPrefix}b${i}`} className="font-bold text-[var(--t-accent)]">
+        <span key={`${keyPrefix}b${i}`} className="font-bold text-(--t-accent)">
           {part.slice(2, -2)}
         </span>
       );
@@ -91,12 +95,8 @@ function renderInline(text: string, keyPrefix = ""): React.ReactNode[] {
   });
 }
 
-interface MarkdownMessageProps {
-  text: string;
-}
-
 /** Renders a full AI response with markdown: ###/## headings, - lists, **bold** */
-function MarkdownMessage({ text }: MarkdownMessageProps) {
+function MarkdownMessage({ text }: { text: string }) {
   if (!text) return null;
   const lines = String(text).split("\n");
   const result: React.ReactNode[] = [];
@@ -109,7 +109,7 @@ function MarkdownMessage({ text }: MarkdownMessageProps) {
         {pendingListItems.map((item, i) => (
           <li key={i} className="flex gap-2 items-start">
             <span
-              className="shrink-0 mt-[6px] w-1.5 h-1.5 rounded-full"
+              className="shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full"
               style={{ background: "var(--t-accent2)", opacity: 0.7 }}
             />
             <span>{renderInline(item, `li${i}`)}</span>
@@ -125,14 +125,14 @@ function MarkdownMessage({ text }: MarkdownMessageProps) {
     if (t.startsWith("### ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-bold text-white text-sm mt-2.5 mb-1 first:mt-0">
+        <p key={i} className="font-bold text-sm mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
           {renderInline(t.slice(4), `h3-${i}`)}
         </p>,
       );
     } else if (t.startsWith("## ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-semibold text-white text-[15px] mt-2.5 mb-1 first:mt-0">
+        <p key={i} className="font-semibold text-[15px] mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
           {renderInline(t.slice(3), `h2-${i}`)}
         </p>,
       );
@@ -175,30 +175,25 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }: WelcomeScreenProps) {
       </div>
 
       <h2
-        className="text-2xl sm:text-[1.65rem] font-bold text-white leading-tight text-center ai-chat-fade-in-up"
-        style={{ animationDelay: "60ms" }}
+        className="text-2xl sm:text-[1.65rem] font-bold leading-tight text-center ai-chat-fade-in-up"
+        style={{ animationDelay: "60ms", color: "var(--t-text)" }}
       >
         Hello! I&apos;m your <span className="ai-chat-gradient-text">AI Sommelier.</span>
       </h2>
 
-      <Text
-        as="p"
-        size="sm"
-        color="muted"
-        className="text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
-        style={{ animationDelay: "120ms" }}
+      <p
+        className="text-sm text-center mt-4 px-2 leading-relaxed opacity-80 ai-chat-fade-in-up"
+        style={{ animationDelay: "120ms", color: "var(--t-dim)" }}
       >
         {welcomeParagraph || WELCOME_FALLBACK}
-      </Text>
+      </p>
 
-      <Text
-        as="p"
-        size="xs"
-        className="mt-10 mb-3 text-white/35 uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
-        style={{ animationDelay: "180ms" }}
+      <p
+        className="mt-10 mb-3 text-[10px] uppercase tracking-widest font-bold text-center ai-chat-fade-in-up"
+        style={{ animationDelay: "180ms", color: "var(--t-dim)", opacity: 0.6 }}
       >
         TRY THESE SUGGESTIONS
-      </Text>
+      </p>
 
       <div className="flex flex-col gap-2.5">
         {QUICK_CHAT_CHIPS.map((chip, i) => (
@@ -206,8 +201,13 @@ function WelcomeScreen({ welcomeParagraph, onSuggest }: WelcomeScreenProps) {
             key={chip.label}
             type="button"
             onClick={() => onSuggest(chip.text)}
-            className="w-full text-left px-4 py-3.5 rounded-xl bg-white/[0.06] border border-white/10 text-sm text-white/90 hover:bg-white/10 hover:border-white/15 active:scale-[0.99] transition-all ai-chat-fade-in-up"
-            style={{ animationDelay: `${220 + i * 50}ms` }}
+            className="w-full text-left px-4 py-3.5 rounded-xl text-sm active:scale-[0.99] transition-all ai-chat-fade-in-up"
+            style={{
+              animationDelay: `${220 + i * 50}ms`,
+              background: "var(--t-float)",
+              border: "1px solid var(--t-line)",
+              color: "var(--t-text)",
+            }}
           >
             {chip.label}
           </button>
@@ -223,25 +223,24 @@ interface ChatHeaderProps {
 
 function ChatHeader({ onClose }: ChatHeaderProps) {
   return (
-    <div className="px-4 py-3.5 flex items-center justify-between border-b border-white/10 shrink-0">
+    <div className="px-4 py-3.5 flex items-center justify-between border-b shrink-0"
+      style={{ borderColor: "var(--t-line)" }}>
       <div className="flex items-center gap-3 min-w-0">
-        <span className="text-[var(--t-accent2)] shrink-0">
+        <span className="text-(--t-accent2) shrink-0">
           <BotIcon />
         </span>
-        <Text
-          as="h2"
-          size="md"
-          weight="bold"
-          color="white"
-          className="truncate uppercase tracking-wide"
+        <h2
+          className="truncate uppercase tracking-wide text-sm font-bold"
+          style={{ color: "var(--t-text)" }}
         >
           AI Assistant
-        </Text>
+        </h2>
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors text-lg shrink-0 cursor-pointer active:scale-95"
+        className="w-9 h-9 rounded-full flex items-center justify-center transition-colors text-lg shrink-0 cursor-pointer active:scale-95"
+        style={{ color: "var(--t-dim)" }}
         aria-label="Close chat"
       >
         ✕
@@ -251,6 +250,12 @@ function ChatHeader({ onClose }: ChatHeaderProps) {
 }
 
 /* ─── AIChatDrawer ──────────────────────────────────────────────────────────── */
+interface AIChatDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onGoToCart?: () => void;
+}
+
 export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDrawerProps) {
   const { currencySymbol } = restaurantStore();
   const cartCount = useCartCount();
@@ -274,7 +279,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
   const endRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
 
-  const hasUserMessage = messages.some((m) => m.role === "user");
+  const hasUserMessage = (messages as ChatMessage[]).some((m) => m.role === "user");
   const isBusy = loading || streaming;
   const showWelcomeLayout = messages.length === 0 && !isBusy;
 
@@ -283,12 +288,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
     setInitialized(true);
 
     getChatHistory()
-      .then((history) => {
+      .then((history: unknown) => {
         if (Array.isArray(history) && history.length > 0) {
           setMessages(
             history.map((m: Record<string, unknown>) => ({
-              role: m.role === "user" ? "user" : "ai",
-              text: m.content as string,
+              role: m.role === "user" ? "user" : ("ai" as const),
+              text: typeof m.content === "string" ? m.content : String(m.content ?? ""),
               items: Array.isArray(m.recommended_items) ? m.recommended_items : [],
               timestamp: parseChatTimestamp(m),
             })),
@@ -298,7 +303,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
         setMessages([]);
         return getWelcomeMessage();
       })
-      .then((welcome) => {
+      .then((welcome: unknown) => {
         if (typeof welcome === "string" && welcome.trim()) {
           setWelcomeText(welcome.trim());
         }
@@ -374,8 +379,8 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           }
           appendStreamingText(chunk);
         },
-        onDone: (items: unknown[]) => {
-          finalizeStreamingMessage(items ?? []);
+        onDone: (items?: unknown[], mode?: string, options?: string[]) => {
+          finalizeStreamingMessage((items ?? []) as import('../../../types/menu').MenuItem[], mode ?? 'normal', options ?? []);
         },
         onError: () => {
           if (firstChunk) {
@@ -392,7 +397,14 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
         },
       });
     },
-    [addMessage, setLoading, inputText, startStreamingMessage, appendStreamingText, finalizeStreamingMessage],
+    [
+      addMessage,
+      setLoading,
+      inputText,
+      startStreamingMessage,
+      appendStreamingText,
+      finalizeStreamingMessage,
+    ],
   );
 
   const inputPlaceholder = hasUserMessage ? "Ask follow-up…" : "Ask for suggestions…";
@@ -405,9 +417,16 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           <WelcomeScreen welcomeParagraph={welcomeText} onSuggest={send} />
         ) : (
           <div className="space-y-5">
-            {messages.map((m, i) => {
+            {(messages as ChatMessage[]).map((m, i) => {
               const isUser = m.role === "user";
               const t = formatMessageTime(m.timestamp);
+              const isLatestAi =
+                !isUser &&
+                i === messages.length - 1 &&
+                !m.streaming &&
+                !isBusy;
+              const showClarifyOptions =
+                isLatestAi && m.mode === "clarify" && Array.isArray(m.options) && m.options.length > 0;
 
               return (
                 <div key={i} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -437,9 +456,17 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                       "max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
                       isUser
                         ? "bg-brand text-white rounded-tr-sm"
-                        : "bg-white/5 text-white/95 rounded-tl-sm border border-white/10 border-l-4",
+                        : "rounded-tl-sm border-l-4",
                     ].join(" ")}
-                    style={!isUser ? { borderLeftColor: "var(--t-accent2)" } : undefined}
+                    style={!isUser ? {
+                      background: "var(--t-surface)",
+                      color: "var(--t-text)",
+                      borderColor: "var(--t-line)",
+                      borderLeftColor: "var(--t-accent2)",
+                      borderStyle: "solid",
+                      borderWidth: "1px",
+                      borderLeftWidth: "4px",
+                    } : undefined}
                   >
                     {isUser ? (
                       m.text
@@ -448,7 +475,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                         <MarkdownMessage text={m.text} />
                         {m.streaming && (
                           <span
-                            className="inline-block w-[2px] h-[14px] ml-0.5 animate-pulse align-middle"
+                            className="inline-block w-0.5 h-3.5 ml-0.5 animate-pulse align-middle"
                             style={{ background: "var(--t-accent2)" }}
                           />
                         )}
@@ -457,23 +484,42 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                   </div>
 
                   {t && (
-                    <Text
-                      as="span"
-                      size="xs"
-                      className="mt-1.5 px-1 uppercase tracking-wide text-white/35"
+                    <span
+                      className="mt-1.5 px-1 uppercase tracking-wide text-xs"
+                      style={{ color: "var(--t-dim)", opacity: 0.6 }}
                     >
                       {isUser ? "YOU" : "ASSISTANT"} · {t}
-                    </Text>
+                    </span>
                   )}
 
-                  {!isUser && m.items?.length > 0 && (
+                  {!isUser && Array.isArray(m.items) && m.items.length > 0 && (
                     <div className="mt-3 w-full max-w-full space-y-3 pl-0">
-                      {m.items.map((item) => (
+                      {(m.items as Array<{ _id?: string; id?: string }>).map((item) => (
                         <MenuItemCard
                           key={item._id ?? item.id}
-                          item={item}
+                          item={item as Parameters<typeof MenuItemCard>[0]['item']}
                           currencySymbol={currencySymbol}
                         />
+                      ))}
+                    </div>
+                  )}
+
+                  {showClarifyOptions && m.options && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {m.options.map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => send(opt)}
+                          className="px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap active:scale-95 transition-all"
+                          style={{
+                            background: "var(--t-accent2-20)",
+                            border: "1px solid var(--t-accent2-40)",
+                            color: "var(--t-accent2)",
+                          }}
+                        >
+                          {opt}
+                        </button>
                       ))}
                     </div>
                   )}
@@ -502,8 +548,15 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                   </Text>
                 </div>
                 <div
-                  className="bg-white/5 px-4 py-3 rounded-2xl rounded-tl-sm border border-white/10 border-l-4"
-                  style={{ borderLeftColor: "var(--t-accent2)" }}
+                  className="px-4 py-3 rounded-2xl rounded-tl-sm border-l-4"
+                  style={{
+                    background: "var(--t-surface)",
+                    borderColor: "var(--t-line)",
+                    borderLeftColor: "var(--t-accent2)",
+                    borderStyle: "solid",
+                    borderWidth: "1px",
+                    borderLeftWidth: "4px",
+                  }}
                 >
                   <div className="flex gap-1 items-center">
                     {[0, 150, 300].map((delay) => (
@@ -522,30 +575,38 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
         )}
       </div>
 
-      <div className="px-4 pt-3 pb-5 border-t border-white/10 shrink-0">
+      <div className="px-4 pt-3 pb-5 border-t shrink-0" style={{ borderColor: "var(--t-line)" }}>
         <div className="flex gap-2">
           <input
             ref={inputRef}
             type="text"
             value={inputText}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputText(e.target.value)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
               if (e.key === "Enter") send();
             }}
             placeholder={inputPlaceholder}
             disabled={isBusy}
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--t-accent)] text-white transition-colors placeholder:text-white/35 disabled:opacity-60"
+            className="flex-1 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-colors disabled:opacity-60"
+            style={{
+              background: "var(--t-float)",
+              border: "1.5px solid var(--t-line)",
+              color: "var(--t-text)",
+            }}
           />
           {SpeechRecognitionAvailable && (
             <button
               type="button"
               onClick={isListening ? stopListening : startListening}
               disabled={isBusy}
-              className={`w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
-                isListening
-                  ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse"
-                  : "bg-white/5 border border-white/10 text-slate-400 hover:text-white"
+              className={`w-13 h-13 shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
+                isListening ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse" : ""
               }`}
+              style={!isListening ? {
+                background: "var(--t-float)",
+                border: "1.5px solid var(--t-line)",
+                color: "var(--t-dim)",
+              } : undefined}
               title={isListening ? "Stop listening" : "Speak your order"}
             >
               🎙️
@@ -555,12 +616,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
             type="button"
             onClick={() => send()}
             disabled={isBusy}
-            className="w-[52px] h-[52px] shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
+            className="w-13 h-13 shrink-0 rounded-2xl flex items-center justify-center text-black transition-transform active:scale-[0.97] disabled:opacity-50 cursor-pointer"
             style={{ background: "var(--t-accent)" }}
             aria-label="Send"
           >
             {loading ? (
-              <Spinner size="sm" className="!border-black/35 !border-t-black" />
+              <Spinner size="sm" className="border-black/35! border-t-black!" />
             ) : (
               <SendIcon />
             )}
@@ -574,7 +635,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
               type="button"
               onClick={() => send(chip.text)}
               disabled={isBusy}
-              className="px-3 py-1.5 bg-transparent border border-white/15 rounded-full text-xs text-white/85 whitespace-nowrap active:scale-95 transition-transform hover:border-white/25 hover:bg-white/5 disabled:opacity-50 shrink-0"
+              className="px-3 py-1.5 rounded-full text-xs whitespace-nowrap active:scale-95 transition-transform disabled:opacity-50 shrink-0"
+              style={{
+                background: "var(--t-float)",
+                border: "1px solid var(--t-line)",
+                color: "var(--t-dim)",
+              }}
             >
               {chip.label}
             </button>
@@ -605,9 +671,9 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           </button>
         )}
 
-        <Text as="p" size="xs" className="text-center mt-3 text-white/25 uppercase tracking-widest">
+        <p className="text-[10px] text-center mt-3 uppercase tracking-widest" style={{ color: "var(--t-dim)", opacity: 0.4 }}>
           {INFRA_FOOTER}
-        </Text>
+        </p>
       </div>
     </>
   );

@@ -15,7 +15,7 @@ export function SolutionSlide() {
 
   return (
     <section
-      className="min-h-[100dvh] w-full shrink-0 flex flex-col justify-center px-6 py-12 sm:py-16"
+      className="min-h-dvh w-full shrink-0 flex flex-col justify-center px-6 py-12 sm:py-16"
       style={{ background: bg }}
     >
       <div className="max-w-6xl mx-auto w-full">
@@ -36,7 +36,7 @@ export function SolutionSlide() {
               {SOLUTION_BULLETS.map(({ label, desc }, i) => (
                 <Reveal key={label} animation="revealFade" delay={0.1 + i * 0.1}>
                   <div className="py-4 flex items-start gap-4">
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-[7px]" style={{ background: ORANGE }} />
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.75" style={{ background: ORANGE }} />
                     <div>
                       <p className="font-semibold text-sm" style={{ color: labelColor }}>{label}</p>
                       <p className="text-xs mt-1 leading-relaxed" style={{ color: descColor }}>{desc}</p>
@@ -49,11 +49,11 @@ export function SolutionSlide() {
 
           <Reveal animation="revealRight" delay={0.15}>
             <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B00] to-[#7B00FF] rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              <div className="absolute -inset-1 bg-linear-to-r from-[#FF6B00] to-[#7B00FF] rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
               <img
-                src="/images/DynamuChat.jpeg"
+                src={isDark ? "/images/DarkChatMode.jpeg" : "/images/LightChatMode.jpeg"} 
                 alt="Dynamu AI Chat Interface"
-                className="relative rounded-2xl shadow-2xl border border-black/10 w-full max-w-md lg:max-w-full mx-auto max-h-[580px] lg:max-h-[640px] object-cover object-top"
+                className="relative rounded-2xl shadow-2xl border border-black/10 w-full max-w-md lg:max-w-full mx-auto max-h-145 lg:max-h-160 object-cover object-top"
               />
             </div>
           </Reveal>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useCartCount, useCartItems, useCartTotal, cartStore } from "../../../store/cartStore";
+import { useCartCount, useCartItems } from "../../../store/cartStore";
 import { restaurantStore } from "../../../store/restaurantStore";
 import { authStore } from "../../../store/authStore";
 import { disconnectSocket } from "../../../services/socketService";
@@ -20,16 +20,17 @@ import {
 
 import Header from "../../../components/common/Header";
 import BottomNavigator from "../../../components/common/BottomNavigator";
-import CartDrawer from "../../../components/common/CartDrawer/CartDrawer";
-import AIChatDrawer from "../../../components/common/AIChatDrawer/AIChatDrawer";
+import CartDrawer from "../../../components/common/CartDrawer";
+import AIChatDrawer from "../../../components/common/AIChatDrawer";
 import SessionGate from "../../../components/customer/SessionGate";
 import { Spinner } from "../../../components/ui/Spinner";
 import Text from "../../../components/ui/Text";
 
 import useCustomerSession from "./useCustomerSession";
 import CartBar from "./CartBar";
-import JoinRequestsPanel from "./JoinRequestsPanel";
+import JoinRequestsPanel, { type JoinRequest } from "./JoinRequestsPanel";
 import DesktopAIFab from "./DesktopAIFab";
+import type { SessionData } from "./useCustomerSession";
 
 import type { MenuItem } from "../../../types";
 
@@ -58,10 +59,8 @@ export default function CustomerLayout() {
     applyColorMode(colorMode ?? "light");
   }, [themeNumber, colorMode]);
 
-  const { remove } = cartStore();
   const items = useCartItems();
   const count = useCartCount();
-  const total = useCartTotal();
   const { name, tableNumber: storedTable, menu } = restaurantStore();
 
   const [gateComplete, setGateComplete] = useState(false);
@@ -106,9 +105,9 @@ export default function CustomerLayout() {
   }, [itemsStr, loading]);
 
   // ── Gate callback ──
-  const handleGateComplete = async (sessionData: Record<string, unknown>, guestName: string) => {
+  const handleGateComplete = async (sessionData: unknown, guestName: string) => {
     try {
-      await sessionGateComplete(sessionData, guestName);
+      await sessionGateComplete(sessionData as SessionData, guestName);
 
       // Fetch special sections in parallel
       setSectionsLoading(true);
@@ -232,9 +231,9 @@ export default function CustomerLayout() {
       <DesktopAIFab aiChatOpen={aiChatOpen} onToggle={toggleAI} />
 
       <JoinRequestsPanel
-        requests={pendingJoinRequests}
+        requests={pendingJoinRequests as unknown as JoinRequest[]}
         onResolve={(id: string) =>
-          setPendingJoinRequests((prev) => prev.filter((r) => r.request_id !== id))
+          setPendingJoinRequests((prev) => prev.filter((r) => (r as unknown as JoinRequest).request_id !== id))
         }
       />
 
@@ -262,9 +261,7 @@ export default function CustomerLayout() {
           }
         }}
         items={items}
-        onRemove={remove}
         onPlaceOrder={handlePlaceOrder}
-        total={total}
         count={count}
         loading={ordering}
         subtitle={drawerSubtitle}

@@ -159,7 +159,7 @@ export default function BottomNavigator({ basePath: basePathProp, aiChatOpen = f
           <button
             type="button"
             onClick={onChatClick}
-            className="flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--t-accent)] transition-opacity active:opacity-80"
+            className="flex-1 flex flex-col items-center justify-center min-w-0 py-1 px-0.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-(--t-accent) transition-opacity active:opacity-80"
           >
             <div
               className="w-full flex flex-col items-center justify-center gap-1.5 rounded-xl py-2.5 px-1"

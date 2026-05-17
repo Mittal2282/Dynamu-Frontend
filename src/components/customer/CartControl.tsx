@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { syncCart } from "../../services/customerService";
-import { cartStore, cartKey } from "../../store/cartStore";
-import type { MenuItem } from "../../types/menu";
-import type { Variant } from "../../types/menu";
+import { cartKey, cartStore } from "../../store/cartStore";
+import type { MenuItem, Variant } from "../../types/menu";
 
 interface CartControlProps {
   item: MenuItem;

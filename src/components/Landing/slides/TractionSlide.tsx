@@ -18,7 +18,7 @@ export function TractionSlide() {
       imageUrl={IMG.traction}
       overlay={OVERLAY_TRACTION}
       overlayDark={OVERLAY_TRACTION_DARK}
-      className="min-h-[100dvh] w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
+      className="min-h-dvh w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
     >
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">

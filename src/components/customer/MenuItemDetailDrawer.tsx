@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import LazyImage from "../ui/LazyImage";
-import { VegBadge } from "../ui/Badge";
-import CartControl from "./CartControl";
-import VariantDrawer from "./VariantDrawer";
-import { LevelDots } from "./MenuItemCard";
-import { cartStore } from "../../store/cartStore";
 import { syncCart } from "../../services/customerService";
+import { cartStore } from "../../store/cartStore";
 import { restaurantStore } from "../../store/restaurantStore";
+import type { MenuItem, Variant } from "../../types/menu";
 import { formatCurrency } from "../../utils/formatters";
 import { getItemVegStatus, variantEffectivePrice } from "../../utils/vegStatus";
-import type { MenuItem, Variant } from "../../types/menu";
+import { VegBadge } from "../ui/Badge";
+import LazyImage from "../ui/LazyImage";
+import CartControl from "./CartControl";
+import { LevelDots } from "./MenuItemCard";
+import VariantDrawer from "./VariantDrawer";
 
 interface MenuItemDetailDrawerProps {
   item: MenuItem;
@@ -79,7 +79,7 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
             </div>
           }
         />
-        <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+        <div className="absolute top-1.5 left-1.5 p-0.75 rounded-sm bg-white/90 shadow-sm">
           <VegBadge isVeg={vegStatus === "mixed" ? "mixed" : vegStatus === "veg"} size="sm" />
         </div>
       </div>
@@ -567,7 +567,7 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 </p>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 no-scrollbar">
                   {similarItems.map((sim) => (
-                    <div key={sim._id} className="shrink-0 w-[170px]">
+                    <div key={sim._id} className="shrink-0 w-42.5">
                       <SimilarItemCard item={sim} currencySymbol={currencySymbol} />
                     </div>
                   ))}

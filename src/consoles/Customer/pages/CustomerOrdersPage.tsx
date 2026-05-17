@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import Button from "../../../components/ui/Button";
 import LazyImage from "../../../components/ui/LazyImage";
@@ -369,16 +369,22 @@ export default function CustomerOrdersPage() {
     }
   }, []);
 
+  // Initial fetch + 15-second poll
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 15000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
+  // Re-fetch only when orderVersion *changes* after mount (socket push).
+  // Using a ref so the initial orderVersion value (which may already be > 0
+  // when navigating here after placing an order) doesn't trigger a duplicate fetch.
+  const prevOrderVersionRef = useRef(orderVersion);
   useEffect(() => {
-    if (orderVersion > 0) fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderVersion]);
+    if (orderVersion === prevOrderVersionRef.current) return;
+    prevOrderVersionRef.current = orderVersion;
+    fetchOrders();
+  }, [orderVersion, fetchOrders]);
 
   const original = orders.find((o) => !o.is_addon);
   const addons = orders.filter((o) => o.is_addon);

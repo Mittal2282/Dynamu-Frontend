@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   checkSession,
   getJoinStatus,
@@ -11,9 +11,8 @@ import { locationStore } from "../../store/locationStore";
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
 import Text from "../ui/Text";
-import OutOfRangeScreen from "./OutOfRangeScreen";
 import LocationRequiredScreen from "./LocationRequiredScreen";
-import React from "react";
+import OutOfRangeScreen from "./OutOfRangeScreen";
 
 // The gate state is kept as a string union to preserve runtime shape.
 type GateStateKind =

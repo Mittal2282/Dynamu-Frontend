@@ -20,7 +20,7 @@ export function HowItWorksSlide() {
       imageUrl={IMG.howItWorks}
       overlay={OVERLAY_HOW_IT_WORKS}
       overlayDark={OVERLAY_HOW_IT_WORKS_DARK}
-      className="min-h-[100dvh] w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
+      className="min-h-dvh w-full flex flex-col justify-center py-12 sm:py-16 lg:py-20 shrink-0"
     >
       <div className="max-w-6xl mx-auto px-6">
         <Reveal>

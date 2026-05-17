@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { CountBadge } from '../ui/Badge';
-import Text from '../ui/Text';
+import { authStore } from '../../store/authStore';
 import { useCartCount, useCartTotal } from '../../store/cartStore';
 import { restaurantStore } from '../../store/restaurantStore';
-import { authStore } from '../../store/authStore';
 import { formatCurrency } from '../../utils/formatters';
+import { CountBadge } from '../ui/Badge';
+import Text from '../ui/Text';
 
 interface IconProps {
   className?: string;
@@ -175,7 +175,7 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
                   ? 'text-(--t-accent) bg-(--t-accent-10) border-(--t-accent-40)'
                   : count > 0
                     ? 'text-(--t-accent) border-(--t-accent-40) bg-(--t-accent-10) hover:bg-(--t-accent-20)'
-                    : 'text-[var(--t-dim)] hover:text-[var(--t-text)] hover:bg-[var(--t-float)]',
+                    : 'text-(--t-dim) hover:text-(--t-text) hover:bg-(--t-float)',
               ].join(' ')}
               aria-label={`Cart${count > 0 ? ` — ${count} items` : ''}`}
             >
@@ -215,7 +215,7 @@ export default function Header({ onCartClick, variant = 'legacy', basePath = '',
           as="h1"
           size="lg"
           weight="bold"
-          className="bg-gradient-to-r from-brand to-orange-400 bg-clip-text text-transparent"
+          className="bg-linear-to-r from-brand to-orange-400 bg-clip-text text-transparent"
         >
           {title}
         </Text>

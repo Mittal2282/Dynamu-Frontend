@@ -18,7 +18,7 @@ export function CtaSlide() {
       imageUrl={IMG.cta}
       overlay={OVERLAY_CTA}
       overlayDark={OVERLAY_CTA_DARK}
-      className="min-h-[100dvh] w-full shrink-0 flex flex-col justify-center py-12 sm:py-20"
+      className="min-h-dvh w-full shrink-0 flex flex-col justify-center py-12 sm:py-20"
     >
       <div className="max-w-3xl mx-auto px-6 text-center w-full">
         <Reveal animation="revealFade">

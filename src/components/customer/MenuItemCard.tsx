@@ -271,7 +271,7 @@ export default function MenuItemCard({ item, currencySymbol, size = "md" }: Menu
               }
             />
             {/* Veg / Non-veg dot */}
-            <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+            <div className="absolute top-1.5 left-1.5 p-0.75 rounded-sm bg-white/90 shadow-sm">
               <VegBadge isVeg={vegStatus === 'mixed' ? 'mixed' : vegStatus === 'veg'} size="sm" />
             </div>
           </div>
