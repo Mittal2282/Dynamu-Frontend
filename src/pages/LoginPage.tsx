@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authStore } from "../store/authStore";
 import { adminLogin } from "../services/dashboardService";
 import Button from "../components/ui/Button";
 import Text from "../components/ui/Text";
+import { applyColorMode } from "../theme/tokens";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,6 +12,11 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    applyColorMode('light');
+    return () => applyColorMode('dark');
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -60,7 +66,7 @@ export default function LoginPage() {
         <div className="text-center mb-4">
           <button
             onClick={() => navigate("/")}
-            className="text-xs text-slate-300 hover:text-white transition-colors"
+            className="text-xs text-dim hover:text-ink transition-colors"
           >
             ← Back to home
           </button>
@@ -76,7 +82,7 @@ export default function LoginPage() {
           >
             Dynamu
           </Text>
-          <Text size="sm" color="muted" className="mt-1 text-slate-200">
+          <Text size="sm" color="muted" className="mt-1 text-dim">
             Admin Portal
           </Text>
         </div>
@@ -93,7 +99,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="form-control w-full">
-              <div className="label pb-1"><span className="label-text text-xs text-slate-200">Email address</span></div>
+              <div className="label pb-1"><span className="label-text text-xs text-dim">Email address</span></div>
               <input
                 name="email"
                 type="email"
@@ -106,7 +112,7 @@ export default function LoginPage() {
             </label>
 
             <label className="form-control w-full">
-              <div className="label pb-1"><span className="label-text text-xs text-slate-200">Password</span></div>
+              <div className="label pb-1"><span className="label-text text-xs text-dim">Password</span></div>
               <input
                 name="password"
                 type="password"

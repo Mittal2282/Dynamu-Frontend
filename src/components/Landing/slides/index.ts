@@ -5,8 +5,6 @@ import { HeroSlide } from './HeroSlide';
 import { HowItWorksSlide } from './HowItWorksSlide';
 import { ProblemSlide } from './ProblemSlide';
 import { SolutionSlide } from './SolutionSlide';
-import { TractionSlide } from './TractionSlide';
-
 /** Ordered deck — length drives dots, keyboard bounds, and transform steps. */
 export const SLIDE_COMPONENTS = [
   HeroSlide,
@@ -14,7 +12,6 @@ export const SLIDE_COMPONENTS = [
   SolutionSlide,
   HowItWorksSlide,
   CapabilitiesSlide,
-  TractionSlide,
   CtaSlide,
   FooterSlide,
 ];
