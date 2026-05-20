@@ -4,9 +4,14 @@ interface SourceBadgeProps {
 
 export function SourceBadge({ source }: SourceBadgeProps) {
   if (!source || source === 'platform') return null;
-  const cfg = source === 'bulk'
-    ? { label: 'Bulk', bg: 'rgba(168,85,247,0.12)', color: '#a855f7', border: 'rgba(168,85,247,0.25)' }
-    : { label: 'Manual', bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', border: 'rgba(59,130,246,0.25)' };
+  const cfgMap: Record<string, { label: string; bg: string; color: string; border: string }> = {
+    bulk:    { label: 'Bulk',    bg: 'rgba(168,85,247,0.12)', color: '#a855f7', border: 'rgba(168,85,247,0.25)' },
+    manual:  { label: 'Manual',  bg: 'rgba(59,130,246,0.12)', color: '#3b82f6', border: 'rgba(59,130,246,0.25)' },
+    zomato:  { label: 'Zomato',  bg: 'rgba(239,68,68,0.12)',  color: '#ef4444', border: 'rgba(239,68,68,0.25)'  },
+    swiggy:  { label: 'Swiggy',  bg: 'rgba(249,115,22,0.12)', color: '#f97316', border: 'rgba(249,115,22,0.25)' },
+    pos:     { label: 'POS',     bg: 'rgba(99,102,241,0.12)', color: '#6366f1', border: 'rgba(99,102,241,0.25)' },
+  };
+  const cfg = cfgMap[source] ?? { label: source, bg: 'rgba(107,114,128,0.12)', color: '#6b7280', border: 'rgba(107,114,128,0.25)' };
   return (
     <span
       className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border"

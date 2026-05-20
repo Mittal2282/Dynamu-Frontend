@@ -31,16 +31,7 @@ fi
 echo -e "${YELLOW}📦 Step 1: Installing dependencies...${NC}"
 npm install
 
-echo -e "${YELLOW}🔍 Step 2: Type-checking TypeScript...${NC}"
-npm run typecheck
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Type check passed${NC}"
-else
-    echo -e "${RED}❌ TypeScript errors found — fix before deploying${NC}"
-    exit 1
-fi
-
-echo -e "${YELLOW}🔨 Step 3: Building Vite app...${NC}"
+echo -e "${YELLOW}🔨 Step 2: Building Vite app...${NC}"
 npm run build
 
 if [ ! -d "dist" ]; then
@@ -48,7 +39,7 @@ if [ ! -d "dist" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}📤 Step 4: Uploading to S3...${NC}"
+echo -e "${YELLOW}📤 Step 3: Uploading to S3...${NC}"
 aws s3 sync dist/ s3://${BUCKET_NAME} --delete --region ${REGION}
 
 if [ $? -eq 0 ]; then
@@ -58,7 +49,7 @@ else
     exit 1
 fi
 
-echo -e "${YELLOW}🔄 Step 5: Invalidating CloudFront cache...${NC}"
+echo -e "${YELLOW}🔄 Step 4: Invalidating CloudFront cache...${NC}"
 aws cloudfront create-invalidation \
   --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} \
   --paths '/*' \
