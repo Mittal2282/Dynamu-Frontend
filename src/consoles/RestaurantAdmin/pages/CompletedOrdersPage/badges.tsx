@@ -22,6 +22,27 @@ export function SourceBadge({ source }: SourceBadgeProps) {
   );
 }
 
+export function PaymentBadge({ status }: { status?: string }) {
+  if (status === 'paid') {
+    return (
+      <span
+        className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border"
+        style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}
+      >
+        Paid
+      </span>
+    );
+  }
+  return (
+    <span
+      className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border"
+      style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)' }}
+    >
+      Unpaid
+    </span>
+  );
+}
+
 interface StatusBadgeProps {
   status?: string;
 }
