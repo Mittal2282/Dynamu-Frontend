@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { getIngredients, toggleIngredient } from "../../../services/dashboardService";
+import type { Ingredient } from "../../../services/dashboardService";
 import { useInfiniteList, useSentinel } from "../../../hooks/useInfiniteList";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -88,13 +89,6 @@ function getVegType(items_using: DishRef[] = []): VegType {
 }
 
 /* ─── Ingredient Row ─────────────────────────────────────────────────────────*/
-interface Ingredient {
-  name: string;
-  is_available: boolean;
-  affected_count: number;
-  items_using?: DishRef[];
-}
-
 interface IngredientCardProps {
   ingredient: Ingredient;
   onToggle: (name: string, newAvailability: boolean) => Promise<void>;
@@ -299,13 +293,13 @@ export default function IngredientsPage() {
 
   const handleToggle = async (name: string, newAvailability: boolean) => {
     setSaving(name);
-    setIngredients((prev: Ingredient[]) =>
+    setIngredients((prev) =>
       prev.map((ing) => (ing.name === name ? { ...ing, is_available: newAvailability } : ing))
     );
     try {
       await toggleIngredient(name, newAvailability);
     } catch {
-      setIngredients((prev: Ingredient[]) =>
+      setIngredients((prev) =>
         prev.map((ing) => (ing.name === name ? { ...ing, is_available: !newAvailability } : ing))
       );
     } finally {
@@ -321,7 +315,7 @@ export default function IngredientsPage() {
     { key: "in",  label: "In Stock" },
   ];
 
-  const initialLoad = loading && (ingredients as Ingredient[]).length === 0;
+  const initialLoad = loading && ingredients.length === 0;
 
   return (
     <div className="space-y-6">
@@ -364,13 +358,13 @@ export default function IngredientsPage() {
           />
           <StatChip
             label="In Stock"
-            value={(ingredients as Ingredient[]).filter((i) => i.is_available).length}
+            value={ingredients.filter((i) => i.is_available).length}
             color="#4ade80"
           />
           <StatChip
             label="Out of Stock"
-            value={(ingredients as Ingredient[]).filter((i) => !i.is_available).length}
-            color={(ingredients as Ingredient[]).some((i) => !i.is_available) ? "#f87171" : "var(--t-dim)"}
+            value={ingredients.filter((i) => !i.is_available).length}
+            color={ingredients.some((i) => !i.is_available) ? "#f87171" : "var(--t-dim)"}
           />
         </div>
       )}
@@ -380,9 +374,9 @@ export default function IngredientsPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-              style={{ color: "var(--t-dim)" }}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none z-10"
+              style={{ color: "rgba(255,255,255,0.45)" }}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
@@ -415,7 +409,7 @@ export default function IngredientsPage() {
       {/* ── Content ── */}
       {initialLoad ? (
         <IngredientsPageSkeleton />
-      ) : error && (ingredients as Ingredient[]).length === 0 ? (
+      ) : error && ingredients.length === 0 ? (
         <div
           className="flex flex-col items-center justify-center py-16 rounded-2xl"
           style={{ background: "var(--t-surface)", border: "1px solid rgba(239,68,68,0.2)" }}
@@ -452,10 +446,10 @@ export default function IngredientsPage() {
       ) : (
         <>
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--t-line)", background: "var(--t-surface)" }}>
-            {(ingredients as Ingredient[]).map((ing, i) => (
+            {ingredients.map((ing, i) => (
               <div key={ing.name}>
                 <IngredientCard ingredient={ing} onToggle={handleToggle} saving={saving} />
-                {i < (ingredients as Ingredient[]).length - 1 && (
+                {i < ingredients.length - 1 && (
                   <div className="h-px mx-4" style={{ background: "var(--t-line)" }} />
                 )}
               </div>
@@ -468,7 +462,7 @@ export default function IngredientsPage() {
               <span className="loading loading-spinner loading-sm" />
             </div>
           )}
-          {!hasMore && (ingredients as Ingredient[]).length > 0 && (
+          {!hasMore && ingredients.length > 0 && (
             <p className="text-center text-xs py-2" style={{ color: "var(--t-dim)" }}>
               All {total} ingredient{total !== 1 ? "s" : ""} loaded
             </p>

@@ -8,6 +8,12 @@ import {
 import { connectTableSocket, disconnectTableSocket } from "../../services/socketService";
 import { authStore } from "../../store/authStore";
 import { locationStore } from "../../store/locationStore";
+import type { LocationSnapshot } from "../../store/locationStore";
+
+type LocationCapture = LocationSnapshot | { __error: unknown };
+function isLocationError(geo: LocationCapture): geo is { __error: unknown } {
+  return "__error" in geo;
+}
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
 import Text from "../ui/Text";
@@ -16,17 +22,17 @@ import OutOfRangeScreen from "./OutOfRangeScreen";
 
 // The gate state is kept as a string union to preserve runtime shape.
 type GateStateKind =
-  | 'checking'
-  | 'name_entry'
-  | 'join_or_create'
-  | 'name_entry_new'
-  | 'waiting'
-  | 'rejected'
-  | 'expired'
-  | 'out_of_range'
-  | 'location_denied'
-  | 'location_error'
-  | 'error';
+  | "checking"
+  | "name_entry"
+  | "join_or_create"
+  | "name_entry_new"
+  | "waiting"
+  | "rejected"
+  | "expired"
+  | "out_of_range"
+  | "location_denied"
+  | "location_error"
+  | "error";
 
 interface OutOfRangeDetails {
   distance_m?: number;
@@ -55,7 +61,7 @@ interface SessionGateProps {
  */
 export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: SessionGateProps) {
   const [gateState, setGateState] = useState<GateStateKind>("checking");
-  const [existingName, setExistingName] = useState(""); // host's name
+  const [existingName, setExistingName] = useState("");
   const [anyoneOnline, setAnyoneOnline] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [nameError, setNameError] = useState("");
@@ -104,8 +110,8 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
           return;
         }
 
-        setExistingName(result.customer_name || "");
-        setAnyoneOnline(result.anyone_online);
+        setExistingName(typeof result.customer_name === "string" ? result.customer_name : "");
+        setAnyoneOnline(result.anyone_online === true);
         setGateState("join_or_create");
       } catch {
         setGateState("name_entry"); // fallback: treat as fresh table
@@ -195,9 +201,9 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
     return v;
   };
 
-  const captureLocation = async () => {
+  const captureLocation = async (): Promise<LocationCapture> => {
     try {
-      locationStore.getState().start(); // begin watchPosition for future API calls
+      locationStore.getState().start();
       return await locationStore.getState().ensureFresh(15_000);
     } catch (err) {
       return { __error: err };
@@ -212,19 +218,29 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
       onSessionReady(sessionData, name);
       return;
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { code?: string; details?: { distance_m?: number; radius_m?: number; restaurant_name?: string }; message?: string } } };
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            code?: string;
+            details?: { distance_m?: number; radius_m?: number; restaurant_name?: string };
+            message?: string;
+          };
+        };
+      };
       const code = axiosErr?.response?.data?.code;
       if (code !== "LOCATION_REQUIRED") {
         if (code === "OUT_OF_RANGE") {
           setOutOfRangeDetails({
             distance_m: axiosErr.response?.data?.details?.distance_m,
-            radius_m:   axiosErr.response?.data?.details?.radius_m,
+            radius_m: axiosErr.response?.data?.details?.radius_m,
             restaurant_name: axiosErr.response?.data?.details?.restaurant_name || "",
           });
           setGateState("out_of_range");
           return;
         }
-        setErrorMsg(axiosErr?.response?.data?.message || "Failed to start session. Please try again.");
+        setErrorMsg(
+          axiosErr?.response?.data?.message || "Failed to start session. Please try again.",
+        );
         setGateState("error");
         return;
       }
@@ -232,8 +248,8 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
 
     // Server requires location (geofencing enforced) → capture and retry once.
     const geo = await captureLocation();
-    if ((geo as { __error?: unknown }).__error) {
-      const geoErr = (geo as { __error?: { code?: number } }).__error;
+    if (isLocationError(geo)) {
+      const geoErr = geo.__error as { code?: number } | null;
       setGateState(geoErr?.code === 1 ? "location_denied" : "location_error");
       return;
     }
@@ -242,12 +258,20 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
       const sessionData = await startSession(qrCodeId, tableNumber, name, forceNew, geo);
       onSessionReady(sessionData, name);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { code?: string; details?: { distance_m?: number; radius_m?: number; restaurant_name?: string }; message?: string } } };
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            code?: string;
+            details?: { distance_m?: number; radius_m?: number; restaurant_name?: string };
+            message?: string;
+          };
+        };
+      };
       const code = axiosErr?.response?.data?.code;
       if (code === "OUT_OF_RANGE") {
         setOutOfRangeDetails({
           distance_m: axiosErr.response?.data?.details?.distance_m,
-          radius_m:   axiosErr.response?.data?.details?.radius_m,
+          radius_m: axiosErr.response?.data?.details?.radius_m,
           restaurant_name: axiosErr.response?.data?.details?.restaurant_name || "",
         });
         setGateState("out_of_range");
@@ -257,7 +281,9 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
         setGateState("location_denied");
         return;
       }
-      setErrorMsg(axiosErr?.response?.data?.message || "Failed to start session. Please try again.");
+      setErrorMsg(
+        axiosErr?.response?.data?.message || "Failed to start session. Please try again.",
+      );
       setGateState("error");
     }
   };
@@ -294,7 +320,7 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
     setIsSubmitting(true);
     try {
       const result = await requestJoinSession(qrCodeId, name);
-      requestIdRef.current = result.request_id;
+      requestIdRef.current = typeof result.request_id === "string" ? result.request_id : null;
       setGateState("waiting");
       startPolling();
     } catch (err) {
@@ -572,7 +598,11 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
         restaurantName={outOfRangeDetails?.restaurant_name}
         onRetry={async () => {
           setGateState(nameInput.trim() ? "name_entry_new" : "name_entry");
-          try { await locationStore.getState().ensureFresh(0); } catch { /* ignore */ }
+          try {
+            await locationStore.getState().ensureFresh(0);
+          } catch {
+            /* ignore */
+          }
         }}
       />
     );
@@ -601,7 +631,9 @@ export default function SessionGate({ qrCodeId, tableNumber, onSessionReady }: S
           try {
             await locationStore.getState().ensureFresh(0);
             setGateState("name_entry");
-          } catch { /* keep on screen */ }
+          } catch {
+            /* keep on screen */
+          }
         }}
       />
     );

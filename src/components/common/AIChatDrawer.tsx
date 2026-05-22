@@ -1,9 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getChatHistory,
-  getWelcomeMessage,
-  streamChatMessage,
-} from "../../services/chatService";
+import { getChatHistory, getWelcomeMessage, streamChatMessage } from "../../services/chatService";
 import { useCartCount } from "../../store/cartStore";
 import { chatStore } from "../../store/chatStore";
 import { restaurantStore } from "../../store/restaurantStore";
@@ -21,7 +17,7 @@ const SpeechRecognitionAvailable = !!(window.SpeechRecognition || window.webkitS
 const INFRA_FOOTER = "SECURE AI INFRASTRUCTURE v1.4.0";
 
 interface ChatMessage {
-  role: 'user' | 'ai';
+  role: "user" | "ai";
   text: string;
   items?: unknown[];
   timestamp?: number;
@@ -125,14 +121,22 @@ function MarkdownMessage({ text }: { text: string }) {
     if (t.startsWith("### ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-bold text-sm mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
+        <p
+          key={i}
+          className="font-bold text-sm mt-2.5 mb-1 first:mt-0"
+          style={{ color: "var(--t-text)" }}
+        >
           {renderInline(t.slice(4), `h3-${i}`)}
         </p>,
       );
     } else if (t.startsWith("## ")) {
       flushList(`fl-${i}`);
       result.push(
-        <p key={i} className="font-semibold text-[15px] mt-2.5 mb-1 first:mt-0" style={{ color: "var(--t-text)" }}>
+        <p
+          key={i}
+          className="font-semibold text-[15px] mt-2.5 mb-1 first:mt-0"
+          style={{ color: "var(--t-text)" }}
+        >
           {renderInline(t.slice(3), `h2-${i}`)}
         </p>,
       );
@@ -223,8 +227,10 @@ interface ChatHeaderProps {
 
 function ChatHeader({ onClose }: ChatHeaderProps) {
   return (
-    <div className="px-4 py-3.5 flex items-center justify-between border-b shrink-0"
-      style={{ borderColor: "var(--t-line)" }}>
+    <div
+      className="px-4 py-3.5 flex items-center justify-between border-b shrink-0"
+      style={{ borderColor: "var(--t-line)" }}
+    >
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-(--t-accent2) shrink-0">
           <BotIcon />
@@ -310,7 +316,9 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
       })
       .catch(() => {
         setMessages([]);
-        setWelcomeText("Welcome! I'm here to help you discover delicious food. What are you in the mood for today?");
+        setWelcomeText(
+          "Welcome! I'm here to help you discover delicious food. What are you in the mood for today?",
+        );
       });
   }, [isOpen, initialized, setInitialized, setMessages]);
 
@@ -380,7 +388,11 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           appendStreamingText(chunk);
         },
         onDone: (items?: unknown[], mode?: string, options?: string[]) => {
-          finalizeStreamingMessage((items ?? []) as import('../../../types/menu').MenuItem[], mode ?? 'normal', options ?? []);
+          finalizeStreamingMessage(
+            (items ?? []) as import("../../types/menu").MenuItem[],
+            mode ?? "normal",
+            options ?? [],
+          );
         },
         onError: () => {
           if (firstChunk) {
@@ -420,13 +432,12 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
             {(messages as ChatMessage[]).map((m, i) => {
               const isUser = m.role === "user";
               const t = formatMessageTime(m.timestamp);
-              const isLatestAi =
-                !isUser &&
-                i === messages.length - 1 &&
-                !m.streaming &&
-                !isBusy;
+              const isLatestAi = !isUser && i === messages.length - 1 && !m.streaming && !isBusy;
               const showClarifyOptions =
-                isLatestAi && m.mode === "clarify" && Array.isArray(m.options) && m.options.length > 0;
+                isLatestAi &&
+                m.mode === "clarify" &&
+                Array.isArray(m.options) &&
+                m.options.length > 0;
 
               return (
                 <div key={i} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
@@ -454,19 +465,21 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                   <div
                     className={[
                       "max-w-[88%] px-4 py-3 rounded-2xl text-sm leading-relaxed",
-                      isUser
-                        ? "bg-brand text-white rounded-tr-sm"
-                        : "rounded-tl-sm border-l-4",
+                      isUser ? "bg-brand text-white rounded-tr-sm" : "rounded-tl-sm border-l-4",
                     ].join(" ")}
-                    style={!isUser ? {
-                      background: "var(--t-surface)",
-                      color: "var(--t-text)",
-                      borderColor: "var(--t-line)",
-                      borderLeftColor: "var(--t-accent2)",
-                      borderStyle: "solid",
-                      borderWidth: "1px",
-                      borderLeftWidth: "4px",
-                    } : undefined}
+                    style={
+                      !isUser
+                        ? {
+                            background: "var(--t-surface)",
+                            color: "var(--t-text)",
+                            borderColor: "var(--t-line)",
+                            borderLeftColor: "var(--t-accent2)",
+                            borderStyle: "solid",
+                            borderWidth: "1px",
+                            borderLeftWidth: "4px",
+                          }
+                        : undefined
+                    }
                   >
                     {isUser ? (
                       m.text
@@ -497,7 +510,7 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
                       {(m.items as Array<{ _id?: string; id?: string }>).map((item) => (
                         <MenuItemCard
                           key={item._id ?? item.id}
-                          item={item as Parameters<typeof MenuItemCard>[0]['item']}
+                          item={item as Parameters<typeof MenuItemCard>[0]["item"]}
                           currencySymbol={currencySymbol}
                         />
                       ))}
@@ -600,13 +613,19 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
               onClick={isListening ? stopListening : startListening}
               disabled={isBusy}
               className={`w-13 h-13 shrink-0 rounded-2xl flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer text-xl ${
-                isListening ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse" : ""
+                isListening
+                  ? "bg-red-500/20 border border-red-500/40 text-red-400 animate-pulse"
+                  : ""
               }`}
-              style={!isListening ? {
-                background: "var(--t-float)",
-                border: "1.5px solid var(--t-line)",
-                color: "var(--t-dim)",
-              } : undefined}
+              style={
+                !isListening
+                  ? {
+                      background: "var(--t-float)",
+                      border: "1.5px solid var(--t-line)",
+                      color: "var(--t-dim)",
+                    }
+                  : undefined
+              }
               title={isListening ? "Stop listening" : "Speak your order"}
             >
               🎙️
@@ -671,7 +690,10 @@ export default function AIChatDrawer({ isOpen, onClose, onGoToCart }: AIChatDraw
           </button>
         )}
 
-        <p className="text-[10px] text-center mt-3 uppercase tracking-widest" style={{ color: "var(--t-dim)", opacity: 0.4 }}>
+        <p
+          className="text-[10px] text-center mt-3 uppercase tracking-widest"
+          style={{ color: "var(--t-dim)", opacity: 0.4 }}
+        >
           {INFRA_FOOTER}
         </p>
       </div>

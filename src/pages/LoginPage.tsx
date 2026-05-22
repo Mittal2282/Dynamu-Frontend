@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authStore } from "../store/authStore";
-import { adminLogin } from "../services/dashboardService";
 import Button from "../components/ui/Button";
 import Text from "../components/ui/Text";
+import { adminLogin } from "../services/dashboardService";
+import { authStore } from "../store/authStore";
 import { applyColorMode } from "../theme/tokens";
 
 export default function LoginPage() {
@@ -42,9 +42,9 @@ export default function LoginPage() {
       // Backend returns { user: { role, name, ... }, accessToken, refreshToken }
       const role = data.user?.role ?? data.role;
       setAdminTokens({
-        accessToken: data.access_token ?? data.accessToken,
-        refreshToken: data.refresh_token ?? data.refreshToken,
-        role,
+        accessToken: data.access_token ?? data.accessToken ?? "",
+        refreshToken: data.refresh_token ?? data.refreshToken ?? "",
+        role: role ?? "",
         name: data.user?.name ?? data.name ?? "",
       });
       if (role === "super_admin") navigate("/superadmin", { replace: true });
@@ -78,7 +78,7 @@ export default function LoginPage() {
             as="h1"
             size="2xl"
             weight="bold"
-            className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent"
+            className="bg-linear-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent"
           >
             Dynamu
           </Text>
@@ -89,7 +89,7 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="glass p-8 rounded-3xl">
-          <Text as="h2" size="lg" weight="semibold" className="mb-6 !text-orange-500">
+          <Text as="h2" size="lg" weight="semibold" className="mb-6 text-orange-500!">
             Sign in to your account
           </Text>
 
@@ -129,7 +129,7 @@ export default function LoginPage() {
               fullWidth
               size="lg"
               loading={loading}
-              className="mt-2 !bg-orange-500 hover:!bg-orange-600 shadow-lg shadow-orange-500/20"
+              className="mt-2 bg-orange-500! hover:bg-orange-600! shadow-lg shadow-orange-500/20"
             >
               Sign In
             </Button>

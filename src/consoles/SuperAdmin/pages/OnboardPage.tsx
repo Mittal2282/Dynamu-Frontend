@@ -1,7 +1,11 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
-import { createRestaurant, importMenu, updateSAPetpoojaConfig } from "../../../services/superAdminService";
+import {
+  createRestaurant,
+  importMenu,
+  updateSAPetpoojaConfig,
+} from "../../../services/superAdminService";
 import { authStore } from "../../../store/authStore";
 
 const STEPS = ["Restaurant Details", "Import Menu", "Petpooja POS", "Done"];
@@ -69,7 +73,11 @@ function Field({ label, name, value, onChange, type = "text", placeholder, hint 
         placeholder={placeholder}
         className="input input-bordered w-full text-sm"
       />
-      {hint && <div className="label pt-1"><span className="label-text-alt text-xs">{hint}</span></div>}
+      {hint && (
+        <div className="label pt-1">
+          <span className="label-text-alt text-xs">{hint}</span>
+        </div>
+      )}
     </label>
   );
 }
@@ -102,14 +110,16 @@ function Step1({ form, onChange, onNext, loading, error }: Step1Props) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-base font-bold text-white">Restaurant Details</p>
+        <p className="text-base font-bold">Restaurant Details</p>
         <p className="text-slate-300 text-sm mt-0.5">
           Basic information about the restaurant and its owner.
         </p>
       </div>
 
       {error && (
-        <div role="alert" className="alert alert-error text-sm">{error}</div>
+        <div role="alert" className="alert alert-error text-sm">
+          {error}
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,7 +409,9 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
       .filter((r) => r.name);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } }) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } },
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setError("");
@@ -420,9 +432,10 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
           const mRows = XLSX.utils.sheet_to_json(
             workbook.Sheets["Menu Items"] || workbook.Sheets[workbook.SheetNames[0]],
           ) as Record<string, unknown>[];
-          const vRows = XLSX.utils.sheet_to_json(
-            workbook.Sheets["Item Variants"],
-          ) as Record<string, unknown>[];
+          const vRows = XLSX.utils.sheet_to_json(workbook.Sheets["Item Variants"]) as Record<
+            string,
+            unknown
+          >[];
           setMenuRows(mRows);
           setVariantRows(vRows);
           setFileName(`${file.name} · XLSX (variants) · ${(file.size / 1024).toFixed(1)} KB`);
@@ -434,7 +447,8 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
               name: ((r["Item Name"] as string) || "").trim(),
               price: r["Has Variants?"] === "Yes" ? "See variants" : String(r["Price (₹)"] ?? ""),
               meal_tag: ((r["Meal Tag"] as string) || "").trim(),
-              vegNonVeg: r["Has Variants?"] === "Yes" ? "Mixed" : (r["Veg / Non-Veg"] as string) || "Veg",
+              vegNonVeg:
+                r["Has Variants?"] === "Yes" ? "Mixed" : (r["Veg / Non-Veg"] as string) || "Veg",
             }))
             .filter((r) => r.name);
           setPreview(prev);
@@ -469,9 +483,9 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
     setLoading(true);
     try {
       if (menuRows.length > 0) {
-        await importMenu(restaurantId, null, menuRows, variantRows);
+        await importMenu(restaurantId ?? "", null, menuRows, variantRows);
       } else {
-        await importMenu(restaurantId, csvText);
+        await importMenu(restaurantId ?? "", csvText);
       }
       onNext();
     } catch (err: unknown) {
@@ -485,14 +499,16 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-base font-bold text-white">Import Menu</p>
+        <p className="text-base font-bold">Import Menu</p>
         <p className="text-slate-300 text-sm mt-0.5">
           Upload a CSV or XLSX file — format is auto-detected.
         </p>
       </div>
 
       {error && (
-        <div role="alert" className="alert alert-error text-sm">{error}</div>
+        <div role="alert" className="alert alert-error text-sm">
+          {error}
+        </div>
       )}
 
       {/* Format reference */}
@@ -558,7 +574,10 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
       {preview.length > 0 && (
         <div>
           <p className="text-xs text-slate-300 mb-2">Preview — first {preview.length} rows</p>
-          <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--t-line)' }}>
+          <div
+            className="overflow-x-auto rounded-xl border"
+            style={{ borderColor: "var(--t-line)" }}
+          >
             <table className="table table-sm w-full text-xs">
               <thead>
                 <tr>
@@ -574,7 +593,9 @@ function Step2({ restaurantId, onNext, onSkip }: Step2Props) {
                   <tr key={i} className="hover">
                     <td>{r.category}</td>
                     <td className="font-medium">{r.name}</td>
-                    <td className="font-semibold" style={{ color: "var(--t-accent)" }}>{r.price}</td>
+                    <td className="font-semibold" style={{ color: "var(--t-accent)" }}>
+                      {r.price}
+                    </td>
                     <td>{r.meal_tag || "-"}</td>
                     <td>{r.vegNonVeg || "-"}</td>
                   </tr>
@@ -613,10 +634,19 @@ interface Step3PetpoojaProps {
 }
 
 function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
-  const [form, setForm] = useState({ enabled: false, app_key: "", app_secret: "", access_token: "", rest_id: "" });
+  const [form, setForm] = useState({
+    enabled: false,
+    app_key: "",
+    app_secret: "",
+    access_token: "",
+    rest_id: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [savedUrls, setSavedUrls] = useState<{ callback_url: string; menu_push_url: string } | null>(null);
+  const [savedUrls, setSavedUrls] = useState<{
+    callback_url: string;
+    menu_push_url: string;
+  } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = (text: string, key: string) => {
@@ -627,7 +657,10 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
   };
 
   const handleSave = async () => {
-    if (!form.enabled) { onNext(); return; }
+    if (!form.enabled) {
+      onNext();
+      return;
+    }
     if (!form.app_key || !form.app_secret || !form.access_token || !form.rest_id) {
       setError("All fields are required when enabling Petpooja.");
       return;
@@ -646,7 +679,9 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
       setSavedUrls({ callback_url: result.callback_url, menu_push_url: result.menu_push_url });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message ?? "Failed to save. Please try from restaurant settings later.");
+      setError(
+        e.response?.data?.message ?? "Failed to save. Please try from restaurant settings later.",
+      );
     } finally {
       setLoading(false);
     }
@@ -658,15 +693,32 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
         <div className="text-center space-y-2">
           <div className="text-4xl">✅</div>
           <h2 className="text-lg font-bold text-white">Petpooja Configured</h2>
-          <p className="text-sm text-slate-400">Paste these URLs into your Petpooja sandbox Configuration page.</p>
+          <p className="text-sm text-slate-400">
+            Paste these URLs into your Petpooja sandbox Configuration page.
+          </p>
         </div>
-        <UrlRow label="Menu Sharing Endpoint" value={savedUrls.menu_push_url} copied={copied} onCopy={copy} id="menu" />
-        <UrlRow label="Callback URL" value={savedUrls.callback_url} copied={copied} onCopy={copy} id="callback" />
+        <UrlRow
+          label="Menu Sharing Endpoint"
+          value={savedUrls.menu_push_url}
+          copied={copied}
+          onCopy={copy}
+          id="menu"
+        />
+        <UrlRow
+          label="Callback URL"
+          value={savedUrls.callback_url}
+          copied={copied}
+          onCopy={copy}
+          id="callback"
+        />
         <p className="text-xs text-slate-500 text-center">
-          After saving, trigger a Menu Push from Petpooja to map item IDs. Orders will relay when customers request the bill.
+          After saving, trigger a Menu Push from Petpooja to map item IDs. Orders will relay when
+          customers request the bill.
         </p>
         <div className="flex justify-end">
-          <button onClick={onNext} className="btn btn-primary">Continue →</button>
+          <button onClick={onNext} className="btn btn-primary">
+            Continue →
+          </button>
         </div>
       </div>
     );
@@ -691,7 +743,10 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
         <input
           type="checkbox"
           checked={form.enabled}
-          onChange={(e) => { setForm((f) => ({ ...f, enabled: e.target.checked })); setError(""); }}
+          onChange={(e) => {
+            setForm((f) => ({ ...f, enabled: e.target.checked }));
+            setError("");
+          }}
           className="toggle toggle-warning"
         />
       </label>
@@ -702,7 +757,9 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
             <label key={key} className="form-control w-full">
               <div className="label pb-1">
                 <span className="label-text text-xs font-medium uppercase tracking-wider">
-                  {key === "rest_id" ? "Restaurant ID (restID / mapping code)" : key.replace(/_/g, " ")}
+                  {key === "rest_id"
+                    ? "Restaurant ID (restID / mapping code)"
+                    : key.replace(/_/g, " ")}
                 </span>
               </div>
               <input
@@ -720,14 +777,13 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="flex items-center justify-between pt-2">
-        <button onClick={onSkip} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+        <button
+          onClick={onSkip}
+          className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+        >
           Skip for now
         </button>
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="btn btn-primary"
-        >
+        <button onClick={handleSave} disabled={loading} className="btn btn-primary">
           {loading ? <span className="loading loading-spinner loading-sm" /> : null}
           {form.enabled ? "Save & Continue" : "Continue →"}
         </button>
@@ -736,7 +792,19 @@ function Step3Petpooja({ restaurantId, onNext, onSkip }: Step3PetpoojaProps) {
   );
 }
 
-function UrlRow({ label, value, copied, onCopy, id }: { label: string; value: string; copied: string | null; onCopy: (v: string, id: string) => void; id: string }) {
+function UrlRow({
+  label,
+  value,
+  copied,
+  onCopy,
+  id,
+}: {
+  label: string;
+  value: string;
+  copied: string | null;
+  onCopy: (v: string, id: string) => void;
+  id: string;
+}) {
   return (
     <div className="space-y-1">
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
@@ -792,11 +860,13 @@ function Step3({ restaurantId }: Step3Props) {
       <div>
         <h2
           className="text-2xl font-bold"
-          style={{
-            background: "linear-gradient(90deg, #fff, #94a3b8)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          } as React.CSSProperties}
+          style={
+            {
+              background: "linear-gradient(90deg, #fff, #94a3b8)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            } as React.CSSProperties
+          }
         >
           Restaurant Onboarded!
         </h2>
@@ -861,11 +931,11 @@ export default function OnboardPage() {
       return;
     }
     setForm((p) => ({ ...p, [name]: value }));
-    if (name === "name" && !form.slug) {
+    if (name === "name" && !form.slug && typeof value === "string") {
       setForm((p) => ({
         ...p,
-        [name]: value,
-        slug: (value as string)
+        name: value,
+        slug: value
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-")
           .replace(/^-|-$/g, ""),
@@ -874,7 +944,13 @@ export default function OnboardPage() {
   };
 
   const handleStep1 = async () => {
-    const required: (keyof OnboardForm)[] = ["name", "slug", "owner_name", "owner_email", "owner_password"];
+    const required: (keyof OnboardForm)[] = [
+      "name",
+      "slug",
+      "owner_name",
+      "owner_email",
+      "owner_password",
+    ];
     for (const f of required) {
       if (!form[f]) {
         setError(`${f.replace(/_/g, " ")} is required`);
@@ -906,7 +982,7 @@ export default function OnboardPage() {
         payload.table_count = parseInt(form.table_count) || 0;
         payload.start_number = parseInt(form.start_number) || 1;
       }
-      const data = await createRestaurant(payload) as { restaurant: { _id: string } };
+      const data = (await createRestaurant(payload)) as { restaurant: { _id: string } };
       setRestaurantId(data.restaurant._id);
       setStep(1);
     } catch (err: unknown) {
@@ -978,7 +1054,11 @@ export default function OnboardPage() {
           <Step2 restaurantId={restaurantId} onNext={() => setStep(2)} onSkip={() => setStep(2)} />
         )}
         {step === 2 && (
-          <Step3Petpooja restaurantId={restaurantId} onNext={() => setStep(3)} onSkip={() => setStep(3)} />
+          <Step3Petpooja
+            restaurantId={restaurantId}
+            onNext={() => setStep(3)}
+            onSkip={() => setStep(3)}
+          />
         )}
         {step === 3 && <Step3 restaurantId={restaurantId} />}
       </div>

@@ -44,7 +44,7 @@ function SkeletonCard() {
       className="rounded-2xl p-3 animate-pulse border"
       style={{ background: "var(--t-surface)", borderColor: "var(--t-line)" }}
     >
-      <div className="w-full h-[88px] rounded-xl mb-2" style={{ background: "var(--t-float)" }} />
+      <div className="w-full h-22 rounded-xl mb-2" style={{ background: "var(--t-float)" }} />
       <div className="h-2 rounded w-1/2 mb-1.5" style={{ background: "var(--t-float)" }} />
       <div className="h-3 rounded w-full mb-1.5" style={{ background: "var(--t-float)" }} />
       <div className="h-3 rounded w-2/5 mb-2" style={{ background: "var(--t-float)" }} />
@@ -377,7 +377,7 @@ function TimeBasedSection({ items, mealTime, loading, currencySymbol }: TimeBase
               key={item._id}
               className={`w-full md:w-auto snap-start h-full ${isHiddenOnDesktop ? "md:hidden" : ""}`}
             >
-              <MenuItemCard item={item} currencySymbol={currencySymbol} />
+              <MenuItemCard item={item} currencySymbol={currencySymbol} useVariantDrawer />
             </div>
           );
         })}
@@ -532,7 +532,7 @@ export default function CustomerHomePage() {
       </div>
       {/* AI card — mobile sticky, outside grid so it sticks through all scroll sections */}
       <div
-        className="sticky md:hidden top-[5px] z-20 px-4 mb-2 -mt-1"
+        className="sticky md:hidden top-1.25 z-20 px-4 mb-2 -mt-1"
         style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
       >
         <AskAICard onClick={onOpenAI} />

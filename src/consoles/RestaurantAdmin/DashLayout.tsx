@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { getDashProfile } from "../../services/dashboardService";
 import { authStore } from "../../store/authStore";
-import { buildCssTokens, applyCssTokens, applyColorMode, DEFAULT_THEME_NUMBER } from "../../theme/tokens";
+import {
+  buildCssTokens,
+  applyCssTokens,
+  applyColorMode,
+  DEFAULT_THEME_NUMBER,
+} from "../../theme/tokens";
 
 interface NavItemData {
   to: string;
@@ -24,7 +29,7 @@ const NAV_MAIN: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <rect x="2" y="3" width="20" height="14" rx="2" />
         <path d="M8 21h8M12 17v4" />
@@ -44,7 +49,7 @@ const NAV_MAIN: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <path d="M3 6h18M3 12h18M9 6v12M15 6v12M3 18h18" />
       </svg>
@@ -61,7 +66,7 @@ const NAV_MAIN: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
         <rect x="9" y="3" width="6" height="4" rx="1" />
@@ -80,7 +85,7 @@ const NAV_MAIN: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <path d="M12 2a10 10 0 00-7 17.09M12 2c1.6 3.2 2 6.5 1 10M12 2c-1.6 3.2-2 6.5-1 10" />
         <path d="M5 17.09C6.5 18.9 9.1 20 12 20s5.5-1.1 7-2.91" />
@@ -102,7 +107,7 @@ const NAV_SECONDARY: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
         <rect x="9" y="3" width="6" height="4" rx="1" />
@@ -121,7 +126,7 @@ const NAV_SECONDARY: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <path d="M18 20V10M12 20V4M6 20v-6" />
       </svg>
@@ -138,7 +143,7 @@ const NAV_SECONDARY: NavItemData[] = [
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="w-[18px] h-[18px]"
+        className="w-4.5 h-4.5"
       >
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h.1a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h.1a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.1a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
@@ -237,9 +242,8 @@ export default function DashLayout() {
 
   useEffect(() => {
     applyCssTokens(buildCssTokens(DEFAULT_THEME_NUMBER));
-    applyColorMode(colorMode ?? 'light');
+    applyColorMode(colorMode ?? "light");
   }, [colorMode]);
-
 
   const toggleSidebarCollapsed = () => {
     setSidebarCollapsed((c) => {
@@ -263,7 +267,11 @@ export default function DashLayout() {
   return (
     <div
       className="h-screen overflow-hidden flex"
-      style={{ fontFamily: "'Outfit', sans-serif", background: "var(--t-bg, #0a0c10)", color: "var(--t-text)" }}
+      style={{
+        fontFamily: "'Outfit', sans-serif",
+        background: "var(--t-bg, #0a0c10)",
+        color: "var(--t-text)",
+      }}
     >
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -277,22 +285,26 @@ export default function DashLayout() {
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-30 flex flex-col transition-all duration-300 ease-out w-60
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-          ${sidebarCollapsed ? "lg:w-[4.25rem]" : "lg:w-60"}`}
+          ${sidebarCollapsed ? "lg:w-17" : "lg:w-60"}`}
         style={{
           background: "var(--t-surface, #111318)",
           borderRight: "1px solid var(--t-line, rgba(255,255,255,0.07))",
         }}
       >
         <div
-          className="h-[3px] w-full shrink-0"
+          className="h-0.75 w-full shrink-0"
           style={{
-            background: "linear-gradient(90deg, var(--t-accent) 0%, var(--t-accent2, #fb923c) 60%, transparent 100%)",
+            background:
+              "linear-gradient(90deg, var(--t-accent) 0%, var(--t-accent2, #fb923c) 60%, transparent 100%)",
             boxShadow: "0 1px 8px var(--t-accent-20)",
           }}
         />
 
         {/* Mobile drawer header */}
-        <div className="flex items-center justify-between px-3 py-2 shrink-0 lg:hidden" style={{ borderBottom: "1px solid var(--t-line)" }}>
+        <div
+          className="flex items-center justify-between px-3 py-2 shrink-0 lg:hidden"
+          style={{ borderBottom: "1px solid var(--t-line)" }}
+        >
           <span className="text-xs font-semibold truncate pr-2" style={{ color: "var(--t-text)" }}>
             {restaurantName || "Menu"}
           </span>
@@ -478,8 +490,8 @@ export default function DashLayout() {
 
           <button
             type="button"
-            onClick={() => setColorMode(colorMode === 'light' ? 'dark' : 'light')}
-            title={colorMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            onClick={() => setColorMode(colorMode === "light" ? "dark" : "light")}
+            title={colorMode === "light" ? "Switch to dark mode" : "Switch to light mode"}
             className={`w-full flex items-center gap-3 rounded-xl text-sm transition-all duration-150 ${
               sidebarCollapsed ? "lg:justify-center lg:px-2 lg:py-2.5" : "px-3 py-2.5"
             }`}
@@ -493,17 +505,41 @@ export default function DashLayout() {
               e.currentTarget.style.background = "transparent";
             }}
           >
-            {colorMode === 'dark' ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
-                <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            {colorMode === "dark" ? (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4.5 h-4.5 shrink-0"
+              >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
               </svg>
             ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px] shrink-0">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4.5 h-4.5 shrink-0"
+              >
                 <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
               </svg>
             )}
             <span className={`font-medium ${sidebarCollapsed ? "lg:sr-only" : ""}`}>
-              {colorMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              {colorMode === "dark" ? "Light Mode" : "Dark Mode"}
             </span>
           </button>
 
@@ -531,7 +567,7 @@ export default function DashLayout() {
               strokeWidth={1.8}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-[18px] h-[18px] shrink-0"
+              className="w-4.5 h-4.5 shrink-0"
             >
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>

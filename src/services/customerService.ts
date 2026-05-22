@@ -5,10 +5,7 @@ import type { MenuItem } from '../types/menu';
 import type { CartEntry, SyncCartItem } from '../types/cart';
 import type { Order } from '../types/order';
 
-/**
- * Customer-facing API services.
- * All functions return response.data (already unwrapped by apiCaller).
- */
+type Resp<T> = { data: T };
 
 interface LocationPayload {
   latitude: number | null;
@@ -23,16 +20,30 @@ export interface SessionData {
   menu: Record<string, MenuItem[]>;
 }
 
-export interface CartResponse {
-  items: CartEntry[];
+export interface ServerCartItem {
+  menu_item: {
+    _id: string;
+    name: string;
+    price: number;
+    discount_percentage?: number;
+    is_veg?: boolean | null;
+    description?: string;
+    image_url?: string;
+  };
+  quantity: number;
+  variant_name?: string;
+  variant_group?: string;
+  variant_price?: number;
+  variant_is_veg?: boolean | null;
 }
 
-/**
- * Start a customer session by scanning a QR code.
- */
+export interface CartResponse {
+  items: ServerCartItem[];
+}
+
 export async function startSession(
   qrCodeId: string,
-  tableNumber: string | number,
+  _tableNumber: string | number,
   name = '',
   forceNew = false,
   location: LocationPayload | null = null
@@ -47,7 +58,7 @@ export async function startSession(
     payload.customer_longitude  = location.longitude;
     payload.customer_accuracy_m = location.accuracy_m ?? null;
   }
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<SessionData>>({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_START,
     payload,
@@ -59,10 +70,10 @@ export async function checkSession(
   qrCodeId: string,
   existingToken: string | null = null
 ): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_CHECK,
-    payload:  { qr_code_id: qrCodeId, session_token: existingToken },
+    payload:  { qr_code_id: qrCodeId, session_token: existingToken || "" },
   });
   return data.data;
 }
@@ -71,7 +82,7 @@ export async function requestJoinSession(
   qrCodeId: string,
   joinerName: string
 ): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_REQUEST_JOIN,
     payload:  { qr_code_id: qrCodeId, joiner_name: joinerName },
@@ -80,7 +91,7 @@ export async function requestJoinSession(
 }
 
 export async function getJoinStatus(requestId: string): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
     method:   'GET',
     endpoint: ENDPOINTS.SESSION_JOIN_STATUS(requestId),
   });
@@ -91,7 +102,7 @@ export async function respondToJoin(
   requestId: string,
   approved: boolean
 ): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_RESPOND_JOIN,
     payload:  { request_id: requestId, approved },
@@ -99,23 +110,19 @@ export async function respondToJoin(
   return data.data;
 }
 
-/**
- * Fetch the current session cart from the server.
- */
 export async function getCart(): Promise<CartResponse> {
-  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.CART });
+  const data = await apiCaller<Resp<CartResponse>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.CART,
+  });
   return data.data;
 }
 
-/**
- * Sync cart to the server (fire-and-forget friendly).
- */
 export async function syncCart(items: CartEntry[]): Promise<unknown> {
   const formattedItems: SyncCartItem[] = items.map((item) => ({
     _id: item._id,
     quantity: item.qty,
     instruction: item.instruction,
-    // Variant fields — server stores and returns these so variant info survives page refresh
     variant_name:   item.selectedVariant?.name      || undefined,
     variant_group:  item.selectedVariant?.groupName || undefined,
     variant_price:  item.selectedVariant?.price     ?? undefined,
@@ -130,13 +137,10 @@ export async function syncCart(items: CartEntry[]): Promise<unknown> {
   });
 }
 
-/**
- * Place an order from the current session cart.
- */
 export async function placeOrder(
   payload: { notes?: string; payment_method?: string } = {}
 ): Promise<Order> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<Order>>({
     method:   'POST',
     endpoint: ENDPOINTS.PLACE_ORDER,
     payload,
@@ -144,81 +148,67 @@ export async function placeOrder(
   return data.data;
 }
 
-/**
- * Get all orders for the current session.
- */
 export async function getCustomerOrders(): Promise<Order[]> {
-  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.CUSTOMER_ORDERS });
+  const data = await apiCaller<Resp<Order[]>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.CUSTOMER_ORDERS,
+  });
   return data.data ?? [];
 }
 
-/**
- * Request final bill / end the customer table session.
- */
 export async function endCustomerSession(
   payload: { reason?: string } = {}
 ): Promise<{ success?: boolean; message?: string }> {
-  const data = await apiCaller({
+  const data = await apiCaller<Resp<{ success?: boolean; message?: string }>>({
     method:   'POST',
     endpoint: ENDPOINTS.SESSION_END,
     payload:  { reason: 'request_bill', ...payload },
   });
-  return data.data ?? data;
+  return data.data;
 }
 
-/**
- * Request final bill (customer). Prefer this for QR flow; backend may alias SESSION_END.
- */
 export async function requestBill(): Promise<unknown> {
-  const data = await apiCaller({
+  return apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.REQUEST_BILL,
   });
-  return data.data ?? data;
 }
 
-/**
- * Get AI-powered cart suggestions (3 complementary items).
- */
 export async function getCartSuggestions(cartItemIds: string[]): Promise<MenuItem[]> {
-  const data = await apiCaller({
-    method:  'POST',
+  const data = await apiCaller<Resp<MenuItem[]>>({
+    method:   'POST',
     endpoint: ENDPOINTS.CART_SUGGESTIONS,
     payload:  { cart_item_ids: cartItemIds },
   });
   return data.data ?? [];
 }
 
-/**
- * Get top 10 trending items for this restaurant (past 7 days).
- */
 export async function getTrendingItems(): Promise<MenuItem[]> {
-  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.MENU_TRENDING });
+  const data = await apiCaller<Resp<MenuItem[]>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.MENU_TRENDING,
+  });
   return data.data ?? [];
 }
 
-/**
- * Get Chef's Special items for this restaurant.
- */
 export async function getChefsSpecials(): Promise<MenuItem[]> {
-  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.MENU_CHEFS_SPECIAL });
+  const data = await apiCaller<Resp<MenuItem[]>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.MENU_CHEFS_SPECIAL,
+  });
   return data.data ?? [];
 }
 
-/**
- * Get featured items (restaurant-configured or 5 random fallback).
- */
 export async function getFeaturedItems(): Promise<MenuItem[]> {
-  const data = await apiCaller({ method: 'GET', endpoint: ENDPOINTS.MENU_FEATURED });
+  const data = await apiCaller<Resp<MenuItem[]>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.MENU_FEATURED,
+  });
   return data.data ?? [];
 }
 
-/**
- * Get available menu items for the current time slot (breakfast / lunch / dinner).
- * Passes the client's local hour so the server uses the user's timezone.
- */
 export async function getTimeBasedMenu(): Promise<{ items: MenuItem[]; meal_time: string }> {
-  const data = await apiCaller({
+  const data = await apiCaller<{ data: MenuItem[]; meal_time: string }>({
     method:   'GET',
     endpoint: ENDPOINTS.MENU_TIME_BASED,
     params:   { hour: new Date().getHours() },

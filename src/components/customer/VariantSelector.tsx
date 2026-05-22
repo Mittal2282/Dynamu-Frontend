@@ -68,7 +68,6 @@ export default function VariantSelector({ item, currencySymbol, onAdd }: Variant
               {/* Radio indicator */}
               <div
                 className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                style={{ borderColor: isActive ? "var(--t-accent)" : "var(--t-line)" }}
               >
                 {isActive && (
                   <div className="w-2 h-2 rounded-full" style={{ background: "var(--t-accent)" }} />
@@ -78,7 +77,6 @@ export default function VariantSelector({ item, currencySymbol, onAdd }: Variant
               {/* Variant name */}
               <span
                 className="flex-1 text-sm font-semibold"
-                style={{ color: isUnavailable ? "var(--t-dim)" : isActive ? "#fff" : "rgba(245,246,250,0.8)" }}
               >
                 {v.name}
               </span>

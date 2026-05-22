@@ -13,6 +13,7 @@ import ProductFormModal from "../../components/ProductFormModal";
 import BulkUploadModal from "../../components/BulkUploadModal";
 import AddCategoryModal from "../../components/AddCategoryModal";
 import { getItemVegStatus, variantEffectivePrice } from "../../../../utils/vegStatus";
+import type { MenuItem } from "../../../../types/menu";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [d, setD] = useState<T>(value);
@@ -52,27 +53,11 @@ interface Variant {
   price: number;
   discount_percentage?: number;
   isAvailable?: boolean;
-  isVeg?: boolean;
+  isVeg?: boolean | null;
   groupName?: string;
-  [key: string]: unknown;
 }
 
-interface MenuItem {
-  _id: string;
-  name: string;
-  price: number;
-  category?: string;
-  image_url?: string;
-  is_available: boolean;
-  is_chefs_special?: boolean;
-  is_featured?: boolean;
-  has_variants?: boolean;
-  variants?: Variant[];
-  discount_percentage?: number;
-  stock_status?: boolean;
-  blocked_by_ingredients?: string[];
-  _isNew?: boolean;
-}
+type EditableMenuItem = MenuItem & { _isNew?: boolean };
 
 interface ItemHandlers {
   onToggleAvail: (id: string) => Promise<void>;
@@ -124,7 +109,7 @@ function MenuItemCard({
   const effectivePrice = discount > 0 ? Math.round(item.price * (1 - discount / 100)) : null;
   const vegStatus = getItemVegStatus(item);
   const vegColor = vegStatus === "veg" ? "#22c55e" : vegStatus === "nonveg" ? "#ef4444" : "#94a3b8";
-  const hasVariants = item.has_variants && item.variants?.length > 0;
+  const hasVariants = item.has_variants && (item.variants?.length ?? 0) > 0;
   const minVariantPrice = hasVariants
     ? Math.min(...(item.variants ?? []).map((v) => variantEffectivePrice(v)))
     : null;
@@ -143,7 +128,7 @@ function MenuItemCard({
   };
 
   const blockedByIngredient =
-    item.stock_status === false && (item.blocked_by_ingredients?.length ?? 0) > 0;
+    item.stock_status === 'out_of_stock' && (item.blocked_by_ingredients?.length ?? 0) > 0;
 
   const commitDiscount = () => {
     const val = Math.min(100, Math.max(0, parseInt(discountInput, 10) || 0));
@@ -214,15 +199,15 @@ function MenuItemCard({
         )}
 
         <div
-          className="absolute top-2 left-2 p-[3px] rounded-sm shadow-sm"
+          className="absolute top-2 left-2 p-0.75 rounded-sm shadow-sm"
           style={{ background: "rgba(255,255,255,0.93)" }}
         >
           <div
-            className="w-3 h-3 rounded-sm border-[2px] flex items-center justify-center"
+            className="w-3 h-3 rounded-sm border-2 flex items-center justify-center"
             style={{ borderColor: vegColor }}
           >
             {vegStatus === "mixed" ? (
-              <div className="flex items-center gap-[2px]">
+              <div className="flex items-center gap-0.5">
                 <div className="w-1 h-1 rounded-full" style={{ background: "#22c55e" }} />
                 <div className="w-1 h-1 rounded-full" style={{ background: "#ef4444" }} />
               </div>
@@ -380,7 +365,7 @@ function MenuItemCard({
                         <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: avail ? "#22c55e" : "#475569" }} />
                         {avail ? "On" : "Off"}
                       </button>
-                      <span className="w-2 h-2 rounded-[2px] border shrink-0 flex items-center justify-center" style={{ borderColor: vCol }}>
+                      <span className="w-2 h-2 rounded-xs border shrink-0 flex items-center justify-center" style={{ borderColor: vCol }}>
                         <span className="w-1 h-1 rounded-full block" style={{ background: vCol }} />
                       </span>
                       <span className="text-[11px] truncate flex-1 min-w-0" style={{ color: "var(--t-text)" }}>{v.name}</span>
@@ -484,7 +469,7 @@ function MenuItemCard({
                 {item.is_available ? "Visible to customers" : "Hidden from menu"}
               </span>
             </div>
-            <Toggle checked={item.is_available} onChange={() => onToggleAvail(item._id)} disabled={isSaving} colorOn="bg-green-500" />
+            <Toggle checked={item.is_available ?? true} onChange={() => onToggleAvail(item._id)} disabled={isSaving} colorOn="bg-green-500" />
           </div>
         )}
 
@@ -697,7 +682,7 @@ function MenuPageSkeleton() {
         </div>
       </div>
       <div className="flex flex-wrap gap-3">
-        <div className="shimmer h-9 flex-1 min-w-[13rem] rounded-xl" />
+        <div className="shimmer h-9 flex-1 min-w-52 rounded-xl" />
         <div className="shimmer h-9 w-36 rounded-xl" />
         <div className="shimmer h-9 w-44 rounded-xl" />
       </div>
@@ -735,7 +720,7 @@ export default function MenuManagePage() {
   const [addMenuOpen, setAddMenuOpen]     = useState(false);
   const addMenuRef                        = useRef<HTMLDivElement>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
-  const [editingItem, setEditingItem]     = useState<Partial<MenuItem> | null>(null);
+  const [editingItem, setEditingItem]     = useState<EditableMenuItem | null>(null);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
 
   useEffect(() => {
@@ -755,7 +740,7 @@ export default function MenuManagePage() {
     setSaving(id);
     try {
       const updated = await toggleDashMenuItem(id);
-      setItems((prev: MenuItem[]) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
     } catch {
       alert("Failed to toggle availability.");
     } finally {
@@ -767,7 +752,7 @@ export default function MenuManagePage() {
     setSaving(id);
     try {
       const updated = await toggleChefsSpecial(id);
-      setItems((prev: MenuItem[]) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
     } catch {
       alert("Failed to toggle Chef's Special.");
     } finally {
@@ -779,7 +764,7 @@ export default function MenuManagePage() {
     setSaving(id);
     try {
       const updated = await toggleFeatured(id);
-      setItems((prev: MenuItem[]) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
+      setItems((prev) => prev.map((it) => (it._id === id ? { ...it, ...(updated as object) } : it)));
     } catch {
       alert("Failed to toggle Featured.");
     } finally {
@@ -788,19 +773,19 @@ export default function MenuManagePage() {
   };
 
   const handleEdit = (item: MenuItem) => {
-    setEditingItem(item);
+    setEditingItem({ ...item, _isNew: false });
     setProductModalOpen(true);
   };
 
   const handleAddToCategory = (category: string) => {
     setEditingItem(null);
     setProductModalOpen(true);
-    setEditingItem({ _id: undefined, category, _isNew: true });
+    setEditingItem({ _id: '', category, name: '', price: 0, _isNew: true });
   };
 
   const handleProductSaved = (savedItem: MenuItem) => {
-    setItems((prev: MenuItem[]) =>
-      editingItem?._id
+    setItems((prev) =>
+      editingItem?._id && !editingItem._isNew
         ? prev.map((it) => (it._id === savedItem._id ? savedItem : it))
         : [...prev, savedItem],
     );
@@ -817,7 +802,7 @@ export default function MenuManagePage() {
     setSaving(itemId);
     try {
       const updated = await updateDashMenuItem(itemId, { discount_percentage: value });
-      setItems((prev: MenuItem[]) => prev.map((i) => (i._id === itemId ? { ...i, ...(updated as object) } : i)));
+      setItems((prev) => prev.map((i) => (i._id === itemId ? { ...i, ...(updated as object) } : i)));
     } catch {
       // silently ignore
     } finally {
@@ -829,7 +814,7 @@ export default function MenuManagePage() {
     setSaving(itemId);
     try {
       const updated = await updateDashMenuItem(itemId, { variants: updatedVariants });
-      setItems((prev: MenuItem[]) => prev.map((i) => (i._id === itemId ? { ...i, ...(updated as object) } : i)));
+      setItems((prev) => prev.map((i) => (i._id === itemId ? { ...i, ...(updated as object) } : i)));
     } catch {
       // silently ignore
     } finally {
@@ -841,7 +826,7 @@ export default function MenuManagePage() {
     setSaving(itemId);
     try {
       await deleteDashMenuItem(itemId);
-      setItems((prev: MenuItem[]) => prev.filter((i) => i._id !== itemId));
+      setItems((prev) => prev.filter((i) => i._id !== itemId));
     } catch {
       // silently ignore — item stays in list
     } finally {
@@ -944,8 +929,8 @@ export default function MenuManagePage() {
       {/* ── Filters ── */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-52">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--t-dim)" }}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" style={{ color: "rgba(255,255,255,0.45)" }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
             </svg>
@@ -968,15 +953,19 @@ export default function MenuManagePage() {
           )}
         </div>
 
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="select select-bordered text-sm font-medium"
-          style={{ minWidth: '10rem' }}
-        >
-          <option value="">All categories</option>
-          {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
+        <div className="select-custom-wrap" style={{ minWidth: '10rem' }}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="select select-bordered text-sm font-medium"
+          >
+            <option value="">All categories</option>
+            {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+          <svg className="select-chevron w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
 
         <div role="tablist" className="tabs tabs-boxed text-xs font-semibold">
           {[
@@ -1069,7 +1058,7 @@ export default function MenuManagePage() {
         isOpen={productModalOpen}
         onClose={() => { setProductModalOpen(false); setEditingItem(null); }}
         onSave={handleProductSaved}
-        item={editingItem?._isNew ? { category: editingItem.category } : editingItem}
+        item={editingItem?._isNew ? null : editingItem}
         existingCategories={categories}
       />
 

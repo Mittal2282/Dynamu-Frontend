@@ -14,7 +14,7 @@ interface Variant {
   price?: number;
   groupName?: string;
   isAvailable?: boolean;
-  isVeg?: boolean;
+  isVeg?: boolean | null;
   discount_percentage?: number;
 }
 
@@ -23,7 +23,7 @@ interface MenuItem {
   name: string;
   price?: number;
   category?: string;
-  is_veg?: boolean;
+  is_veg?: boolean | null;
   has_variants?: boolean;
   variants?: Variant[];
   discount_percentage?: number;
@@ -113,7 +113,7 @@ export default function ManualOrderModal({ onClose, onSaved }: ManualOrderModalP
   }, []);
 
   useEffect(() => {
-    getDashTables().then((d) => setTables(d as TableItem[])).catch(() => {});
+    getDashTables().then((d) => setTables(d.map((t) => ({ _id: t._id ?? t.id ?? '', table_number: t.table_number, name: t.name })))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -320,11 +320,11 @@ export default function ManualOrderModal({ onClose, onSaved }: ManualOrderModalP
                 onScroll={handleCatalogScroll}
               >
                 {catalogLoading ? (
-                  <div className="flex items-center justify-center h-full min-h-[120px]">
+                  <div className="flex items-center justify-center h-full min-h-30">
                     <span className="loading loading-spinner loading-sm" style={{ color: 'var(--t-dim)' }} />
                   </div>
                 ) : catalogItems.length === 0 ? (
-                  <div className="flex items-center justify-center h-full min-h-[120px]">
+                  <div className="flex items-center justify-center h-full min-h-30">
                     <p className="text-xs" style={{ color: 'var(--t-dim)' }}>
                       {debouncedSearch ? `No results for "${debouncedSearch}"` : 'No items found'}
                     </p>

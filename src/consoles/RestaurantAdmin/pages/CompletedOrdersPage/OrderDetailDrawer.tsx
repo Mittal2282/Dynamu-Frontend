@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { fmtDate, fmtTime, fmtCurrency } from './helpers';
 import { StatusBadge, SourceBadge } from './badges';
 
-interface OrderItemDetail {
+export interface OrderItemDetail {
   name: string;
   quantity: number;
   unit_price?: number;
@@ -14,7 +14,7 @@ interface OrderItemDetail {
   menu_item?: { is_veg?: boolean; image_url?: string };
 }
 
-interface CompletedOrder {
+export interface CompletedOrder {
   _id: string;
   order_number?: string | number;
   createdAt?: string;

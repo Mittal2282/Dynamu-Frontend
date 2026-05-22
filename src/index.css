@@ -184,6 +184,24 @@ button { cursor: pointer; }
   filter: drop-shadow(0 0 14px var(--t-accent-40));
 }
 
+/* ─── DaisyUI component shape overrides ─────────────────────────────────────── */
+/* DaisyUI v5 with themes:false doesn't always pick up --radius-btn from :root.
+   Explicitly enforce the desired border-radius on all btn/badge instances. */
+.btn         { border-radius: 0.625rem; } /* 10px — rounded-lg feel */
+.badge       { border-radius: 9999px;   } /* fully pill-shaped      */
+
+/* ─── Select dropdown — larger custom chevron ─────────────────────────────── */
+.select-custom-wrap         { position: relative; display: inline-flex; width: 100%; }
+.select-custom-wrap select  { appearance: none; padding-right: 2.5rem; width: 100%; }
+.select-custom-wrap .select-chevron {
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--t-dim);
+}
+
 /* Brand button — follows restaurant theme */
 .btn-brand {
   background-color: var(--t-accent);

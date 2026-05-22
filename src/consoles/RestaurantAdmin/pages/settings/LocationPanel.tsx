@@ -169,8 +169,8 @@ export default function LocationPanel() {
     setSaving(true);
     try {
       await updateRestaurantLocation({
-        latitude:  form.latitude,
-        longitude: form.longitude,
+        latitude:  form.latitude!,
+        longitude: form.longitude!,
         accuracy_m: form.accuracy_m ?? undefined,
         label:     form.label || undefined,
         radius_m:  form.radius_m,
@@ -260,7 +260,7 @@ export default function LocationPanel() {
           className="relative"
           style={{ borderTop: "1px solid var(--t-line)", borderBottom: "1px solid var(--t-line)" }}
         >
-          <div className="h-[340px] w-full">
+          <div className="h-85 w-full">
             <MapContainer
               center={[center.lat, center.lng]}
               zoom={hasCoords ? 15 : 5}
@@ -368,7 +368,7 @@ export default function LocationPanel() {
             }}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 mt-[2px] ml-[2px] ${
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-300 mt-0.5 ml-0.5 ${
                 allowAll ? "translate-x-5" : "translate-x-0"
               }`}
             />

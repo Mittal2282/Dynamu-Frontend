@@ -83,8 +83,8 @@ export function useInfiniteList<T>(
  * Returns a ref to attach to a sentinel element.
  * Calls onIntersect when the element enters the viewport.
  */
-export function useSentinel(onIntersect: () => void): React.RefObject<HTMLElement | null> {
-  const ref = useRef<HTMLElement | null>(null);
+export function useSentinel(onIntersect: () => void): React.RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;

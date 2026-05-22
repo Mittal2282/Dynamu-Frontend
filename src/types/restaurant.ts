@@ -32,11 +32,11 @@ export interface Restaurant {
 }
 
 export interface TableData {
-  _id?: string;
+  _id: string;
   id?: string;
-  table_number: number | string;
+  table_number: number;
   name?: string;
-  display_status?: string;
+  display_status: string;
   floor?: number;
   floor_name?: string;
   is_active?: boolean;

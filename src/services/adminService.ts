@@ -1,9 +1,12 @@
-import { apiCaller } from '../api/apiCaller';
-import adminApi from '../api/adminAxios';
-import { ENDPOINTS } from '../utils/endpoints';
+import { apiCaller } from "../api/apiCaller";
+import adminApi from "../api/adminAxios";
+import { ENDPOINTS } from "../utils/endpoints";
 
-import type { Order } from '../types/order';
-import type { MenuItem } from '../types/menu';
+import type { Order } from "../types/order";
+import type { MenuItem } from "../types/menu";
+import type { TableData } from "../types/restaurant";
+
+type Resp<T> = { data: T };
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -14,8 +17,10 @@ export async function adminLogin(payload: {
   email: string;
   password: string;
 }): Promise<{ accessToken: string; refreshToken: string; user: { role: string; name: string } }> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<
+    Resp<{ accessToken: string; refreshToken: string; user: { role: string; name: string } }>
+  >({
+    method: "POST",
     endpoint: ENDPOINTS.ADMIN_LOGIN,
     payload,
     useAdmin: true,
@@ -28,9 +33,9 @@ export async function adminLogin(payload: {
  */
 export async function adminLogout(refreshToken: string): Promise<unknown> {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.ADMIN_LOGOUT,
-    payload:  { refresh_token: refreshToken },
+    payload: { refresh_token: refreshToken },
     useAdmin: true,
   });
 }
@@ -41,8 +46,8 @@ export async function adminLogout(refreshToken: string): Promise<unknown> {
  * Fetch the authenticated restaurant's profile.
  */
 export async function getDashProfile(): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_PROFILE,
     useAdmin: true,
   });
@@ -53,8 +58,8 @@ export async function getDashProfile(): Promise<Record<string, unknown>> {
  * Fetch live orders for the restaurant dashboard.
  */
 export async function getDashOrders(): Promise<Order[]> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Order[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_ORDERS,
     useAdmin: true,
   });
@@ -65,8 +70,8 @@ export async function getDashOrders(): Promise<Order[]> {
  * Fetch stats for the restaurant dashboard.
  */
 export async function getDashStats(): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_STATS,
     useAdmin: true,
   });
@@ -77,19 +82,19 @@ export async function getDashStats(): Promise<Record<string, unknown>> {
  * Fetch completed/served orders with optional date range.
  * @param options  ISO date strings (YYYY-MM-DD)
  */
-export async function getCompletedOrders(
-  { dateFrom, dateTo }: { dateFrom?: string; dateTo?: string } = {}
-): Promise<Order[]> {
-  const params = new URLSearchParams({ statuses: 'completed,served' });
-  if (dateFrom) params.append('date_from', dateFrom);
+export async function getCompletedOrders({
+  dateFrom,
+  dateTo,
+}: { dateFrom?: string; dateTo?: string } = {}): Promise<Order[]> {
+  const params = new URLSearchParams({ statuses: "completed,served" });
+  if (dateFrom) params.append("date_from", dateFrom);
   if (dateTo) {
-    // Include the full 'to' day by extending to end-of-day
     const toDate = new Date(dateTo);
     toDate.setDate(toDate.getDate() + 1);
-    params.append('date_to', toDate.toISOString().split('T')[0]);
+    params.append("date_to", toDate.toISOString().split("T")[0]);
   }
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Order[]>>({
+    method: "GET",
     endpoint: `${ENDPOINTS.DASH_ORDERS}?${params.toString()}`,
     useAdmin: true,
   });
@@ -106,8 +111,8 @@ export async function createManualOrder(payload: {
   order_date?: string;
   table_id?: string;
 }): Promise<Order> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<Resp<Order>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_ORDERS_MANUAL,
     payload,
     useAdmin: true,
@@ -121,12 +126,12 @@ export async function createManualOrder(payload: {
 export async function createBulkOrders(
   rows: unknown[],
   orderDate: string,
-  source = 'bulk'
+  source = "bulk",
 ): Promise<{ created: number; failed: unknown[] }> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<Resp<{ created: number; failed: unknown[] }>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_ORDERS_BULK_MANUAL,
-    payload:  { rows, order_date: orderDate, source },
+    payload: { rows, order_date: orderDate, source },
     useAdmin: true,
   });
   return data.data;
@@ -138,8 +143,8 @@ export async function createBulkOrders(
  * Fetch all restaurants (superadmin).
  */
 export async function getRestaurants(): Promise<Record<string, unknown>[]> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Record<string, unknown>[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.SA_RESTAURANTS,
     useAdmin: true,
   });
@@ -149,9 +154,11 @@ export async function getRestaurants(): Promise<Record<string, unknown>[]> {
 /**
  * Create a new restaurant (superadmin).
  */
-export async function createRestaurant(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'POST',
+export async function createRestaurant(
+  payload: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "POST",
     endpoint: ENDPOINTS.SA_RESTAURANTS,
     payload,
     useAdmin: true,
@@ -164,10 +171,10 @@ export async function createRestaurant(payload: Record<string, unknown>): Promis
  */
 export async function createTables(
   restaurantId: string,
-  payload: { count: number; start_number: number }
+  payload: { count: number; start_number: number },
 ): Promise<unknown> {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.SA_TABLES(restaurantId),
     payload,
     useAdmin: true,
@@ -179,15 +186,14 @@ export async function createTables(
  */
 export async function importMenu(
   restaurantId: string,
-  csvText: string,
+  csvText: string | null,
   menuRows?: unknown[],
-  variantRows?: unknown[]
+  variantRows?: unknown[],
 ): Promise<unknown> {
-  const payload = (menuRows && menuRows.length)
-    ? { menuRows, variantRows: variantRows ?? [] }
-    : { csvText };
+  const payload =
+    menuRows && menuRows.length ? { menuRows, variantRows: variantRows ?? [] } : { csvText };
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.SA_MENU(restaurantId),
     payload,
     useAdmin: true,
@@ -200,8 +206,8 @@ export async function importMenu(
  * Fetch all menu items for the restaurant (including unavailable).
  */
 export async function getDashMenu(): Promise<MenuItem[]> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<MenuItem[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_MENU,
     useAdmin: true,
   });
@@ -213,10 +219,10 @@ export async function getDashMenu(): Promise<MenuItem[]> {
  */
 export async function updateDashMenuItem(
   id: string,
-  payload: { name?: string; price?: number; [key: string]: unknown }
+  payload: { name?: string; price?: number; [key: string]: unknown },
 ): Promise<MenuItem> {
-  const data = await apiCaller({
-    method:   'PUT',
+  const data = await apiCaller<Resp<MenuItem>>({
+    method: "PUT",
     endpoint: ENDPOINTS.DASH_MENU_ITEM(id),
     payload,
     useAdmin: true,
@@ -227,9 +233,9 @@ export async function updateDashMenuItem(
 /**
  * Fetch all active tables with live session info.
  */
-export async function getDashTables(): Promise<Record<string, unknown>[]> {
-  const data = await apiCaller({
-    method:   'GET',
+export async function getDashTables(): Promise<TableData[]> {
+  const data = await apiCaller<Resp<TableData[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_TABLES,
     useAdmin: true,
   });
@@ -241,7 +247,7 @@ export async function getDashTables(): Promise<Record<string, unknown>[]> {
  */
 export async function freeTable(tableId: string): Promise<unknown> {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_TABLE_FREE(tableId),
     useAdmin: true,
   });
@@ -252,7 +258,7 @@ export async function freeTable(tableId: string): Promise<unknown> {
  */
 export async function toggleTableActive(tableId: string): Promise<unknown> {
   return apiCaller({
-    method:   'PATCH',
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_TABLE_TOGGLE_ACTIVE(tableId),
     useAdmin: true,
   });
@@ -260,9 +266,9 @@ export async function toggleTableActive(tableId: string): Promise<unknown> {
 
 export async function addTablesToFloor(floorData: Record<string, unknown>): Promise<unknown> {
   return apiCaller({
-    method:   'POST',
+    method: "POST",
     endpoint: ENDPOINTS.DASH_TABLES_BULK,
-    payload:  floorData,
+    payload: floorData,
     useAdmin: true,
   });
 }
@@ -271,8 +277,8 @@ export async function addTablesToFloor(floorData: Record<string, unknown>): Prom
  * Manually close a table session (end it so next QR scan starts fresh).
  */
 export async function closeTableSession(sessionId: string): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_CLOSE_SESSION(sessionId),
     useAdmin: true,
   });
@@ -283,8 +289,8 @@ export async function closeTableSession(sessionId: string): Promise<Record<strin
  * Toggle menu item availability.
  */
 export async function toggleDashMenuItem(id: string): Promise<MenuItem> {
-  const data = await apiCaller({
-    method:   'PATCH',
+  const data = await apiCaller<Resp<MenuItem>>({
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_TOGGLE(id),
     useAdmin: true,
   });
@@ -295,8 +301,8 @@ export async function toggleDashMenuItem(id: string): Promise<MenuItem> {
  * Toggle Chef's Special flag on a menu item.
  */
 export async function toggleChefsSpecial(id: string): Promise<MenuItem> {
-  const data = await apiCaller({
-    method:   'PATCH',
+  const data = await apiCaller<Resp<MenuItem>>({
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_CHEFS_SPECIAL(id),
     useAdmin: true,
   });
@@ -307,17 +313,16 @@ export async function toggleChefsSpecial(id: string): Promise<MenuItem> {
  * Delete a menu item.
  */
 export async function deleteDashMenuItem(id: string): Promise<unknown> {
-  const data = await apiCaller({
-    method:   'DELETE',
+  return apiCaller({
+    method: "DELETE",
     endpoint: ENDPOINTS.DASH_MENU_ITEM_DELETE(id),
     useAdmin: true,
   });
-  return data;
 }
 
 export async function toggleFeatured(id: string): Promise<MenuItem> {
-  const data = await apiCaller({
-    method:   'PATCH',
+  const data = await apiCaller<Resp<MenuItem>>({
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_MENU_FEATURED(id),
     useAdmin: true,
   });
@@ -328,8 +333,8 @@ export async function toggleFeatured(id: string): Promise<MenuItem> {
  * Fetch orders for a specific restaurant (superadmin).
  */
 export async function getRestaurantOrders(restaurantId: string): Promise<Order[]> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Order[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.SA_REST_ORDERS(restaurantId),
     useAdmin: true,
   });
@@ -342,8 +347,8 @@ export async function getRestaurantOrders(restaurantId: string): Promise<Order[]
  * Fetch all menu categories for this restaurant.
  */
 export async function getDashCategories(): Promise<string[]> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<string[]>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_CATEGORIES,
     useAdmin: true,
   });
@@ -354,10 +359,10 @@ export async function getDashCategories(): Promise<string[]> {
  * Create a new category.
  */
 export async function createDashCategory(name: string): Promise<string> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<Resp<string>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_CATEGORIES,
-    payload:  { name },
+    payload: { name },
     useAdmin: true,
   });
   return data.data;
@@ -369,8 +374,8 @@ export async function createDashCategory(name: string): Promise<string> {
  * Create a new menu item.
  */
 export async function createDashMenuItem(payload: Record<string, unknown>): Promise<MenuItem> {
-  const data = await apiCaller({
-    method:   'POST',
+  const data = await apiCaller<Resp<MenuItem>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_MENU,
     payload,
     useAdmin: true,
@@ -382,15 +387,14 @@ export async function createDashMenuItem(payload: Record<string, unknown>): Prom
  * Bulk import menu items from CSV text.
  */
 export async function bulkImportMenuItems(
-  csvText: string,
+  csvText: string | null,
   menuRows?: unknown[],
-  variantRows?: unknown[]
+  variantRows?: unknown[],
 ): Promise<{ imported: number; errors: string[] }> {
-  const payload = (menuRows && menuRows.length)
-    ? { menuRows, variantRows: variantRows ?? [] }
-    : { csvText };
-  const data = await apiCaller({
-    method:   'POST',
+  const payload =
+    menuRows && menuRows.length ? { menuRows, variantRows: variantRows ?? [] } : { csvText };
+  const data = await apiCaller<Resp<{ imported: number; errors: string[] }>>({
+    method: "POST",
     endpoint: ENDPOINTS.DASH_MENU_BULK,
     payload,
     useAdmin: true,
@@ -404,14 +408,14 @@ export async function bulkImportMenuItems(
  */
 export async function uploadMenuItemImage(file: File): Promise<string> {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append("image", file);
   const res = await adminApi.post(ENDPOINTS.DASH_MENU_IMAGE_UPLOAD, formData);
   return res.data.data.url;
 }
 
 export async function getIngredients(): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'GET',
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "GET",
     endpoint: ENDPOINTS.DASH_INGREDIENTS,
     useAdmin: true,
   });
@@ -420,12 +424,12 @@ export async function getIngredients(): Promise<Record<string, unknown>> {
 
 export async function toggleIngredient(
   name: string,
-  isAvailable: boolean
+  isAvailable: boolean,
 ): Promise<Record<string, unknown>> {
-  const data = await apiCaller({
-    method:   'PATCH',
+  const data = await apiCaller<Resp<Record<string, unknown>>>({
+    method: "PATCH",
     endpoint: ENDPOINTS.DASH_INGREDIENTS_TOGGLE,
-    payload:  { name, is_available: isAvailable },
+    payload: { name, is_available: isAvailable },
     useAdmin: true,
   });
   return data.data;

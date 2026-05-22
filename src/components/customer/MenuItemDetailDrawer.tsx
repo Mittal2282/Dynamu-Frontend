@@ -24,7 +24,7 @@ interface ExtendedMenuItem extends MenuItem {
   sugar_level?: number;
   price_label?: string | number;
   ingredients?: string | string[];
-  tags?: string;
+  tags?: string[];
   meal_tag?: string;
   serves?: string | number;
   preparation_time?: string | number;
@@ -46,17 +46,20 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
     : [];
   const allVariantsUnavailable = item.has_variants && availableVariants.length === 0;
   const defaultVariant = item.has_variants
-    ? (availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? availableVariants[0] ?? null)
+    ? (availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ??
+      availableVariants[0] ??
+      null)
     : null;
   const displayPrice = item.has_variants
-    ? (defaultVariant ? variantEffectivePrice(defaultVariant) : item.price)
+    ? defaultVariant
+      ? variantEffectivePrice(defaultVariant)
+      : item.price
     : item.price;
   const hasDiscount = !item.has_variants && (item.discount_percentage ?? 0) > 0;
   const discountedPrice = hasDiscount
     ? Math.round(item.price * (1 - (item.discount_percentage ?? 0) / 100))
     : null;
   const vegStatus = getItemVegStatus(item);
-  const extItem = item as ExtendedMenuItem;
 
   return (
     <div
@@ -86,20 +89,25 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
 
       {/* Details */}
       <div className="p-2.5 flex flex-col flex-1 gap-2">
-        <p className="text-xs font-bold leading-snug line-clamp-2" style={{ color: "var(--t-text)" }}>
+        <p
+          className="text-xs font-bold leading-snug line-clamp-2"
+          style={{ color: "var(--t-text)" }}
+        >
           {item.name}
         </p>
 
         {/* Price */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {item.has_variants && (
-            <span className="text-[9px]" style={{ color: "var(--t-dim)" }}>from</span>
+            <span className="text-[9px]" style={{ color: "var(--t-dim)" }}>
+              from
+            </span>
           )}
-          <span
-            className="text-xs font-black"
-            style={{ color: "var(--t-accent)" }}
-          >
-            {formatCurrency(discountedPrice ?? extItem.price_label ?? displayPrice, currencySymbol)}
+          <span className="text-xs font-black" style={{ color: "var(--t-accent)" }}>
+            {formatCurrency(
+              discountedPrice ?? displayPrice,
+              currencySymbol,
+            )}
           </span>
           {hasDiscount && (
             <span
@@ -127,7 +135,9 @@ function SimilarItemCard({ item, currencySymbol }: SimilarItemCardProps) {
                 height: "32px",
               }}
             >
-              {allVariantsUnavailable ? "Unavailable" : (
+              {allVariantsUnavailable ? (
+                "Unavailable"
+              ) : (
                 <>
                   <span style={{ fontSize: "12px", fontWeight: 900 }}>+</span>
                   Choose
@@ -163,7 +173,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
   const [dragDelta, setDragDelta] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startY: number; delta: number; active: boolean }>({
-    startY: 0, delta: 0, active: false,
+    startY: 0,
+    delta: 0,
+    active: false,
   });
 
   const CLOSE_THRESHOLD = 100;
@@ -194,14 +206,17 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
   // Pre-select the default variant once we know the item
   useEffect(() => {
     if (!item?.has_variants) return;
     const variants = (item.variants ?? []).filter((v) => v.isAvailable !== false);
-    const def = variants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? variants[0] ?? null;
+    const def =
+      variants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? variants[0] ?? null;
     setSelectedVariant(def);
   }, [item]);
 
@@ -214,7 +229,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
     : [];
   const allVariantsUnavailable = item.has_variants && availableVariants.length === 0;
   const defaultVariant = item.has_variants
-    ? (availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ?? availableVariants[0] ?? null)
+    ? (availableVariants.find((v) => (v as { isDefault?: boolean }).isDefault) ??
+      availableVariants[0] ??
+      null)
     : null;
   const groupName = item.has_variants
     ? ((item.variants?.[0] as { groupName?: string })?.groupName ?? "Options")
@@ -225,7 +242,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
     try {
       if (item.has_variants) {
         if (!selectedVariant) return;
-        const effectiveVariant = { ...selectedVariant, price: variantEffectivePrice(selectedVariant) };
+        const effectiveVariant = {
+          ...selectedVariant,
+          price: variantEffectivePrice(selectedVariant),
+        };
         for (let i = 0; i < quantity; i++) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           cartStore.getState().add({ ...item, selectedVariant: effectiveVariant } as any);
@@ -246,7 +266,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
   };
 
   const displayPrice = item.has_variants
-    ? (defaultVariant ? variantEffectivePrice(defaultVariant) : item.price)
+    ? defaultVariant
+      ? variantEffectivePrice(defaultVariant)
+      : item.price
     : item.price;
   const hasDiscount = !item.has_variants && (item.discount_percentage ?? 0) > 0;
   const discountedPrice = hasDiscount
@@ -257,14 +279,13 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
   const ingredients = Array.isArray(rawIngredients)
     ? rawIngredients
     : typeof rawIngredients === "string" && rawIngredients.trim()
-      ? rawIngredients.split(",").map((s) => s.trim()).filter(Boolean)
+      ? rawIngredients
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
       : [];
 
-  const rawTags = extItem.tags;
-  const tags =
-    typeof rawTags === "string" && rawTags.trim()
-      ? rawTags.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
+  const tags: string[] = Array.isArray(extItem.tags) ? extItem.tags : [];
 
   const similarItems = Object.values(menu ?? {})
     .flat()
@@ -294,6 +315,9 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
           transition: isDragging ? "none" : "transform 0.28s cubic-bezier(0.32,0.72,0,1)",
         }}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Close button — always visible, overlaid on top of sheet */}
         <button
@@ -339,7 +363,11 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 {item.category && (
                   <span
                     className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--t-float)", color: "var(--t-dim)", border: "1px solid var(--t-line)" }}
+                    style={{
+                      background: "var(--t-float)",
+                      color: "var(--t-dim)",
+                      border: "1px solid var(--t-line)",
+                    }}
                   >
                     {item.category}
                   </span>
@@ -347,7 +375,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 {extItem.meal_tag && (
                   <span
                     className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: "color-mix(in srgb, var(--t-accent) 12%, transparent)", color: "var(--t-accent)" }}
+                    style={{
+                      background: "color-mix(in srgb, var(--t-accent) 12%, transparent)",
+                      color: "var(--t-accent)",
+                    }}
                   >
                     {extItem.meal_tag}
                   </span>
@@ -366,10 +397,15 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
             {/* Price */}
             <div className="flex items-center gap-3 flex-wrap">
               {item.has_variants && (
-                <span className="text-sm" style={{ color: "var(--t-dim)" }}>from</span>
+                <span className="text-sm" style={{ color: "var(--t-dim)" }}>
+                  from
+                </span>
               )}
               <span className="text-2xl font-black" style={{ color: "var(--t-accent)" }}>
-                {formatCurrency(discountedPrice ?? extItem.price_label ?? displayPrice, currencySymbol)}
+                {formatCurrency(
+                  discountedPrice ?? displayPrice,
+                  currencySymbol,
+                )}
               </span>
               {hasDiscount && (
                 <>
@@ -395,7 +431,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
             {/* Inline variant picker */}
             {item.has_variants && availableVariants.length > 0 && (
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--t-dim)" }}>
+                <p
+                  className="text-[11px] font-bold uppercase tracking-widest mb-2"
+                  style={{ color: "var(--t-dim)" }}
+                >
                   {groupName}
                 </p>
                 <div className="flex flex-col gap-2">
@@ -419,16 +458,27 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                           className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
                           style={{ borderColor: isActive ? "var(--t-accent)" : "var(--t-line)" }}
                         >
-                          {isActive && <div className="w-2 h-2 rounded-full" style={{ background: "var(--t-accent)" }} />}
+                          {isActive && (
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: "var(--t-accent)" }}
+                            />
+                          )}
                         </div>
-                        <span className="flex-1 text-sm font-semibold" style={{ color: "var(--t-text)" }}>
+                        <span
+                          className="flex-1 text-sm font-semibold"
+                          style={{ color: "var(--t-text)" }}
+                        >
                           {v.name}
                         </span>
                         <span
                           className="w-2 h-2 rounded-full shrink-0"
                           style={{ background: v.isVeg !== false ? "#22c55e" : "#ef4444" }}
                         />
-                        <span className="text-sm font-bold" style={{ color: isActive ? "var(--t-accent)" : "var(--t-dim)" }}>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: isActive ? "var(--t-accent)" : "var(--t-dim)" }}
+                        >
                           {formatCurrency(effPrice, currencySymbol)}
                         </span>
                       </button>
@@ -458,14 +508,20 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
             )}
 
             {/* Attributes grid */}
-            {(extItem.serves || extItem.preparation_time || extItem.taste_profile || extItem.allergens) && (
+            {(extItem.serves ||
+              extItem.preparation_time ||
+              extItem.taste_profile ||
+              extItem.allergens) && (
               <div className="grid grid-cols-2 gap-2">
                 {extItem.serves && (
                   <div
                     className="px-3 py-2 rounded-xl"
                     style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "var(--t-dim)" }}
+                    >
                       Serves
                     </p>
                     <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
@@ -478,7 +534,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     className="px-3 py-2 rounded-xl"
                     style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "var(--t-dim)" }}
+                    >
                       Prep time
                     </p>
                     <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
@@ -491,7 +550,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     className="px-3 py-2 rounded-xl"
                     style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--t-dim)" }}>
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "var(--t-dim)" }}
+                    >
                       Taste
                     </p>
                     <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
@@ -502,9 +564,15 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 {extItem.allergens && (
                   <div
                     className="px-3 py-2 rounded-xl col-span-2"
-                    style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}
+                    style={{
+                      background: "rgba(239,68,68,0.06)",
+                      border: "1px solid rgba(239,68,68,0.15)",
+                    }}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ef4444" }}>
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "#ef4444" }}
+                    >
                       Allergens
                     </p>
                     <p className="text-sm font-semibold mt-0.5" style={{ color: "var(--t-text)" }}>
@@ -529,7 +597,11 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                     <span
                       key={i}
                       className="text-xs px-2.5 py-1 rounded-full border font-medium"
-                      style={{ borderColor: "var(--t-line)", color: "var(--t-dim)", background: "var(--t-float)" }}
+                      style={{
+                        borderColor: "var(--t-line)",
+                        color: "var(--t-dim)",
+                        background: "var(--t-float)",
+                      }}
                     >
                       {ing}
                     </span>
@@ -559,10 +631,7 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
             {/* Similar items */}
             {similarItems.length > 0 && (
               <div>
-                <p
-                  className="text-sm font-bold mb-3"
-                  style={{ color: "var(--t-text)" }}
-                >
+                <p className="text-sm font-bold mb-3" style={{ color: "var(--t-text)" }}>
                   More from {item.category}
                 </p>
                 <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 no-scrollbar">
@@ -596,8 +665,12 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               className="flex items-center justify-center transition-colors"
               style={{ width: "44px", color: "var(--t-accent)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--t-accent-20)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
               aria-label="Decrease quantity"
             >
               <span style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>−</span>
@@ -610,7 +683,10 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
                 borderRight: "1px solid var(--t-accent-40)",
               }}
             >
-              <span className="font-black text-base tabular-nums select-none" style={{ color: "var(--t-accent)" }}>
+              <span
+                className="font-black text-base tabular-nums select-none"
+                style={{ color: "var(--t-accent)" }}
+              >
                 {quantity}
               </span>
             </div>
@@ -619,8 +695,12 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
               onClick={() => setQuantity((q) => q + 1)}
               className="flex items-center justify-center transition-colors"
               style={{ width: "44px", color: "var(--t-accent)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--t-accent-20)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--t-accent-20)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
               aria-label="Increase quantity"
             >
               <span style={{ fontSize: "18px", fontWeight: 700, lineHeight: 1 }}>+</span>
@@ -629,10 +709,12 @@ export default function MenuItemDetailDrawer({ item, onClose }: MenuItemDetailDr
 
           {/* Add to Cart button */}
           {(() => {
-            const disabled = allVariantsUnavailable || (item.has_variants && !selectedVariant) || addLoading;
-            const unitPrice = item.has_variants && selectedVariant
-              ? variantEffectivePrice(selectedVariant)
-              : (discountedPrice ?? displayPrice);
+            const disabled =
+              allVariantsUnavailable || (item.has_variants && !selectedVariant) || addLoading;
+            const unitPrice =
+              item.has_variants && selectedVariant
+                ? variantEffectivePrice(selectedVariant)
+                : (discountedPrice ?? displayPrice);
             const totalPrice = unitPrice * quantity;
             return (
               <button

@@ -5,6 +5,7 @@ import {
   updateDashMenuItem,
   uploadMenuItemImage,
 } from "../../../services/dashboardService";
+import type { MenuItem } from "../../../types/menu";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,7 +13,7 @@ interface VariantData {
   groupName?: string;
   name: string;
   price: string | number;
-  isVeg?: boolean;
+  isVeg?: boolean | null;
   isDefault?: boolean;
   isAvailable?: boolean;
   discount_percentage?: number;
@@ -46,26 +47,10 @@ interface FormData {
   variants: VariantData[];
 }
 
-interface MenuItem {
-  _id: string;
-  name?: string;
-  price?: number;
-  ingredients?: string[] | string;
-  allergens?: string[] | string;
-  tags?: string[] | string;
-  preparation_time?: number | string;
-  serves?: number | string;
-  display_order?: number | string;
-  has_variants?: boolean;
-  variants?: VariantData[];
-  image_url?: string;
-  [key: string]: unknown;
-}
-
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (saved: unknown) => void;
+  onSave: (saved: MenuItem) => void;
   item?: MenuItem | null;
   existingCategories?: string[];
 }

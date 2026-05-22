@@ -69,7 +69,7 @@ function CategorySection({ name, items, currencySymbol, innerRef }: CategorySect
           {name}
         </h2>
         <div
-          className="mt-1.5 w-10 h-[3px] rounded-full"
+          className="mt-1.5 w-10 h-0.75 rounded-full"
           style={{ background: "var(--t-accent)" }}
         />
       </div>

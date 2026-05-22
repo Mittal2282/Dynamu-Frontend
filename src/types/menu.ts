@@ -33,4 +33,14 @@ export interface MenuItem {
   blocked_by_ingredients?: string[];
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
   tags?: string[];
+  ingredients?: string[] | string;
+  allergens?: string[] | string;
+  preparation_time?: number | string;
+  serves?: number | string;
+  display_order?: number | string;
+  gst_slab?: number;
+  meal_tag?: string;
+  taste_profile?: string;
+  is_combo?: boolean;
+  combo_discount?: number;
 }

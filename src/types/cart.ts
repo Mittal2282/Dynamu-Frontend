@@ -7,6 +7,7 @@ export interface CartEntry {
   price: number;
   qty: number;
   instruction?: string;
+  description?: string;
   is_veg?: boolean | null;
   image_url?: string;
   discount_percentage?: number;

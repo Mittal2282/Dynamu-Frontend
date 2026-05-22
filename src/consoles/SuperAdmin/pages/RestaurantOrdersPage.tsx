@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getRestaurantOrders } from "../../../services/superAdminService";
 import { apiCaller } from "../../../api/apiCaller";
+import type { Order } from "../../../types/order";
 
 const STATUS_COLOR: Record<string, { color: string; bg: string }> = {
-  pending:   { color: "#eab308", bg: "rgba(234,179,8,0.15)" },
+  pending: { color: "#eab308", bg: "rgba(234,179,8,0.15)" },
   confirmed: { color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
   preparing: { color: "#a855f7", bg: "rgba(168,85,247,0.15)" },
-  ready:     { color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
-  served:    { color: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
+  ready: { color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
+  served: { color: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
   completed: { color: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
   cancelled: { color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
 };
@@ -26,22 +27,6 @@ const ALL_STATUSES = [
 interface RestaurantInfo {
   name?: string;
   slug?: string;
-}
-
-interface OrderItem {
-  name: string;
-  quantity: number;
-}
-
-interface Order {
-  _id: string;
-  order_number: string;
-  table?: { table_number?: number };
-  table_number?: number;
-  items?: OrderItem[];
-  total_amount?: number;
-  status: string;
-  createdAt: string | Date;
 }
 
 function timeAgo(date: string | Date): string {
@@ -76,15 +61,19 @@ export default function RestaurantOrdersPage() {
   };
 
   useEffect(() => {
-    apiCaller({ method: "GET", endpoint: `/api/superadmin/restaurants/${id}`, useAdmin: true })
-      .then((data) => setRestaurant((data as { data?: { restaurant?: RestaurantInfo } })?.data?.restaurant ?? null))
+    apiCaller<{ data?: { restaurant?: RestaurantInfo } }>({
+      method: "GET",
+      endpoint: `/api/superadmin/restaurants/${id}`,
+      useAdmin: true,
+    })
+      .then((data) => setRestaurant(data?.data?.restaurant ?? null))
       .catch(console.error);
   }, [id]);
 
   useEffect(() => {
     // setLoading(true) is now handled by event handlers for filters or the id-change effect above.
-    getRestaurantOrders(id)
-      .then((data) => setOrders(data as Order[]))
+    getRestaurantOrders(id!)
+      .then((data) => setOrders(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id, statusFilter, dateFrom, dateTo]);
@@ -104,11 +93,13 @@ export default function RestaurantOrdersPage() {
         <div>
           <h1
             className="text-2xl font-bold"
-            style={{
-              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            } as React.CSSProperties}
+            style={
+              {
+                background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              } as React.CSSProperties
+            }
           >
             {restaurant?.name || "Restaurant"} — Orders
           </h1>
@@ -196,9 +187,15 @@ export default function RestaurantOrdersPage() {
                   <th className="text-xs font-semibold uppercase tracking-wider">Order #</th>
                   <th className="text-xs font-semibold uppercase tracking-wider">Table</th>
                   <th className="text-xs font-semibold uppercase tracking-wider">Items</th>
-                  <th className="text-right text-xs font-semibold uppercase tracking-wider">Total</th>
-                  <th className="text-center text-xs font-semibold uppercase tracking-wider">Status</th>
-                  <th className="text-right text-xs font-semibold uppercase tracking-wider">Time</th>
+                  <th className="text-right text-xs font-semibold uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="text-center text-xs font-semibold uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-right text-xs font-semibold uppercase tracking-wider">
+                    Time
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -212,13 +209,16 @@ export default function RestaurantOrdersPage() {
                 ) : (
                   orders.map((order) => (
                     <tr key={order._id} className="hover cursor-pointer">
-                      <td className="font-mono text-xs text-slate-400">
-                        {order.order_number}
-                      </td>
+                      <td className="font-mono text-xs text-slate-400">{order.order_number}</td>
                       <td>
-                        Table {order.table?.table_number ?? order.table_number ?? "—"}
+                        Table{" "}
+                        {(typeof order.table === "object"
+                          ? order.table?.table_number
+                          : undefined) ??
+                          order.table_number ??
+                          "—"}
                       </td>
-                      <td className="max-w-[220px]">
+                      <td className="max-w-55">
                         <span className="truncate block text-xs">
                           {order.items?.map((i) => `${i.name} ×${i.quantity}`).join(", ") || "—"}
                         </span>
@@ -239,7 +239,7 @@ export default function RestaurantOrdersPage() {
                         </span>
                       </td>
                       <td className="text-right text-xs whitespace-nowrap">
-                        {timeAgo(order.createdAt)}
+                        {order.createdAt ? timeAgo(order.createdAt) : "—"}
                       </td>
                     </tr>
                   ))

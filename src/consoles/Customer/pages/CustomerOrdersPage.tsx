@@ -4,7 +4,11 @@ import Button from "../../../components/ui/Button";
 import LazyImage from "../../../components/ui/LazyImage";
 import { Spinner } from "../../../components/ui/Spinner";
 import { getCustomerPhase, getOrderStatusConfig } from "../../../constants/orderStatusConfig";
-import { endCustomerSession, getCustomerOrders, requestBill } from "../../../services/customerService";
+import {
+  endCustomerSession,
+  getCustomerOrders,
+  requestBill,
+} from "../../../services/customerService";
 import { disconnectSocket } from "../../../services/socketService";
 import { authStore } from "../../../store/authStore";
 import { cartStore } from "../../../store/cartStore";
@@ -153,9 +157,9 @@ interface PhaseConfig {
 }
 
 const PHASE_CONFIG: Record<string, PhaseConfig> = {
-  waiting:   { label: 'Waiting for Restaurant to Accept', color: '#f59e0b', Icon: IconHourglass },
-  preparing: { label: 'Preparing',                        color: '#a855f7', Icon: IconFlame },
-  completed: { label: 'Completed',                        color: '#22c55e', Icon: IconCheck },
+  waiting: { label: "Waiting for Restaurant to Accept", color: "#f59e0b", Icon: IconHourglass },
+  preparing: { label: "Preparing", color: "#a855f7", Icon: IconFlame },
+  completed: { label: "Completed", color: "#22c55e", Icon: IconCheck },
 };
 
 // ── Order batch component ─────────────────────────────────────────────────────
@@ -192,7 +196,7 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
       <div className="pl-5 pr-4 py-5 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <p
-            className="text-[10px] font-bold uppercase tracking-[0.1em] leading-relaxed max-w-[70%]"
+            className="text-[10px] font-bold uppercase tracking-widest leading-relaxed max-w-[70%]"
             style={{ color: "var(--t-nav-muted)" }}
           >
             <span style={{ color: phaseInfo.color }}>{metaKicker}</span>
@@ -215,8 +219,8 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
             const bVeg = b.is_veg ?? b.menu_item?.is_veg ?? true;
             return Number(bVeg) - Number(aVeg);
           });
-          const hasVeg    = sortedItems.some(it => (it.is_veg ?? it.menu_item?.is_veg) !== false);
-          const hasNonVeg = sortedItems.some(it => (it.is_veg ?? it.menu_item?.is_veg) === false);
+          const hasVeg = sortedItems.some((it) => (it.is_veg ?? it.menu_item?.is_veg) !== false);
+          const hasNonVeg = sortedItems.some((it) => (it.is_veg ?? it.menu_item?.is_veg) === false);
           const mixed = hasVeg && hasNonVeg;
 
           return (
@@ -227,21 +231,34 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
                 const isVeg = item.is_veg ?? item.menu_item?.is_veg ?? true;
                 const vegColor = isVeg ? "#22c55e" : "#ef4444";
                 const unitPrice = item.unit_price ?? item.price ?? 0;
-                const effectiveTotal = item.total_price ?? ((item.quantity ?? 1) * unitPrice);
+                const effectiveTotal = item.total_price ?? (item.quantity ?? 1) * unitPrice;
 
                 // Section label for first non-veg item when order has both types
-                const showNonVegDivider = mixed && !isVeg &&
-                  (i === 0 || (sortedItems[i - 1].is_veg ?? sortedItems[i - 1].menu_item?.is_veg ?? true) !== false);
+                const showNonVegDivider =
+                  mixed &&
+                  !isVeg &&
+                  (i === 0 ||
+                    (sortedItems[i - 1].is_veg ?? sortedItems[i - 1].menu_item?.is_veg ?? true) !==
+                      false);
 
                 return (
                   <div key={i} className="contents">
                     {showNonVegDivider && (
                       <div className="col-span-3 flex items-center gap-2 my-0.5">
-                        <div className="flex-1 h-px" style={{ background: "rgba(239,68,68,0.2)" }} />
-                        <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#ef4444" }}>
+                        <div
+                          className="flex-1 h-px"
+                          style={{ background: "rgba(239,68,68,0.2)" }}
+                        />
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-widest"
+                          style={{ color: "#ef4444" }}
+                        >
                           Non-Veg
                         </span>
-                        <div className="flex-1 h-px" style={{ background: "rgba(239,68,68,0.2)" }} />
+                        <div
+                          className="flex-1 h-px"
+                          style={{ background: "rgba(239,68,68,0.2)" }}
+                        />
                       </div>
                     )}
                     <div
@@ -253,15 +270,17 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
                       }}
                     >
                       {/* Image */}
-                      <div className="relative w-full h-[60px] overflow-hidden">
+                      <div className="relative w-full h-15 overflow-hidden">
                         <LazyImage
                           src={imageUrl}
                           alt={item.name}
                           containerClassName="w-full h-full"
                           imgClassName="w-full h-full object-cover"
                           placeholder={
-                            <div className="w-full h-full flex items-center justify-center"
-                              style={{ background: "var(--t-float)" }}>
+                            <div
+                              className="w-full h-full flex items-center justify-center"
+                              style={{ background: "var(--t-float)" }}
+                            >
                               <span className="text-3xl">{isVeg ? "🥗" : "🍗"}</span>
                             </div>
                           }
@@ -272,31 +291,54 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
                       <div className="p-1.5 flex flex-col gap-0.5 flex-1">
                         {/* Veg indicator */}
                         <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 rounded-sm border-2 shrink-0 flex items-center justify-center"
-                            style={{ borderColor: vegColor }}>
-                            <div className="w-1 h-1 rounded-full" style={{ background: vegColor }} />
+                          <div
+                            className="w-2.5 h-2.5 rounded-sm border-2 shrink-0 flex items-center justify-center"
+                            style={{ borderColor: vegColor }}
+                          >
+                            <div
+                              className="w-1 h-1 rounded-full"
+                              style={{ background: vegColor }}
+                            />
                           </div>
-                          <span className="text-[9px] font-bold uppercase tracking-wide leading-none"
-                            style={{ color: vegColor }}>
+                          <span
+                            className="text-[9px] font-bold uppercase tracking-wide leading-none"
+                            style={{ color: vegColor }}
+                          >
                             {isVeg ? "Veg" : "Non-Veg"}
                           </span>
                         </div>
-                        <p className="text-[11px] font-bold leading-snug line-clamp-2" style={{ color: "var(--t-text)" }}>
+                        <p
+                          className="text-[11px] font-bold leading-snug line-clamp-2"
+                          style={{ color: "var(--t-text)" }}
+                        >
                           {item.name}
                         </p>
                         {item.variant_name && (
-                          <p className="text-[9px] font-semibold leading-none" style={{ color: "var(--t-accent)" }}>
-                            {item.variant_group ? `${item.variant_group}: ` : ""}{item.variant_name}
+                          <p
+                            className="text-[9px] font-semibold leading-none"
+                            style={{ color: "var(--t-accent)" }}
+                          >
+                            {item.variant_group ? `${item.variant_group}: ` : ""}
+                            {item.variant_name}
                           </p>
                         )}
-                        <p className="text-[10px] tabular-nums" style={{ color: "var(--t-nav-muted)" }}>
+                        <p
+                          className="text-[10px] tabular-nums"
+                          style={{ color: "var(--t-nav-muted)" }}
+                        >
                           {item.quantity ?? 1} × {formatCurrency(unitPrice, currencySymbol)}
                         </p>
-                        <p className="text-[11px] font-bold tabular-nums" style={{ color: "var(--t-accent)" }}>
+                        <p
+                          className="text-[11px] font-bold tabular-nums"
+                          style={{ color: "var(--t-accent)" }}
+                        >
                           {formatCurrency(effectiveTotal, currencySymbol)}
                         </p>
                         {note ? (
-                          <p className="text-[9px] italic mt-0.5 line-clamp-2" style={{ color: "var(--t-nav-muted)" }}>
+                          <p
+                            className="text-[9px] italic mt-0.5 line-clamp-2"
+                            style={{ color: "var(--t-nav-muted)" }}
+                          >
                             "{note}"
                           </p>
                         ) : null}
@@ -310,23 +352,36 @@ function OrderBatch({ order, batchIndex, currencySymbol }: OrderBatchProps) {
         })()}
 
         {order.notes && (
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
-            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}>
-            <span className="text-[13px] shrink-0" aria-hidden>📝</span>
+          <div
+            className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
+            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+          >
+            <span className="text-[13px] shrink-0" aria-hidden>
+              📝
+            </span>
             <p className="text-[11px] italic leading-snug" style={{ color: "var(--t-nav-muted)" }}>
               {order.notes}
             </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1 gap-3 border-t" style={{ borderColor: "var(--t-line)" }}>
+        <div
+          className="flex items-center justify-between pt-1 gap-3 border-t"
+          style={{ borderColor: "var(--t-line)" }}
+        >
           <div className="flex items-center gap-2.5 min-w-0">
             <phaseInfo.Icon className="w-4 h-4 shrink-0" style={{ color: phaseInfo.color }} />
-            <span className="text-[11px] font-bold uppercase tracking-wide truncate" style={{ color: phaseInfo.color }}>
+            <span
+              className="text-[11px] font-bold uppercase tracking-wide truncate"
+              style={{ color: phaseInfo.color }}
+            >
               {phaseInfo.label}
             </span>
           </div>
-          <span className="text-base font-bold tabular-nums shrink-0" style={{ color: "var(--t-text)" }}>
+          <span
+            className="text-base font-bold tabular-nums shrink-0"
+            style={{ color: "var(--t-text)" }}
+          >
             {formatCurrency(order.total_amount || 0, currencySymbol)}
           </span>
         </div>
@@ -356,7 +411,6 @@ export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [endingSession, setEndingSession] = useState(false);
-  const [billRequested, setBillRequested] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -406,7 +460,7 @@ export default function CustomerOrdersPage() {
       authStore.getState().setSessionToken(null);
       cartStore.getState().clear();
       disconnectSocket();
-      setBillRequested(true);
+      navigate(`${basePath}/bill`);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       const msg =
@@ -417,45 +471,6 @@ export default function CustomerOrdersPage() {
     } finally {
       setEndingSession(false);
     }
-  }
-
-  if (billRequested) {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center gap-6"
-        style={{ backgroundColor: "color-mix(in srgb, var(--t-bg) 96%, black)" }}
-      >
-        <div className="text-7xl">🙏</div>
-        <div className="space-y-3 max-w-sm">
-          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight" style={{ color: "var(--t-text)" }}>
-            Thank You!
-          </h1>
-          <p className="text-base leading-relaxed" style={{ color: "var(--t-dim)" }}>
-            Your bill has been requested. Our staff will be with you shortly.
-          </p>
-          <p
-            className="text-sm leading-relaxed pt-2"
-            style={{ color: "var(--t-nav-muted)" }}
-          >
-            Craving something more?{" "}
-            <span className="font-semibold" style={{ color: "var(--t-accent)" }}>
-              Scan the QR code on your table
-            </span>{" "}
-            to start a new session and order again.
-          </p>
-        </div>
-        <div
-          className="mt-2 px-5 py-3 rounded-2xl border text-xs font-semibold uppercase tracking-widest"
-          style={{
-            borderColor: "var(--t-accent-40)",
-            color: "var(--t-accent)",
-            background: "var(--t-accent-10)",
-          }}
-        >
-          Hope to see you again soon!
-        </div>
-      </div>
-    );
   }
 
   if (loading) {
@@ -532,7 +547,7 @@ export default function CustomerOrdersPage() {
         <Button
           variant="secondary"
           onClick={() => navigate(`${basePath}/menu`)}
-          className="flex-1 py-2 !rounded-xl text-xs font-bold uppercase tracking-wider transition-opacity active:opacity-90"
+          className="flex-1 py-2 rounded-xl! text-xs font-bold uppercase tracking-wider transition-opacity active:opacity-90"
           style={{
             backgroundColor: "transparent",
             color: "var(--t-text)",
@@ -546,7 +561,7 @@ export default function CustomerOrdersPage() {
             loading={endingSession}
             onClick={handleRequestBill}
             disabled={!allCompleted}
-            className="w-full py-2 !rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-opacity active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-2 rounded-xl! text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-opacity active:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: "var(--t-accent)",
               color: "var(--t-bg)",
@@ -630,7 +645,7 @@ export default function CustomerOrdersPage() {
       </div>
 
       {/* ── Mobile/tablet: fixed bottom bill panel ─────────────────────────── */}
-      <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none bottom-[72px] md-bottom-5 mb-3">
+      <div className="lg:hidden fixed left-0 right-0 z-40 flex justify-center pointer-events-none bottom-18 md-bottom-5 mb-3">
         <div
           className="w-full md:max-w-3xl rounded-2xl shadow-2xl p-5 space-y-4 pointer-events-auto"
           style={{

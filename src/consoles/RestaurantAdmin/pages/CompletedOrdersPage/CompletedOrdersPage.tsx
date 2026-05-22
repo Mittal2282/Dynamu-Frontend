@@ -3,33 +3,10 @@ import { getCompletedOrders } from '../../../../services/dashboardService';
 import { todayStr, fmtDate, fmtTime, fmtCurrency, downloadSampleSheet } from './helpers';
 import { StatusBadge, SourceBadge } from './badges';
 import OrderDetailDrawer from './OrderDetailDrawer';
+import type { CompletedOrder } from './OrderDetailDrawer';
 import ManualOrderModal from './ManualOrderModal';
 import BulkUploadModal from './BulkUploadModal';
 import ExportModal from './ExportModal';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface OrderItemSummary {
-  name: string;
-  variant_name?: string;
-  quantity?: number;
-}
-
-interface CompletedOrder {
-  _id: string;
-  order_number?: string | number;
-  createdAt?: string;
-  customer_name?: string;
-  table?: { table_number?: number | string };
-  items?: OrderItemSummary[];
-  total_amount?: number;
-  status?: string;
-  source?: string;
-  subtotal?: number;
-  service_charge?: number;
-  payment_status?: string;
-  notes?: string;
-}
 
 type StatusFilter = 'all' | 'completed' | 'served' | 'cancelled';
 
@@ -164,7 +141,7 @@ export default function CompletedOrdersPage() {
         </div>
 
         {/* Search */}
-        <div className="relative flex-1 min-w-[180px]" style={{ height: 32 }}>
+        <div className="relative flex-1 min-w-45" style={{ height: 32 }}>
           <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--t-dim)' }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -288,7 +265,7 @@ export default function CompletedOrdersPage() {
                           <SourceBadge source={order.source} />
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 max-w-[110px]">
+                      <td className="px-3 py-2.5 max-w-27.5">
                         <p className="text-xs truncate" style={{ color: order.customer_name ? 'var(--t-text)' : 'var(--t-dim)' }}>
                           {order.customer_name ?? '—'}
                         </p>

@@ -10,7 +10,7 @@ export interface ServerToClientEvents {
   'order:updated': (order: Order) => void;
   'table:updated': (data: unknown) => void;
   'session:started': (data: { customer_name?: string; anyone_online?: boolean }) => void;
-  'bill:requested': (data: unknown) => void;
+  'bill:requested': (data: { table_number: number; members?: string[] }) => void;
   'chat:message': (data: unknown) => void;
 }
 

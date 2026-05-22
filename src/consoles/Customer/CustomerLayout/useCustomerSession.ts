@@ -10,6 +10,7 @@ import { restaurantStore } from "../../../store/restaurantStore";
 
 import type { CartEntry } from "../../../types/cart";
 import type { MenuItem } from "../../../types/menu";
+import type { ServerCartItem } from "../../../services/customerService";
 
 // ─── Session data shape returned by startSession ──────────────────────────────
 
@@ -23,7 +24,14 @@ export interface SessionRestaurant {
 }
 
 export interface SessionTable {
-  [key: string]: unknown;
+  _id?: string;
+  id?: string;
+  table_number: number | string;
+  name?: string;
+  floor?: number;
+  floor_name?: string;
+  is_active?: boolean;
+  session?: Record<string, unknown> | null;
 }
 
 export interface SessionData {
@@ -33,24 +41,6 @@ export interface SessionData {
   menu?: Record<string, MenuItem[]>;
 }
 
-// ─── Server cart payload (from socket cart:updated event) ─────────────────────
-
-interface ServerCartItem {
-  menu_item: {
-    _id: string;
-    name: string;
-    price: number;
-    discount_percentage?: number;
-    is_veg?: boolean | null;
-    description?: string;
-    image_url?: string;
-  };
-  quantity: number;
-  variant_name?: string;
-  variant_group?: string;
-  variant_price?: number;
-  variant_is_veg?: boolean | null;
-}
 
 // ─── placeOrder call context ──────────────────────────────────────────────────
 
@@ -240,7 +230,7 @@ export default function useCustomerSession(
       if (Array.isArray(apiItems) && apiItems.length > 0) {
         const variantCache = loadVariantCache() as Record<string, CartEntry['selectedVariant']>;
         const mergedCart: Record<string, CartEntry> = {};
-        (apiItems as ServerCartItem[]).forEach(
+        apiItems.forEach(
           ({ menu_item, quantity, variant_name, variant_group, variant_price, variant_is_veg }) => {
             const baseId = menu_item._id;
             const baseItem: Omit<CartEntry, 'qty'> = {

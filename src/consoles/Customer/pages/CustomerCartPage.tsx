@@ -18,7 +18,7 @@ interface SelectedVariant {
 }
 
 interface CartItemData {
-  _id?: string;
+  _id: string;
   id?: string;
   _cartKey?: string;
   name: string;
@@ -111,7 +111,7 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
             </div>
           }
         />
-        <div className="absolute top-1.5 left-1.5 p-[3px] rounded-sm bg-white/90 shadow-sm">
+        <div className="absolute top-1.5 left-1.5 p-0.75 rounded-sm bg-white/90 shadow-sm">
           <VegBadge isVeg={displayIsVeg} size="sm" />
         </div>
       </div>
@@ -161,7 +161,7 @@ function CartItem({ item, currencySymbol }: CartItemProps) {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder="e.g. No sugar, extra spicy, sauce on the side..."
-                className="w-full bg-black/20 border border-white/10 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-[var(--t-accent)] transition-colors placeholder:text-white/30 resize-none"
+                className="w-full bg-black/20 border border-white/10 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-(--t-accent) transition-colors placeholder:text-white/30 resize-none"
               />
               <div className="flex gap-2">
                 <button

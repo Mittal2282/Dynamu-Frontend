@@ -50,7 +50,7 @@ export const ENDPOINTS = {
   DASH_TABLES_BULK:        '/api/restaurant-dash/tables/bulk',
   DASH_TABLE_FREE:         (id: string): string => `/api/restaurant-dash/tables/${id}/free`,
   DASH_TABLE_TOGGLE_ACTIVE:(id: string): string => `/api/restaurant-dash/tables/${id}/toggle-active`,
-  DASH_TABLE_BILL_PDF:     (id: string): string => `/api/restaurant-dash/tables/${id}/bill-pdf`,
+  DASH_TABLE_BILL_PDF:     (id: string): string => `api/restaurant-dash/tables/${id}/bill-pdf`,
   DASH_CLOSE_SESSION:      (id: string): string => `/api/restaurant-dash/sessions/${id}/close`,
   DASH_INGREDIENTS:        '/api/restaurant-dash/ingredients',
   DASH_INGREDIENTS_TOGGLE: '/api/restaurant-dash/ingredients/toggle',

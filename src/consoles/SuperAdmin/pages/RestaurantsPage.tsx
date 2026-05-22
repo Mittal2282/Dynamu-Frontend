@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiCaller } from "../../../api/apiCaller";
 import { getRestaurants } from "../../../services/superAdminService";
+import type { SuperAdminRestaurant } from "../../../services/superAdminService";
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
 interface SubConfig {
@@ -38,17 +39,6 @@ const SUB_CONFIG: Record<string, SubConfig> = {
   },
 };
 
-interface Restaurant {
-  _id: string;
-  name: string;
-  slug: string;
-  subscription_status: string;
-  orders_today?: number;
-  table_count?: number;
-  createdAt?: string;
-  owner?: { name?: string; email?: string };
-}
-
 interface PlatformStats {
   total_restaurants?: number;
   active_restaurants?: number;
@@ -69,7 +59,7 @@ function MetricCard({ label, value, sub, accentColor, icon }: MetricCardProps) {
   return (
     <div className="relative rounded-2xl p-5 flex flex-col gap-3 overflow-hidden group transition-all duration-200 hover:-translate-y-0.5 bg-slate-900 border border-white/10 hover:border-white/15">
       <div
-        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
+        className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl"
         style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
       />
       <div
@@ -109,10 +99,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ─── Subscription Health ────────────────────────────────────────────────────── */
-function SubscriptionHealth({ restaurants }: { restaurants: Restaurant[] }) {
+function SubscriptionHealth({ restaurants }: { restaurants: SuperAdminRestaurant[] }) {
   const counts = {
-    active:    restaurants.filter((r) => r.subscription_status === "active").length,
-    trial:     restaurants.filter((r) => r.subscription_status === "trial").length,
+    active: restaurants.filter((r) => r.subscription_status === "active").length,
+    trial: restaurants.filter((r) => r.subscription_status === "trial").length,
     suspended: restaurants.filter((r) => r.subscription_status === "suspended").length,
     cancelled: restaurants.filter((r) => r.subscription_status === "cancelled").length,
   };
@@ -127,7 +117,9 @@ function SubscriptionHealth({ restaurants }: { restaurants: Restaurant[] }) {
       </div>
 
       {total === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-slate-300 text-sm">No restaurants yet</div>
+        <div className="flex-1 flex items-center justify-center text-slate-300 text-sm">
+          No restaurants yet
+        </div>
       ) : (
         <>
           <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5">
@@ -137,7 +129,11 @@ function SubscriptionHealth({ restaurants }: { restaurants: Restaurant[] }) {
                 <div
                   key={status}
                   className="rounded-full transition-all duration-500"
-                  style={{ width: `${(count / total) * 100}%`, background: cfg.color, minWidth: "2px" }}
+                  style={{
+                    width: `${(count / total) * 100}%`,
+                    background: cfg.color,
+                    minWidth: "2px",
+                  }}
                   title={`${cfg.label}: ${count}`}
                 />
               );
@@ -154,10 +150,17 @@ function SubscriptionHealth({ restaurants }: { restaurants: Restaurant[] }) {
                   className="flex items-center gap-2 px-3 py-2 rounded-xl"
                   style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
                 >
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cfg.color }} />
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: cfg.color }}
+                  />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold" style={{ color: cfg.color }}>{cfg.label}</p>
-                    <p className="text-[10px] text-slate-300">{count} · {pct}%</p>
+                    <p className="text-xs font-semibold" style={{ color: cfg.color }}>
+                      {cfg.label}
+                    </p>
+                    <p className="text-[10px] text-slate-300">
+                      {count} · {pct}%
+                    </p>
                   </div>
                 </div>
               );
@@ -170,7 +173,7 @@ function SubscriptionHealth({ restaurants }: { restaurants: Restaurant[] }) {
 }
 
 /* ─── Top Restaurants ────────────────────────────────────────────────────────── */
-function TopRestaurants({ restaurants }: { restaurants: Restaurant[] }) {
+function TopRestaurants({ restaurants }: { restaurants: SuperAdminRestaurant[] }) {
   const top = [...restaurants]
     .sort((a, b) => (b.orders_today ?? 0) - (a.orders_today ?? 0))
     .slice(0, 5);
@@ -180,7 +183,9 @@ function TopRestaurants({ restaurants }: { restaurants: Restaurant[] }) {
     <div className="rounded-2xl p-5 flex flex-col gap-4 bg-slate-900 border border-white/10 h-full">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-white">Most Active Today</p>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">By orders</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
+          By orders
+        </span>
       </div>
 
       {maxOrders === 0 ? (
@@ -198,7 +203,11 @@ function TopRestaurants({ restaurants }: { restaurants: Restaurant[] }) {
               <div key={r._id} className="flex items-center gap-3">
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
-                  style={{ background: `${rankColors[idx]}15`, color: rankColors[idx], border: `1px solid ${rankColors[idx]}30` }}
+                  style={{
+                    background: `${rankColors[idx]}15`,
+                    color: rankColors[idx],
+                    border: `1px solid ${rankColors[idx]}30`,
+                  }}
                 >
                   {idx + 1}
                 </span>
@@ -227,19 +236,23 @@ function TopRestaurants({ restaurants }: { restaurants: Restaurant[] }) {
 /* ─── Main Page ──────────────────────────────────────────────────────────────── */
 export default function RestaurantsPage() {
   const navigate = useNavigate();
-  const [stats, setStats]           = useState<PlatformStats | null>(null);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
+  const [stats, setStats] = useState<PlatformStats | null>(null);
+  const [restaurants, setRestaurants] = useState<SuperAdminRestaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     Promise.all([
-      apiCaller({ method: "GET", endpoint: "/api/superadmin/stats", useAdmin: true }),
+      apiCaller<{ data: PlatformStats }>({
+        method: "GET",
+        endpoint: "/api/superadmin/stats",
+        useAdmin: true,
+      }),
       getRestaurants(),
     ])
       .then(([statsData, restaurantList]) => {
-        setStats((statsData as { data: PlatformStats })?.data);
-        setRestaurants(restaurantList as Restaurant[]);
+        setStats(statsData?.data);
+        setRestaurants(restaurantList);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -277,21 +290,33 @@ export default function RestaurantsPage() {
         <div>
           <h1
             className="text-2xl font-bold"
-            style={{
-              background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            } as React.CSSProperties}
+            style={
+              {
+                background: "linear-gradient(90deg, #fff 30%, #94a3b8)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              } as React.CSSProperties
+            }
           >
             Platform Overview
           </h1>
-          <p className="text-slate-300 text-sm mt-0.5">Business stats & all onboarded restaurants</p>
+          <p className="text-slate-300 text-sm mt-0.5">
+            Business stats & all onboarded restaurants
+          </p>
         </div>
         <button
           onClick={() => navigate("/superadmin/onboard")}
           className="btn btn-primary gap-2 text-sm shrink-0"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -307,7 +332,15 @@ export default function RestaurantsPage() {
           sub={`${stats?.active_restaurants ?? 0} marked active`}
           accentColor="#3b82f6"
           icon={
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
@@ -319,7 +352,15 @@ export default function RestaurantsPage() {
           sub="Restaurants with orders"
           accentColor="#22c55e"
           icon={
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
           }
@@ -330,7 +371,15 @@ export default function RestaurantsPage() {
           sub={`${avgOrdersPerRestaurant} avg / restaurant`}
           accentColor="#a855f7"
           icon={
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#a855f7"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
               <rect x="9" y="3" width="6" height="4" rx="1" />
               <path d="M9 12h6M9 16h4" />
@@ -339,11 +388,21 @@ export default function RestaurantsPage() {
         />
         <MetricCard
           label="Revenue Today"
-          value={stats?.revenue_today ? `₹${Math.round(stats.revenue_today).toLocaleString()}` : "₹0"}
+          value={
+            stats?.revenue_today ? `₹${Math.round(stats.revenue_today).toLocaleString()}` : "₹0"
+          }
           sub={`${avgRevenuePerRestaurant} avg / restaurant`}
           accentColor="#f59e0b"
           icon={
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="w-4 h-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="12" y1="1" x2="12" y2="23" />
               <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
@@ -369,7 +428,12 @@ export default function RestaurantsPage() {
           <div className="relative sm:w-64">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none z-10"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -382,7 +446,12 @@ export default function RestaurantsPage() {
               className="input input-bordered input-sm pl-9 pr-8 w-full text-xs"
             />
             {search && (
-              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs">✕</button>
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs"
+              >
+                ✕
+              </button>
             )}
           </div>
         </div>
@@ -393,10 +462,16 @@ export default function RestaurantsPage() {
               <tr>
                 <th className="text-[10px] font-bold uppercase tracking-widest">Restaurant</th>
                 <th className="text-[10px] font-bold uppercase tracking-widest">Owner</th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Tables</th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Orders Today</th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
+                  Tables
+                </th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
+                  Orders Today
+                </th>
                 <th className="text-[10px] font-bold uppercase tracking-widest">Onboarded</th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">Status</th>
+                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
+                  Status
+                </th>
                 <th className="w-10" />
               </tr>
             </thead>
@@ -406,7 +481,9 @@ export default function RestaurantsPage() {
                   <td colSpan={7} className="text-center py-16">
                     <p className="text-3xl mb-3">{search ? "🔍" : "🏪"}</p>
                     <p className="text-slate-300 text-sm">
-                      {search ? "No restaurants match your search." : "No restaurants yet. Onboard your first one!"}
+                      {search
+                        ? "No restaurants match your search."
+                        : "No restaurants yet. Onboard your first one!"}
                     </p>
                   </td>
                 </tr>
@@ -414,7 +491,11 @@ export default function RestaurantsPage() {
                 filtered.map((r) => {
                   const isActiveToday = (r.orders_today ?? 0) > 0;
                   const onboarded = r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                    ? new Date(r.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
                     : "—";
                   return (
                     <tr key={r._id} className="hover cursor-pointer">
@@ -422,7 +503,9 @@ export default function RestaurantsPage() {
                         <div className="flex items-center gap-2">
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
-                            style={{ background: isActiveToday ? "#22c55e" : "rgba(255,255,255,0.1)" }}
+                            style={{
+                              background: isActiveToday ? "#22c55e" : "rgba(255,255,255,0.1)",
+                            }}
                             title={isActiveToday ? "Has orders today" : "No orders today"}
                           />
                           <div>
@@ -437,12 +520,17 @@ export default function RestaurantsPage() {
                       </td>
                       <td className="text-center">{r.table_count ?? 0}</td>
                       <td className="text-center">
-                        <span className="text-sm font-bold" style={{ color: isActiveToday ? "#22c55e" : "#475569" }}>
+                        <span
+                          className="text-sm font-bold"
+                          style={{ color: isActiveToday ? "#22c55e" : "#475569" }}
+                        >
                           {r.orders_today ?? 0}
                         </span>
                       </td>
                       <td className="text-xs">{onboarded}</td>
-                      <td className="text-center"><StatusBadge status={r.subscription_status} /></td>
+                      <td className="text-center">
+                        <StatusBadge status={r.subscription_status} />
+                      </td>
                       <td className="text-right">
                         <button
                           onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
