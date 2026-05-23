@@ -1,5 +1,7 @@
 import { apiCaller } from "../api/apiCaller";
 import { authStore } from "../store/authStore";
+import { locationStore } from "../store/locationStore";
+import { restaurantStore } from "../store/restaurantStore";
 import { ENDPOINTS } from "../utils/endpoints";
 import { getSocket } from "./socketService";
 
@@ -64,6 +66,21 @@ export async function streamChatMessage(
   const { sessionToken } = authStore.getState();
   const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+  const locationHeaders: Record<string, string> = {};
+  const enforceProximity = restaurantStore.getState().enforceProximity !== false;
+  const { latitude, longitude, accuracy_m, captured_at } = locationStore.getState();
+  const LOCATION_MAX_AGE_MS = 55_000;
+  if (
+    enforceProximity &&
+    latitude != null && longitude != null && captured_at &&
+    Date.now() - captured_at < LOCATION_MAX_AGE_MS
+  ) {
+    locationHeaders["x-customer-lat"]      = String(latitude);
+    locationHeaders["x-customer-lng"]      = String(longitude);
+    locationHeaders["x-customer-accuracy"] = String(Math.round(accuracy_m || 0));
+    locationHeaders["x-customer-ts"]       = String(captured_at);
+  }
+
   let response: Response;
   try {
     response = await fetch(`${baseURL}${ENDPOINTS.CHAT_STREAM}`, {
@@ -71,6 +88,7 @@ export async function streamChatMessage(
       headers: {
         "Content-Type": "application/json",
         ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        ...locationHeaders,
       },
       body: JSON.stringify({ message, socket_id: getSocket()?.id ?? null }),
     });
