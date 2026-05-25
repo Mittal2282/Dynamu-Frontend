@@ -48,6 +48,16 @@ export async function getDashProfile(): Promise<DashProfile> {
   return data.data;
 }
 
+export async function getOrdersByDateRange(dateFrom: string, dateTo: string): Promise<Order[]> {
+  const params = new URLSearchParams({ date_from: dateFrom, date_to: dateTo });
+  const data = await apiCaller<Resp<Order[]>>({
+    method:   'GET',
+    endpoint: `${ENDPOINTS.DASH_ORDERS}?${params.toString()}`,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
 export async function getDashOrders(): Promise<Order[]> {
   const data = await apiCaller<Resp<Order[]>>({
     method:   'GET',
@@ -90,6 +100,7 @@ export async function createManualOrder(payload: {
   notes?: string;
   order_date?: string;
   table_id?: string;
+  source?: string;
 }): Promise<Order> {
   const data = await apiCaller<Resp<Order>>({
     method:   'POST',
@@ -197,6 +208,54 @@ export async function closeTableSession(sessionId: string): Promise<Record<strin
   return data.data;
 }
 
+export async function getPaymentMethods(): Promise<string[]> {
+  const data = await apiCaller<Resp<string[]>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_PAYMENT_METHODS,
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+export async function addPaymentMethod(name: string): Promise<string[]> {
+  const data = await apiCaller<Resp<string[]>>({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_PAYMENT_METHODS,
+    payload:  { name },
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+export async function removePaymentMethod(name: string): Promise<string[]> {
+  const data = await apiCaller<Resp<string[]>>({
+    method:   'DELETE',
+    endpoint: ENDPOINTS.DASH_PAYMENT_METHOD_DEL(name),
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
+export async function collectOrderPayment(orderId: string, paymentMethod: string): Promise<Order> {
+  const data = await apiCaller<Resp<Order>>({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_ORDER_COLLECT_PAYMENT(orderId),
+    payload:  { payment_method: paymentMethod },
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function markBillPaid(sessionId: string, paymentMethod: string): Promise<Order[]> {
+  const data = await apiCaller<Resp<Order[]>>({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_MARK_BILL_PAID(sessionId),
+    payload:  { payment_method: paymentMethod },
+    useAdmin: true,
+  });
+  return data.data ?? [];
+}
+
 export async function toggleDashMenuItem(id: string): Promise<MenuItem> {
   const data = await apiCaller<Resp<MenuItem>>({
     method:   'PATCH',
@@ -291,11 +350,45 @@ export async function uploadMenuItemImage(file: File): Promise<string> {
 
 // ─── Ingredients ──────────────────────────────────────────────────────────────
 
+export interface RecipeEntry {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
 export interface Ingredient {
   name: string;
   is_available: boolean;
-  affected_count: number;
+  current_stock: number;
+  unit: string;
+  minimum_stock: number;
+  recipe_count: number;
+  affected_count?: number;
   items_using?: { _id: string; name: string; is_veg?: boolean; image_url?: string; price?: number }[];
+}
+
+export interface IngredientDetail {
+  ingredient: Ingredient;
+  menuItems: Array<{
+    _id: string;
+    name: string;
+    category?: string;
+    image_url?: string;
+    is_veg?: boolean;
+    recipe_entry: { quantity: number; unit: string } | null;
+  }>;
+}
+
+export interface LedgerEntry {
+  _id: string;
+  ingredient_name: string;
+  delta: number;
+  balance_after: number;
+  reason: string;
+  order_number?: string;
+  menu_item_name?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface PaginatedIngredientsResult {
@@ -320,6 +413,96 @@ export async function getIngredients(params: IngredientsParams = {}): Promise<Pa
     useAdmin: true,
   });
   return { items: data.items ?? [], total: data.total ?? 0, hasMore: data.hasMore ?? false };
+}
+
+export async function createIngredient(payload: {
+  name: string; unit?: string; current_stock?: number; minimum_stock?: number;
+}): Promise<Ingredient> {
+  const data = await apiCaller<Resp<Ingredient>>({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS,
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function updateIngredient(
+  name: string,
+  payload: { current_stock?: number; unit?: string; minimum_stock?: number; is_available?: boolean; new_name?: string },
+): Promise<Ingredient> {
+  const data = await apiCaller<Resp<Ingredient>>({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_INGREDIENT_UPDATE(name),
+    payload,
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function deleteIngredient(name: string): Promise<unknown> {
+  return apiCaller({
+    method:   'DELETE',
+    endpoint: ENDPOINTS.DASH_INGREDIENT_DELETE(name),
+    useAdmin: true,
+  });
+}
+
+export async function getIngredientDetail(name: string): Promise<IngredientDetail> {
+  const data = await apiCaller<Resp<IngredientDetail>>({
+    method:   'GET',
+    endpoint: ENDPOINTS.DASH_INGREDIENT_DETAIL(name),
+    useAdmin: true,
+  });
+  return data.data;
+}
+
+export async function getIngredientLedger(
+  name: string,
+  params: { page?: number; limit?: number } = {},
+): Promise<{ items: LedgerEntry[]; total: number; hasMore: boolean }> {
+  const query = new URLSearchParams();
+  if (params.page) query.set('page', String(params.page));
+  if (params.limit) query.set('limit', String(params.limit));
+  const qs = query.toString() ? `?${query.toString()}` : '';
+  const data = await apiCaller<{ items: LedgerEntry[]; total: number; hasMore: boolean }>({
+    method:   'GET',
+    endpoint: `${ENDPOINTS.DASH_INGREDIENT_LEDGER(name)}${qs}`,
+    useAdmin: true,
+  });
+  return { items: data.items ?? [], total: data.total ?? 0, hasMore: data.hasMore ?? false };
+}
+
+export async function bulkUpdateIngredientStock(
+  updates: Array<{ name: string; new_stock: number }>,
+): Promise<unknown> {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS_BULK,
+    payload:  { updates },
+    useAdmin: true,
+  });
+}
+
+export async function updateMenuItemRecipe(
+  menuItemId: string,
+  recipe: RecipeEntry[],
+): Promise<unknown> {
+  return apiCaller({
+    method:   'PUT',
+    endpoint: ENDPOINTS.DASH_MENU_ITEM_RECIPE(menuItemId),
+    payload:  { recipe },
+    useAdmin: true,
+  });
+}
+
+export async function importIngredientsFromMenu(): Promise<{ imported: number }> {
+  const data = await apiCaller<Resp<{ imported: number }>>({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS_IMPORT,
+    useAdmin: true,
+  });
+  return data.data;
 }
 
 export async function toggleIngredient(

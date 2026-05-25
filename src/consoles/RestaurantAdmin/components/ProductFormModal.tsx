@@ -4,8 +4,12 @@ import {
   createDashMenuItem,
   updateDashMenuItem,
   uploadMenuItemImage,
+  updateMenuItemRecipe,
+  getIngredients,
 } from "../../../services/dashboardService";
 import type { MenuItem } from "../../../types/menu";
+
+const UNITS = ["g", "kg", "ml", "L", "pcs", "units"] as const;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,6 +21,12 @@ interface VariantData {
   isDefault?: boolean;
   isAvailable?: boolean;
   discount_percentage?: number;
+}
+
+interface RecipeRow {
+  name: string;
+  quantity: string | number;
+  unit: string;
 }
 
 interface FormData {
@@ -45,6 +55,7 @@ interface FormData {
   combo_discount: number;
   has_variants: boolean;
   variants: VariantData[];
+  recipe: RecipeRow[];
 }
 
 interface ProductFormModalProps {
@@ -89,6 +100,7 @@ const EMPTY_FORM: FormData = {
   combo_discount: 0,
   has_variants: false,
   variants: [],
+  recipe: [],
 };
 
 const EMPTY_VARIANT: VariantData = {
@@ -324,6 +336,11 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
   const [error, setError] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
+  const [ingredientNames, setIngredientNames] = useState<string[]>([]);
+  const [recipeOpen, setRecipeOpen] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addQty, setAddQty] = useState("");
+  const [addUnit, setAddUnit] = useState<string>("g");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = item !== null && item !== undefined;
@@ -331,6 +348,19 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
   useEffect(() => {
     if (!isOpen) return;
     if (isEdit && item) {
+      let loadedRecipe: RecipeRow[] = (item.recipe ?? []).map((r) => ({
+        name: r.name,
+        quantity: r.quantity,
+        unit: r.unit,
+      }));
+
+      // Pre-populate from ingredients[] when no structured recipe exists yet
+      if (loadedRecipe.length === 0 && item.ingredients) {
+        const names = Array.isArray(item.ingredients)
+          ? (item.ingredients as string[])
+          : String(item.ingredients).split(",").map((s) => s.trim()).filter(Boolean);
+        loadedRecipe = names.map((name) => ({ name: name.trim(), quantity: "", unit: "g" }));
+      }
       setForm({
         ...EMPTY_FORM,
         ...(item as unknown as Partial<FormData>),
@@ -343,13 +373,21 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
         display_order: item.display_order ?? "",
         has_variants: item.has_variants ?? false,
         variants: item.variants?.map((v) => ({ ...v, price: v.price ?? "" })) ?? [],
+        recipe: loadedRecipe,
       });
+      setRecipeOpen(true);
       setImagePreview(item.image_url || "");
     } else {
       setForm(EMPTY_FORM);
+      setRecipeOpen(false);
       setImagePreview("");
     }
+    setAddName(""); setAddQty(""); setAddUnit("g");
     setError("");
+    // Load ingredient names for autocomplete
+    getIngredients({ limit: 200 }).then((res) => {
+      setIngredientNames(res.items.map((i) => i.name));
+    }).catch(() => {});
   }, [isOpen, item, isEdit]);
 
   const set = <K extends keyof FormData>(key: K, val: FormData[K]) =>
@@ -420,6 +458,12 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
       const saved = isEdit && item
         ? await updateDashMenuItem(item._id, payload)
         : await createDashMenuItem(payload);
+      const cleanedRecipe = form.recipe
+        .filter((r) => r.name.trim() !== "")
+        .map((r) => ({ name: r.name.trim(), quantity: Number(r.quantity) || 0, unit: r.unit }));
+      if (isEdit || cleanedRecipe.length > 0) {
+        try { await updateMenuItemRecipe(saved._id, cleanedRecipe); } catch { /* non-blocking */ }
+      }
       onSave(saved);
     } catch {
       setError("Failed to save. Please try again.");
@@ -684,6 +728,207 @@ export default function ProductFormModal({ isOpen, onClose, onSave, item, existi
             <Toggle checked={form.is_featured} onChange={(v) => set("is_featured", v)} label="Featured" />
           </div>
         </div>
+
+        <hr style={{ borderColor: 'var(--t-line)' }} />
+
+        {/* Recipe / Inventory */}
+        {(() => {
+          const usedNames = new Set(form.recipe.map((r) => r.name.trim().toLowerCase()));
+          const unusedIngredients = ingredientNames.filter((n) => !usedNames.has(n.toLowerCase()));
+          const recipeCount = form.recipe.length;
+
+          function commitAdd() {
+            if (!addName) return;
+            set("recipe", [...form.recipe, { name: addName, quantity: addQty, unit: addUnit }]);
+            setAddName(""); setAddQty(""); setAddUnit("g");
+          }
+
+          return (
+            <div>
+              <button
+                type="button"
+                onClick={() => setRecipeOpen((o) => !o)}
+                className="w-full flex items-center justify-between"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t-dim)' }}>
+                  Recipe / Inventory
+                  {recipeCount > 0 && (
+                    <span className="ml-2 normal-case font-normal" style={{ color: 'var(--t-accent)' }}>
+                      {recipeCount} ingredient{recipeCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </p>
+                <svg
+                  className="w-4 h-4 transition-transform"
+                  style={{ color: 'var(--t-dim)', transform: recipeOpen ? 'rotate(180deg)' : 'none' }}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {recipeOpen && (
+                <div className="mt-3">
+                  {/* Existing rows */}
+                  {recipeCount > 0 && (
+                    <div
+                      className="rounded-xl overflow-hidden mb-3"
+                      style={{ border: "1px solid var(--t-line)" }}
+                    >
+                      {/* Column headers */}
+                      <div
+                        className="grid gap-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide select-none"
+                        style={{ gridTemplateColumns: "1fr 80px 76px 28px", background: "var(--t-float)", color: "var(--t-dim)", borderBottom: "1px solid var(--t-line)" }}
+                      >
+                        <span>Ingredient</span>
+                        <span className="text-right">Qty</span>
+                        <span>Unit</span>
+                        <span />
+                      </div>
+
+                      {form.recipe.map((row, idx) => (
+                        <div
+                          key={idx}
+                          className="grid gap-2 items-center px-3 py-2"
+                          style={{
+                            gridTemplateColumns: "1fr 80px 76px 28px",
+                            borderBottom: idx < recipeCount - 1 ? "1px solid var(--t-line)" : undefined,
+                          }}
+                        >
+                          {/* Ingredient name — read-only */}
+                          <p
+                            className="text-sm font-semibold truncate capitalize"
+                            style={{ color: "var(--t-text)" }}
+                            title={row.name}
+                          >
+                            {row.name || <span style={{ color: "var(--t-dim)" }}>—</span>}
+                          </p>
+
+                          {/* Qty — editable */}
+                          <input
+                            type="number"
+                            min="0"
+                            value={row.quantity}
+                            onChange={(e) => {
+                              const next = [...form.recipe];
+                              next[idx] = { ...next[idx], quantity: e.target.value };
+                              set("recipe", next);
+                            }}
+                            placeholder="0"
+                            className="w-full px-2 py-1 rounded-lg text-sm text-right tabular-nums outline-none"
+                            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+                            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+                            onBlur={(e) => (e.target.style.borderColor = "var(--t-line)")}
+                          />
+
+                          {/* Unit — editable */}
+                          <select
+                            value={row.unit}
+                            onChange={(e) => {
+                              const next = [...form.recipe];
+                              next[idx] = { ...next[idx], unit: e.target.value };
+                              set("recipe", next);
+                            }}
+                            className="w-full px-1.5 py-1 rounded-lg text-sm outline-none cursor-pointer"
+                            style={{ background: "var(--t-float)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+                            onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+                            onBlur={(e) => (e.target.style.borderColor = "var(--t-line)")}
+                          >
+                            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+
+                          {/* Delete */}
+                          <button
+                            type="button"
+                            onClick={() => set("recipe", form.recipe.filter((_, i) => i !== idx))}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0 transition-colors"
+                            style={{ color: "var(--t-dim)" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--t-dim)")}
+                            title="Remove"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add new ingredient row */}
+                  {unusedIngredients.length > 0 ? (
+                    <div
+                      className="rounded-xl p-3 space-y-2"
+                      style={{ background: "var(--t-float)", border: "1px solid var(--t-line)" }}
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--t-dim)" }}>
+                        Add Ingredient
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={addName}
+                          onChange={(e) => setAddName(e.target.value)}
+                          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg text-sm outline-none cursor-pointer"
+                          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)", color: addName ? "var(--t-text)" : "var(--t-dim)" }}
+                          onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+                          onBlur={(e) => (e.target.style.borderColor = "var(--t-line)")}
+                        >
+                          <option value="">Select ingredient…</option>
+                          {unusedIngredients.map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="0"
+                          value={addQty}
+                          onChange={(e) => setAddQty(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitAdd(); } }}
+                          placeholder="Qty"
+                          className="w-20 shrink-0 px-2.5 py-1.5 rounded-lg text-sm text-right outline-none tabular-nums"
+                          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+                          onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+                          onBlur={(e) => (e.target.style.borderColor = "var(--t-line)")}
+                        />
+                        <select
+                          value={addUnit}
+                          onChange={(e) => setAddUnit(e.target.value)}
+                          className="w-20 shrink-0 px-1.5 py-1.5 rounded-lg text-sm outline-none cursor-pointer"
+                          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+                          onFocus={(e) => (e.target.style.borderColor = "var(--t-accent)")}
+                          onBlur={(e) => (e.target.style.borderColor = "var(--t-line)")}
+                        >
+                          {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={commitAdd}
+                          disabled={!addName}
+                          className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white transition-all disabled:opacity-40"
+                          style={{ background: "var(--t-accent)" }}
+                          title="Add to recipe"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ) : ingredientNames.length === 0 ? (
+                    <p className="text-xs text-center py-2" style={{ color: "var(--t-dim)" }}>
+                      No inventory ingredients found — add ingredients in the Inventory page first.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-center py-2" style={{ color: "var(--t-dim)" }}>
+                      All inventory ingredients are already in this recipe.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         <hr style={{ borderColor: 'var(--t-line)' }} />
 

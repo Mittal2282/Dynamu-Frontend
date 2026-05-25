@@ -1,3 +1,9 @@
+export interface RecipeEntry {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
 export interface Variant {
   name: string;
   price: number;
@@ -43,4 +49,5 @@ export interface MenuItem {
   taste_profile?: string;
   is_combo?: boolean;
   combo_discount?: number;
+  recipe?: RecipeEntry[];
 }

@@ -39,6 +39,25 @@ const NAV_MAIN: NavItemData[] = [
     ),
   },
   {
+    to: "/dashboard/pos",
+    label: "POS",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-4.5 h-4.5"
+      >
+        <rect x="2" y="3" width="20" height="13" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+        <path d="M7 8h4M7 12h2M15 8h2M15 12h2" />
+      </svg>
+    ),
+  },
+  {
     to: "/dashboard/tables",
     label: "Table Status",
     icon: (
@@ -75,8 +94,8 @@ const NAV_MAIN: NavItemData[] = [
     ),
   },
   {
-    to: "/dashboard/ingredients",
-    label: "Ingredients",
+    to: "/dashboard/inventory",
+    label: "Inventory",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -87,9 +106,8 @@ const NAV_MAIN: NavItemData[] = [
         strokeLinejoin="round"
         className="w-4.5 h-4.5"
       >
-        <path d="M12 2a10 10 0 00-7 17.09M12 2c1.6 3.2 2 6.5 1 10M12 2c-1.6 3.2-2 6.5-1 10" />
-        <path d="M5 17.09C6.5 18.9 9.1 20 12 20s5.5-1.1 7-2.91" />
-        <path d="M11 12c0 4 1 7 1 7s1-3 1-7" />
+        <path d="M3 3h18v4H3zM3 11h18v4H3zM3 19h18v4H3z" />
+        <path d="M7 5h.01M7 13h.01M7 21h.01" />
       </svg>
     ),
   },
@@ -129,6 +147,24 @@ const NAV_SECONDARY: NavItemData[] = [
         className="w-4.5 h-4.5"
       >
         <path d="M18 20V10M12 20V4M6 20v-6" />
+      </svg>
+    ),
+  },
+  {
+    to: "/dashboard/payments",
+    label: "Payments",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="w-4.5 h-4.5"
+      >
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+        <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     ),
   },

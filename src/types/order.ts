@@ -21,6 +21,7 @@ export interface Order {
   order_number: number;
   status: OrderStatus;
   payment_status?: PaymentStatus;
+  payment_method?: 'cash' | 'razorpay' | 'card_on_delivery' | 'upi';
   items: OrderItem[];
   subtotal?: number;
   tax_amount?: number;

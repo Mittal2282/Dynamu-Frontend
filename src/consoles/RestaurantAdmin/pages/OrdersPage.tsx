@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getDashOrders, getPetpoojaConfig } from "../../../services/dashboardService";
+import { getDashOrders, getPetpoojaConfig, markBillPaid, getPaymentMethods, collectOrderPayment } from "../../../services/dashboardService";
+import { useToast } from "../../../components/ui/Toast";
 import { apiCaller } from "../../../api/apiCaller";
 import { connectAdminSocket } from "../../../services/socketService";
 import { authStore } from "../../../store/authStore";
@@ -23,6 +24,7 @@ interface Order {
   _id: string;
   order_number?: string | number;
   status: string;
+  payment_status?: string;
   createdAt: string;
   is_addon?: boolean;
   total_amount?: number;
@@ -56,7 +58,7 @@ const ALLOCATED = ["pending", "confirmed"];
 const IN_PROGRESS = ["preparing", "ready"];
 const TERMINAL = ["served", "completed", "cancelled"];
 
-const EXTERNAL_SOURCES = new Set(["zomato", "swiggy", "pos"]);
+const EXTERNAL_SOURCES = new Set(["zomato", "swiggy"]);
 
 function getSessionColumn(orders: Order[]): "allocated" | "inprogress" | "completed" | "thirdparty" {
   const primarySource = orders[0]?.source;
@@ -302,6 +304,8 @@ interface TableOrderCardProps {
   onStatusChange: (orderId: string, status: string) => void;
   updating: string | null;
   isNew: boolean;
+  onCollectPayment?: (orderId: string, paymentMethod: string) => Promise<void>;
+  allPaymentMethods?: string[];
 }
 
 const EXTERNAL_SOURCE_CFG: Record<string, { label: string; color: string }> = {
@@ -316,6 +320,8 @@ function TableOrderCard({
   onStatusChange,
   updating,
   isNew,
+  onCollectPayment,
+  allPaymentMethods = ["cash", "card_on_delivery", "upi"],
 }: TableOrderCardProps) {
   const { tableNumber, orders: sessionOrders, source } = session;
   const grandTotal = sessionOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -323,8 +329,35 @@ function TableOrderCard({
   const externalCfg = source ? EXTERNAL_SOURCE_CFG[source] : undefined;
   const headerLabel = externalCfg
     ? externalCfg.label
-    : `Table ${tableNumber ?? "?"}`;
+    : tableNumber != null ? `Table ${tableNumber}` : "POS Order";
   const headerColor = externalCfg ? externalCfg.color : columnColor;
+
+  // Collect Payment UI state (for served POS orders)
+  const [posPayMethod, setPosPayMethod] = useState("cash");
+  const [collecting, setCollecting] = useState(false);
+
+  const posUnpaidOrders = source === "pos"
+    ? sessionOrders.filter((o) => o.payment_status !== "paid" && TERMINAL.includes(o.status))
+    : [];
+
+  const showCollectPayment = posUnpaidOrders.length > 0 && column === "completed" && !!onCollectPayment;
+
+  async function handleCollect() {
+    if (!onCollectPayment) return;
+    setCollecting(true);
+    try {
+      for (const o of posUnpaidOrders) {
+        await onCollectPayment(o._id, posPayMethod);
+      }
+    } finally {
+      setCollecting(false);
+    }
+  }
+
+  const pmLabel = (m: string) => {
+    const map: Record<string, string> = { cash: "Cash", card_on_delivery: "Card", upi: "UPI", razorpay: "Online" };
+    return map[m] ?? m.charAt(0).toUpperCase() + m.slice(1);
+  };
 
   return (
     <div
@@ -376,6 +409,39 @@ function TableOrderCard({
         ))}
       </div>
 
+      {/* Collect Payment UI — shown for served POS orders that haven't been paid */}
+      {showCollectPayment && (
+        <div
+          className="px-2.5 pb-2.5 pt-2"
+          style={{ borderTop: "1px solid var(--t-line)" }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "#f59e0b" }}>
+            Collect Payment
+          </p>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={posPayMethod}
+              onChange={(e) => setPosPayMethod(e.target.value)}
+              className="flex-1 text-xs rounded-lg px-2 py-1.5 outline-none"
+              style={{ background: "var(--t-float)", border: "1px solid var(--t-line)", color: "var(--t-text)" }}
+            >
+              {allPaymentMethods.map((m) => (
+                <option key={m} value={m}>{pmLabel(m)}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleCollect}
+              disabled={collecting}
+              className="text-xs font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1"
+              style={{ background: "var(--t-accent)", color: "#fff", opacity: collecting ? 0.7 : 1 }}
+            >
+              {collecting ? (
+                <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+              ) : "Collect"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -385,61 +451,94 @@ interface BillRequestCardProps {
   req: BillRequest;
   total: number;
   onDismiss: () => void;
+  onMarkPaid: (paymentMethod: string) => Promise<void>;
+  customMethods: string[];
 }
 
-function BillRequestCard({ req, total, onDismiss }: BillRequestCardProps) {
+function BillRequestCard({ req, total, onDismiss, onMarkPaid, customMethods }: BillRequestCardProps) {
   const memberStr = req.members.filter(Boolean).join(", ");
   const elapsed = Math.floor((Date.now() - req.requestedAt) / 60000);
   const timeLabel = elapsed < 1 ? "just now" : `${elapsed}m ago`;
+  const [payMethod, setPayMethod] = useState<string>("cash");
+  const [paying, setPaying] = useState(false);
+
+  const handlePay = async () => {
+    setPaying(true);
+    try { await onMarkPaid(payMethod); }
+    finally { setPaying(false); }
+  };
 
   return (
     <div
-      className="bill-flash relative flex items-start gap-2.5 rounded-xl px-3 py-2.5 min-w-[168px] max-w-[220px]"
+      className="bill-flash relative flex flex-col gap-1.5 rounded-xl px-3 py-2.5 min-w-[200px] max-w-[260px]"
       style={{
         border: "1px solid rgba(251,191,36,0.4)",
         borderRadius: "0.75rem",
       }}
     >
-      {/* Bell */}
-      <span className="text-base leading-none mt-0.5 shrink-0">🔔</span>
+      {/* Top row: bell + info + dismiss */}
+      <div className="flex items-start gap-2.5">
+        <span className="text-base leading-none mt-0.5 shrink-0">🔔</span>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-black leading-tight" style={{ color: "#fbbf24" }}>
-          Table {req.table_number}
-        </p>
-        {total > 0 && (
-          <p className="text-[10px] tabular-nums mt-0.5" style={{ color: "var(--t-dim)" }}>
-            ₹{Math.round(total)}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-black leading-tight" style={{ color: "#fbbf24" }}>
+            Table {req.table_number}
           </p>
-        )}
-        {memberStr && (
-          <p
-            className="text-[10px] mt-0.5 truncate"
-            style={{ color: "var(--t-dim)", opacity: 0.8 }}
-            title={memberStr}
-          >
-            {memberStr}
+          {total > 0 && (
+            <p className="text-[10px] tabular-nums mt-0.5" style={{ color: "var(--t-dim)" }}>
+              ₹{Math.round(total)}
+            </p>
+          )}
+          {memberStr && (
+            <p
+              className="text-[10px] mt-0.5 truncate"
+              style={{ color: "var(--t-dim)", opacity: 0.8 }}
+              title={memberStr}
+            >
+              {memberStr}
+            </p>
+          )}
+          <p className="text-[9px] mt-1 font-medium" style={{ color: "rgba(251,191,36,0.55)" }}>
+            {timeLabel}
           </p>
-        )}
-        <p className="text-[9px] mt-1 font-medium" style={{ color: "rgba(251,191,36,0.55)" }}>
-          {timeLabel}
-        </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black transition-colors mt-0.5"
+          style={{ background: "rgba(251,191,36,0.15)", color: "rgba(251,191,36,0.7)" }}
+          title="Dismiss"
+        >
+          ×
+        </button>
       </div>
 
-      {/* Dismiss */}
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black transition-colors mt-0.5"
-        style={{
-          background: "rgba(251,191,36,0.15)",
-          color: "rgba(251,191,36,0.7)",
-        }}
-        title="Dismiss"
-      >
-        ×
-      </button>
+      {/* Payment row */}
+      <div className="flex items-center gap-1.5">
+        <select
+          value={payMethod}
+          onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
+          className="flex-1 text-[10px] rounded-md px-1.5 py-1 outline-none"
+          style={{ background: "rgba(0,0,0,0.3)", color: "var(--t-dim)", border: "1px solid rgba(251,191,36,0.25)" }}
+        >
+          <option value="cash">Cash</option>
+          <option value="card_on_delivery">Card</option>
+          <option value="upi">UPI</option>
+          {customMethods.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={handlePay}
+          disabled={paying}
+          className="text-[10px] font-bold rounded-md px-2 py-1 shrink-0 transition-opacity"
+          style={{ background: "rgba(34,197,94,0.2)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.35)", opacity: paying ? 0.5 : 1 }}
+        >
+          {paying ? "…" : "Mark Paid"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -449,9 +548,11 @@ interface BillRequestQueueProps {
   requests: BillRequest[];
   orders: Order[];
   onDismiss: (id: string) => void;
+  onMarkPaid: (req: BillRequest, paymentMethod: string) => Promise<void>;
+  customMethods: string[];
 }
 
-function BillRequestQueue({ requests, orders, onDismiss }: BillRequestQueueProps) {
+function BillRequestQueue({ requests, orders, onDismiss, onMarkPaid, customMethods }: BillRequestQueueProps) {
   if (requests.length === 0) return null;
 
   return (
@@ -484,6 +585,8 @@ function BillRequestQueue({ requests, orders, onDismiss }: BillRequestQueueProps
               req={req}
               total={total}
               onDismiss={() => onDismiss(req.id)}
+              onMarkPaid={(pm) => onMarkPaid(req, pm)}
+              customMethods={customMethods}
             />
           );
         })}
@@ -575,6 +678,7 @@ function loadBillRequests(): BillRequest[] {
 
 /* ─── Main page ──────────────────────────────────────────────────────────────── */
 export default function OrdersPage() {
+  const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -583,6 +687,7 @@ export default function OrdersPage() {
   const [selectedTable, setSelectedTable] = useState<number | string | null>(null);
   const [billRequests, setBillRequests] = useState<BillRequest[]>(loadBillRequests);
   const [petpoojaEnabled, setPetpoojaEnabled] = useState(false);
+  const [customPaymentMethods, setCustomPaymentMethods] = useState<string[]>([]);
   const prevIdsRef = useRef<Set<string>>(new Set());
 
   // Persist bill requests across refreshes
@@ -621,6 +726,9 @@ export default function OrdersPage() {
     getPetpoojaConfig()
       .then((cfg) => setPetpoojaEnabled(!!cfg.enabled))
       .catch(() => { /* no-op — non-Petpooja restaurants just hide the column */ });
+    getPaymentMethods()
+      .then(setCustomPaymentMethods)
+      .catch(() => { /* non-critical */ });
   }, []);
 
   // Socket listeners: bill requests + new orders (including Petpooja external)
@@ -644,12 +752,15 @@ export default function OrdersPage() {
     };
 
     const newOrderHandler = () => { fetchOrders(true); };
+    const orderUpdatedHandler = () => { fetchOrders(true); };
 
     socket.on("bill:requested", billHandler);
     socket.on("new_order", newOrderHandler);
+    socket.on("order:updated", orderUpdatedHandler);
     return () => {
       socket.off("bill:requested", billHandler);
       socket.off("new_order", newOrderHandler);
+      socket.off("order:updated", orderUpdatedHandler);
     };
   }, [fetchOrders]);
 
@@ -673,6 +784,24 @@ export default function OrdersPage() {
 
   const dismissBillRequest = (id: string) =>
     setBillRequests((prev) => prev.filter((r) => r.id !== id));
+
+  const handleMarkPaid = useCallback(async (req: BillRequest, paymentMethod: string) => {
+    await markBillPaid(req.session_id, paymentMethod);
+    dismissBillRequest(req.id);
+    await fetchOrders(true);
+    toast({ status: "success", title: `Table ${req.table_number} marked as paid` });
+  }, [fetchOrders, toast]);
+
+  const handleCollectPayment = useCallback(async (orderId: string, paymentMethod: string) => {
+    await collectOrderPayment(orderId, paymentMethod);
+    await fetchOrders(true);
+    toast({ status: "success", title: "Payment collected" });
+  }, [fetchOrders, toast]);
+
+  const allPaymentMethods = [
+    "cash", "card_on_delivery", "upi",
+    ...customPaymentMethods.filter((m) => !["cash", "card_on_delivery", "upi"].includes(m)),
+  ];
 
   /* ── Derived data ── */
   const tableNumbers = [
@@ -746,6 +875,8 @@ export default function OrdersPage() {
           requests={billRequests}
           orders={orders}
           onDismiss={dismissBillRequest}
+          onMarkPaid={handleMarkPaid}
+          customMethods={customPaymentMethods}
         />
 
         {/* Table filter + controls */}
@@ -886,6 +1017,8 @@ export default function OrdersPage() {
                             onStatusChange={handleStatusChange}
                             updating={updating}
                             isNew={isSessionNew(session)}
+                            onCollectPayment={handleCollectPayment}
+                            allPaymentMethods={allPaymentMethods}
                           />
                         ))
                       )}

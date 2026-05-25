@@ -141,7 +141,7 @@ function IngredientCard({ ingredient, onToggle, saving }: IngredientCardProps) {
           }}
         >
           <span className="text-[11px]" style={{ color: "var(--t-dim)" }}>
-            <span className="font-bold" style={{ color: affected_count > 0 ? "var(--t-text)" : "var(--t-dim)" }}>
+            <span className="font-bold" style={{ color: (affected_count ?? 0) > 0 ? "var(--t-text)" : "var(--t-dim)" }}>
               {affected_count}
             </span>{" "}
             {affected_count === 1 ? "dish" : "dishes"}
