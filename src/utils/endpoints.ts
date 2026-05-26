@@ -59,6 +59,7 @@ export const ENDPOINTS = {
   DASH_INGREDIENTS:             '/api/restaurant-dash/ingredients',
   DASH_INGREDIENTS_TOGGLE:      '/api/restaurant-dash/ingredients/toggle',
   DASH_INGREDIENTS_BULK:        '/api/restaurant-dash/ingredients/bulk',
+  DASH_INGREDIENTS_BULK_ADD:    '/api/restaurant-dash/ingredients/bulk-add',
   DASH_INGREDIENTS_IMPORT:      '/api/restaurant-dash/ingredients/import',
   DASH_INGREDIENT_DETAIL:       (name: string): string => `/api/restaurant-dash/ingredients/${encodeURIComponent(name)}`,
   DASH_INGREDIENT_UPDATE:       (name: string): string => `/api/restaurant-dash/ingredients/${encodeURIComponent(name)}`,

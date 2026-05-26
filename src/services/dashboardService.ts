@@ -400,6 +400,7 @@ export interface PaginatedIngredientsResult {
 export interface IngredientsParams {
   search?: string;
   status?: string;
+  sort?: string;
   page?: number;
   limit?: number;
   [key: string]: unknown;
@@ -479,6 +480,17 @@ export async function bulkUpdateIngredientStock(
   return apiCaller({
     method:   'POST',
     endpoint: ENDPOINTS.DASH_INGREDIENTS_BULK,
+    payload:  { updates },
+    useAdmin: true,
+  });
+}
+
+export async function bulkAddIngredientStock(
+  updates: Array<{ name: string; quantity: number; unit: string }>,
+): Promise<unknown> {
+  return apiCaller({
+    method:   'POST',
+    endpoint: ENDPOINTS.DASH_INGREDIENTS_BULK_ADD,
     payload:  { updates },
     useAdmin: true,
   });

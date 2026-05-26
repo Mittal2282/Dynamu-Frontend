@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.1",
+    "antd": "^6.4.3",
     "axios": "^1.13.6",
     "daisyui": "^5.5.19",
     "leaflet": "^1.9.4",
