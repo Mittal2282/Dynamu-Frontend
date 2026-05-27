@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import { Modal as AntdModal } from 'antd';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,44 +9,47 @@ interface ModalProps {
   maxWidth?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-sm' }: ModalProps) {
-  const ref = useRef<HTMLDialogElement>(null);
+const WIDTH_MAP: Record<string, number> = {
+  'max-w-xs':  320,
+  'max-w-sm':  420,
+  'max-w-md':  480,
+  'max-w-lg':  560,
+  'max-w-xl':  640,
+  'max-w-2xl': 720,
+  'max-w-3xl': 800,
+};
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (isOpen) el.showModal();
-    else if (el.open) el.close();
-  }, [isOpen]);
+export default function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-sm' }: ModalProps) {
+  const width = WIDTH_MAP[maxWidth] ?? 420;
 
   return (
-    <dialog ref={ref} className="modal" onClose={onClose}>
-      <div
-        className={`modal-box ${maxWidth} p-0 flex flex-col max-h-[90vh]`}
-        style={{ background: 'var(--t-bg)', borderTop: '2.5px solid var(--t-accent)' }}
-      >
-        <div
-          className="px-5 py-4 border-b flex items-center justify-between shrink-0"
-          style={{ borderColor: 'var(--t-line)' }}
-        >
-          {title && (
-            <h3 className="font-bold text-lg leading-none tracking-wide" style={{ color: 'var(--t-text)' }}>
-              {title}
-            </h3>
-          )}
-          <button
-            onClick={onClose}
-            className="btn btn-ghost btn-sm btn-circle ml-auto"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="p-5 flex-1 min-h-0 overflow-y-auto">{children}</div>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose} />
-      </form>
-    </dialog>
+    <AntdModal
+      open={isOpen}
+      onCancel={onClose}
+      title={title}
+      footer={null}
+      width={width}
+      destroyOnHidden
+      styles={{
+        root: {
+          background: 'var(--t-bg)',
+          borderTop: '2.5px solid var(--t-accent)',
+          padding: 0,
+        },
+        header: {
+          background: 'var(--t-bg)',
+          padding: '16px 20px 12px',
+          borderBottom: '1px solid var(--t-line)',
+          marginBottom: 0,
+        },
+        body: {
+          padding: '20px',
+          maxHeight: '75vh',
+          overflowY: 'auto',
+        },
+      }}
+    >
+      {children}
+    </AntdModal>
   );
 }

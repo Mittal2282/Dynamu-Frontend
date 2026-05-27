@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { Alert } from 'antd';
 
 interface ToastOptions {
   status?: 'success' | 'error' | 'info' | 'warning';
@@ -13,41 +14,19 @@ interface ToastItem extends ToastOptions {
 
 type ToastFn = (options: ToastOptions) => void;
 
-const ICONS: Record<string, string> = {
-  success: '✅',
-  error:   '❌',
-  info:    'ℹ️',
-  warning: '⚠️',
-};
-
-const ALERT_CLASS: Record<string, string> = {
-  success: 'alert-success',
-  error:   'alert-error',
-  info:    'alert-info',
-  warning: 'alert-warning',
-};
-
 const ToastContext = createContext<ToastFn | null>(null);
 
 function ToastItemComponent({ id, status = 'info', title, description, onDismiss }: ToastItem & { onDismiss: (id: number) => void }) {
   return (
-    <div
-      role="alert"
-      className={`alert ${ALERT_CLASS[status] ?? ALERT_CLASS.info} shadow-2xl w-full max-w-sm animate-[fadeSlideIn_0.25s_ease-out]`}
-    >
-      <span className="text-lg shrink-0">{ICONS[status]}</span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold leading-snug">{title}</p>
-        {description && <p className="text-xs opacity-80 mt-0.5 leading-relaxed">{description}</p>}
-      </div>
-      <button
-        onClick={() => onDismiss(id)}
-        className="btn btn-ghost btn-xs btn-circle shrink-0"
-        aria-label="Dismiss notification"
-      >
-        ×
-      </button>
-    </div>
+    <Alert
+      type={status}
+      message={title}
+      description={description}
+      closable
+      onClose={() => onDismiss(id)}
+      showIcon
+      className="shadow-2xl animate-[fadeSlideIn_0.25s_ease-out] w-full"
+    />
   );
 }
 

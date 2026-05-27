@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DatePicker, Spin, Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
 import { getCompletedOrders } from '../../../../services/dashboardService';
 import { todayStr, fmtDate, fmtTime, fmtCurrency, downloadSampleSheet } from './helpers';
 import { StatusBadge, SourceBadge } from './badges';
@@ -15,6 +18,92 @@ const STATUS_TABS: { key: StatusFilter; label: string }[] = [
   { key: 'completed', label: 'Completed' },
   { key: 'served',    label: 'Served'    },
   { key: 'cancelled', label: 'Cancelled' },
+];
+
+const ORDER_COLUMNS: ColumnsType<CompletedOrder> = [
+  {
+    title: 'Date & Time',
+    key: 'datetime',
+    width: 120,
+    render: (_, o) => (
+      <>
+        <p className="text-xs font-semibold" style={{ color: 'var(--t-text)' }}>{fmtDate(o.createdAt)}</p>
+        <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: 'var(--t-dim)' }}>{fmtTime(o.createdAt)}</p>
+      </>
+    ),
+  },
+  {
+    title: 'Order #',
+    key: 'order_number',
+    width: 145,
+    render: (_, o) => (
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="font-mono text-xs font-bold tracking-tight" style={{ color: 'var(--t-accent)' }}>#{o.order_number}</span>
+        <SourceBadge source={o.source} />
+      </div>
+    ),
+  },
+  {
+    title: 'Customer',
+    key: 'customer',
+    width: 110,
+    render: (_, o) => (
+      <p className="text-xs truncate" style={{ color: o.customer_name ? 'var(--t-text)' : 'var(--t-dim)' }}>
+        {o.customer_name ?? '—'}
+      </p>
+    ),
+  },
+  {
+    title: 'Items',
+    key: 'items',
+    render: (_, o) => {
+      const itemsArr = o.items ?? [];
+      const totalItemCount = itemsArr.reduce((s, i) => s + (i.quantity ?? 0), 0);
+      const itemSummary = itemsArr
+        .map((i) => `${i.name}${i.variant_name ? ` (${i.variant_name})` : ''} ×${i.quantity}`)
+        .join(' · ');
+      return (
+        <>
+          <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: 'var(--t-dim)' }}>{itemSummary || '—'}</p>
+          {totalItemCount > 0 && (
+            <p className="text-[10px] mt-0.5 font-semibold" style={{ color: 'var(--t-dim)' }}>
+              {totalItemCount} item{totalItemCount !== 1 ? 's' : ''}
+            </p>
+          )}
+        </>
+      );
+    },
+  },
+  {
+    title: 'Table',
+    key: 'table',
+    width: 60,
+    render: (_, o) => o.table?.table_number ? (
+      <span
+        className="inline-flex items-center justify-center w-6 h-6 rounded-lg text-[11px] font-bold"
+        style={{ background: 'var(--t-float)', color: 'var(--t-text)', border: '1px solid var(--t-line)' }}
+      >
+        {o.table.table_number}
+      </span>
+    ) : (
+      <span className="text-xs" style={{ color: 'var(--t-dim)' }}>—</span>
+    ),
+  },
+  {
+    title: 'Total',
+    key: 'total',
+    width: 85,
+    align: 'right',
+    render: (_, o) => (
+      <p className="text-xs font-bold tabular-nums" style={{ color: 'var(--t-text)' }}>{fmtCurrency(o.total_amount)}</p>
+    ),
+  },
+  {
+    title: 'Status',
+    key: 'status',
+    width: 95,
+    render: (_, o) => <StatusBadge status={o.status} />,
+  },
 ];
 
 export default function CompletedOrdersPage() {
@@ -115,30 +204,19 @@ export default function CompletedOrdersPage() {
 
       {/* ── Filter bar ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Date range pill */}
-        <div
-          className="flex items-center gap-0 rounded-xl overflow-hidden shrink-0"
-          style={{ border: '1px solid var(--t-line)', background: 'var(--t-surface)', height: 32 }}
-        >
-          <input
-            type="date"
-            value={dateFrom}
-            max={dateTo}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="text-[11px] font-medium px-2.5 bg-transparent outline-none"
-            style={{ color: 'var(--t-text)', colorScheme: 'dark', width: 128 }}
-          />
-          <span className="text-[10px] px-1 select-none" style={{ color: 'var(--t-dim)' }}>→</span>
-          <input
-            type="date"
-            value={dateTo}
-            min={dateFrom}
-            max={todayStr()}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="text-[11px] font-medium px-2.5 bg-transparent outline-none"
-            style={{ color: 'var(--t-text)', colorScheme: 'dark', width: 128 }}
-          />
-        </div>
+        {/* Date range picker */}
+        <DatePicker.RangePicker
+          value={[dayjs(dateFrom), dayjs(dateTo)]}
+          maxDate={dayjs()}
+          size="small"
+          allowClear={false}
+          onChange={(dates) => {
+            if (dates?.[0] && dates?.[1]) {
+              setDateFrom(dates[0].format('YYYY-MM-DD'));
+              setDateTo(dates[1].format('YYYY-MM-DD'));
+            }
+          }}
+        />
 
         {/* Search */}
         <div className="relative flex-1 min-w-45" style={{ height: 32 }}>
@@ -199,112 +277,55 @@ export default function CompletedOrdersPage() {
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────────────── */}
+      <style>{`
+        .oh-table-wrap .ant-table-content {
+          overflow: visible !important;
+        }
+        .oh-table-wrap .ant-table-thead > tr > th {
+          position: sticky !important;
+          top: 0;
+          z-index: 3;
+          background: var(--t-float) !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+        }
+        .oh-table-wrap .ant-table-tbody > tr:hover > td:first-child {
+          box-shadow: inset 3px 0 0 var(--t-accent);
+        }
+      `}</style>
       <div
         className="flex-1 rounded-2xl overflow-hidden flex flex-col min-h-0"
-        style={{ border: '1px solid var(--t-line)', background: 'var(--t-bg)' }}
+        style={{
+          borderTop: '2px solid var(--t-accent)',
+          borderRight: '1px solid var(--t-line)',
+          borderBottom: '1px solid var(--t-line)',
+          borderLeft: '1px solid var(--t-line)',
+          background: 'var(--t-bg)',
+        }}
       >
-        {loading ? (
-          <div className="flex items-center justify-center h-40">
-            <span className="loading loading-spinner loading-md" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 gap-2">
-            <span className="text-3xl">📋</span>
-            <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>No orders found</p>
-            <p className="text-xs" style={{ color: 'var(--t-dim)' }}>
-              {search ? 'Try a different search term' : 'Try adjusting the date range or add a manual order'}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-auto flex-1">
-            <table className="table table-zebra w-full" style={{ minWidth: 700 }}>
-              <thead className="sticky top-0">
-                <tr>
-                  {[
-                    { label: 'Date & Time', w: '120px' },
-                    { label: 'Order #',     w: '145px' },
-                    { label: 'Customer',    w: '110px' },
-                    { label: 'Items',       w: 'auto'  },
-                    { label: 'Table',       w: '60px'  },
-                    { label: 'Total',       w: '85px'  },
-                    { label: 'Status',      w: '95px'  },
-                  ].map(({ label, w }) => (
-                    <th
-                      key={label}
-                      className="text-[10px] font-bold uppercase tracking-widest select-none whitespace-nowrap py-2.5"
-                      style={{ width: w, color: 'var(--t-dim)' }}
-                    >
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((order) => {
-                  const itemsArr       = order.items ?? [];
-                  const totalItemCount = itemsArr.reduce((s, i) => s + (i.quantity ?? 0), 0);
-                  const itemSummary    = itemsArr
-                    .map((i) => `${i.name}${i.variant_name ? ` (${i.variant_name})` : ''} ×${i.quantity}`)
-                    .join(' · ');
-
-                  return (
-                    <tr
-                      key={order._id}
-                      className="cursor-pointer hover"
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <p className="text-xs font-semibold" style={{ color: 'var(--t-text)' }}>{fmtDate(order.createdAt)}</p>
-                        <p className="text-[10px] mt-0.5 tabular-nums" style={{ color: 'var(--t-dim)' }}>{fmtTime(order.createdAt)}</p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-xs font-bold tracking-tight" style={{ color: 'var(--t-accent)' }}>
-                            #{order.order_number}
-                          </span>
-                          <SourceBadge source={order.source} />
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 max-w-27.5">
-                        <p className="text-xs truncate" style={{ color: order.customer_name ? 'var(--t-text)' : 'var(--t-dim)' }}>
-                          {order.customer_name ?? '—'}
-                        </p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <p className="text-[11px] leading-relaxed line-clamp-2" style={{ color: 'var(--t-dim)' }}>
-                          {itemSummary || '—'}
-                        </p>
-                        {totalItemCount > 0 && (
-                          <p className="text-[10px] mt-0.5 font-semibold" style={{ color: 'var(--t-dim)' }}>
-                            {totalItemCount} item{totalItemCount !== 1 ? 's' : ''}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        {order.table?.table_number ? (
-                          <span
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-lg text-[11px] font-bold"
-                            style={{ background: 'var(--t-float)', color: 'var(--t-text)', border: '1px solid var(--t-line)' }}
-                          >
-                            {order.table.table_number}
-                          </span>
-                        ) : (
-                          <span className="text-xs" style={{ color: 'var(--t-dim)' }}>—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <p className="text-xs font-bold tabular-nums" style={{ color: 'var(--t-text)' }}>{fmtCurrency(order.total_amount)}</p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <StatusBadge status={order.status} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="flex-1 min-h-0 overflow-auto oh-table-wrap">
+          <Table
+            columns={ORDER_COLUMNS}
+            dataSource={filtered}
+            rowKey="_id"
+            size="small"
+            bordered
+            pagination={false}
+            loading={loading ? { indicator: <Spin /> } : false}
+            onRow={(record) => ({ onClick: () => setSelectedOrder(record), style: { cursor: 'pointer' } })}
+            scroll={{ x: 700 }}
+            locale={{
+              emptyText: (
+                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                  <span className="text-3xl">📋</span>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--t-text)' }}>No orders found</p>
+                  <p className="text-xs" style={{ color: 'var(--t-dim)' }}>
+                    {search ? 'Try a different search term' : 'Try adjusting the date range or add a manual order'}
+                  </p>
+                </div>
+              ),
+            }}
+          />
+        </div>
 
         {/* Footer */}
         {!loading && filtered.length > 0 && (

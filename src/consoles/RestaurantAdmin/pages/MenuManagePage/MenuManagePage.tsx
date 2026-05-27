@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Button, Segmented, Select, Spin } from "antd";
 import {
   getDashMenu,
   updateDashMenuItem,
@@ -556,7 +557,7 @@ function MenuItemCard({
 
       {isSaving && (
         <div className="absolute inset-0 flex items-center justify-center rounded-2xl" style={{ background: "rgba(0,0,0,0.45)" }}>
-          <span className="loading loading-spinner loading-md" />
+          <Spin />
         </div>
       )}
     </div>
@@ -858,7 +859,7 @@ export default function MenuManagePage() {
 
   if (initialLoad) return <MenuPageSkeleton />;
   if (error && items.length === 0) {
-    return <div role="alert" className="alert alert-error text-sm">{error}</div>;
+    return <Alert type="error" message={error} showIcon className="text-sm" />;
   }
 
   return (
@@ -879,23 +880,35 @@ export default function MenuManagePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <button onClick={() => setCategoryModalOpen(true)} className="btn btn-sm btn-ghost gap-2 text-sm font-semibold">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
-            </svg>
+          <Button
+            type="text"
+            size="small"
+            onClick={() => setCategoryModalOpen(true)}
+            icon={
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h10M7 12h4m-4 5h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+              </svg>
+            }
+            className="text-sm font-semibold"
+          >
             Category
-          </button>
+          </Button>
 
           <div className="relative" ref={addMenuRef}>
-            <button
+            <Button
+              type="primary"
+              size="small"
               onClick={() => setAddMenuOpen((o) => !o)}
-              className="btn btn-sm btn-primary gap-2 text-sm font-semibold"
+              className="text-sm font-semibold"
+              icon={
+                <svg className={`w-3.5 h-3.5 transition-transform duration-150 ${addMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              }
+              iconPosition="end"
             >
               + Add Item
-              <svg className={`w-3.5 h-3.5 transition-transform duration-150 ${addMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            </Button>
 
             {addMenuOpen && (
               <div
@@ -940,7 +953,7 @@ export default function MenuManagePage() {
             placeholder="Search items…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="input input-bordered w-full pl-9 pr-8 text-sm"
+            className="t-form-field rounded-xl w-full pl-9 pr-8 text-sm h-10"
           />
           {searchQuery && (
             <button
@@ -953,36 +966,29 @@ export default function MenuManagePage() {
           )}
         </div>
 
-        <div className="select-custom-wrap" style={{ minWidth: '10rem' }}>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="select select-bordered text-sm font-medium"
-          >
-            <option value="">All categories</option>
-            {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-          <svg className="select-chevron w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <Select
+          value={categoryFilter || undefined}
+          onChange={(val) => setCategoryFilter(val ?? "")}
+          placeholder="All categories"
+          allowClear
+          onClear={() => setCategoryFilter("")}
+          style={{ minWidth: "10rem" }}
+          className="text-sm font-medium"
+        >
+          {categories.map((cat) => (
+            <Select.Option key={cat} value={cat}>{cat}</Select.Option>
+          ))}
+        </Select>
 
-        <div role="tablist" className="tabs tabs-boxed text-xs font-semibold">
-          {[
+        <Segmented
+          value={availFilter}
+          onChange={(val) => setAvailFilter(val as string)}
+          options={[
             { value: "all", label: "All" },
             { value: "available", label: "Available" },
             { value: "unavailable", label: "Hidden" },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              role="tab"
-              onClick={() => setAvailFilter(opt.value)}
-              className={`tab text-xs font-semibold ${availFilter === opt.value ? 'tab-active' : ''}`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+          ]}
+        />
 
         {isFiltering && (
           <>
@@ -1014,7 +1020,7 @@ export default function MenuManagePage() {
       <div ref={sentinelRef} className="h-1" />
       {loading && items.length > 0 && (
         <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-sm" />
+          <Spin size="small" />
         </div>
       )}
       {!hasMore && items.length > 0 && (

@@ -1,26 +1,28 @@
 import React from 'react';
+import { Button as AntdButton } from 'antd';
 
-const VARIANT: Record<string, string> = {
-  primary:   'btn-primary',
-  secondary: 'btn-ghost border border-white/20',
-  ghost:     'btn-ghost',
-  danger:    'btn-error',
-};
+const TYPE_MAP = {
+  primary:   'primary',
+  secondary: 'default',
+  ghost:     'text',
+  danger:    'primary',
+} as const;
 
-const SIZE: Record<string, string> = {
-  sm: 'btn-sm',
-  md: '',
-  lg: 'btn-lg',
-  xl: 'btn-xl',
-};
+const SIZE_MAP = {
+  sm: 'small',
+  md: 'middle',
+  lg: 'large',
+  xl: 'large',
+} as const;
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'size'> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  htmlType?: 'button' | 'submit' | 'reset';
 }
 
 export default function Button({
@@ -33,39 +35,26 @@ export default function Button({
   fullWidth = false,
   className = '',
   children,
-  type      = 'button',
+  htmlType  = 'button',
   onClick,
   ...rest
 }: ButtonProps) {
-  const isDisabled = disabled || loading;
-
   return (
-    <button
-      type={type}
+    <AntdButton
+      type={TYPE_MAP[variant] ?? 'primary'}
+      danger={variant === 'danger'}
+      size={SIZE_MAP[size] ?? 'middle'}
+      loading={loading}
       disabled={disabled}
-      onClick={isDisabled ? undefined : onClick}
-      className={[
-        'relative btn rounded-xl active:scale-[0.97]',
-        VARIANT[variant] ?? VARIANT.primary,
-        SIZE[size]       ?? '',
-        fullWidth && 'w-full',
-        loading && 'pointer-events-none',
-        className,
-      ].filter(Boolean).join(' ')}
-      {...rest}
+      block={fullWidth}
+      htmlType={htmlType}
+      onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}
+      className={`rounded-xl active:scale-[0.97] ${className}`}
+      {...(rest as object)}
     >
-      <span className={`inline-flex items-center gap-2 ${loading ? 'opacity-0' : ''}`}>
-        {leftIcon && <span>{leftIcon}</span>}
-        {children}
-        {rightIcon && <span>{rightIcon}</span>}
-      </span>
-
-      {loading && (
-        <span className="absolute inset-0 flex items-center justify-center">
-          <span className="w-5 h-5 rounded-full border-2 animate-spin"
-            style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
-        </span>
-      )}
-    </button>
+      {leftIcon && <span className={children ? 'mr-1.5' : ''}>{leftIcon}</span>}
+      {children}
+      {rightIcon && <span className={children ? 'ml-1.5' : ''}>{rightIcon}</span>}
+    </AntdButton>
   );
 }

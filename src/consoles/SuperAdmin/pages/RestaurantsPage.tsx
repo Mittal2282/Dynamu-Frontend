@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button, Input, Spin, Table } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { apiCaller } from "../../../api/apiCaller";
 import { getRestaurants } from "../../../services/superAdminService";
 import type { SuperAdminRestaurant } from "../../../services/superAdminService";
@@ -90,8 +92,8 @@ function StatusBadge({ status }: { status: string }) {
   const cfg = SUB_CONFIG[status] ?? SUB_CONFIG.trial;
   return (
     <span
-      className="badge badge-xs font-bold uppercase tracking-wide"
-      style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}
+      className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full"
+      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
     >
       {cfg.label}
     </span>
@@ -277,11 +279,91 @@ export default function RestaurantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 gap-3">
-        <span className="loading loading-spinner loading-lg" />
+        <Spin size="large" />
         <span className="text-slate-300 text-sm">Loading…</span>
       </div>
     );
   }
+
+  const columns: ColumnsType<SuperAdminRestaurant> = [
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Restaurant</span>,
+      key: "restaurant",
+      render: (_, r) => {
+        const isActiveToday = (r.orders_today ?? 0) > 0;
+        return (
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ background: isActiveToday ? "#22c55e" : "rgba(255,255,255,0.1)" }}
+              title={isActiveToday ? "Has orders today" : "No orders today"}
+            />
+            <div>
+              <div className="font-semibold text-sm">{r.name}</div>
+              <div className="text-[11px] mt-0.5 font-mono" style={{ color: "var(--t-dim)" }}>/{r.slug}</div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Owner</span>,
+      key: "owner",
+      render: (_, r) => (
+        <div>
+          <div className="text-sm">{r.owner?.name || "—"}</div>
+          <div className="text-[11px] mt-0.5" style={{ color: "var(--t-dim)" }}>{r.owner?.email}</div>
+        </div>
+      ),
+    },
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Tables</span>,
+      dataIndex: "table_count",
+      key: "tables",
+      align: "center",
+      render: (val) => val ?? 0,
+    },
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Orders Today</span>,
+      dataIndex: "orders_today",
+      key: "orders_today",
+      align: "center",
+      render: (val, r) => (
+        <span className="text-sm font-bold" style={{ color: (r.orders_today ?? 0) > 0 ? "#22c55e" : "#475569" }}>
+          {val ?? 0}
+        </span>
+      ),
+    },
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Onboarded</span>,
+      dataIndex: "createdAt",
+      key: "onboarded",
+      render: (val) =>
+        val
+          ? new Date(val).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+          : "—",
+    },
+    {
+      title: <span className="text-[10px] font-bold uppercase tracking-widest">Status</span>,
+      dataIndex: "subscription_status",
+      key: "status",
+      align: "center",
+      render: (val) => <StatusBadge status={val} />,
+    },
+    {
+      title: "",
+      key: "actions",
+      render: (_, r) => (
+        <Button
+          type="text"
+          size="small"
+          onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
+        >
+          View Orders →
+        </Button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -304,24 +386,19 @@ export default function RestaurantsPage() {
             Business stats & all onboarded restaurants
           </p>
         </div>
-        <button
+        <Button
+          type="primary"
           onClick={() => navigate("/superadmin/onboard")}
-          className="btn btn-primary gap-2 text-sm shrink-0"
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          }
+          className="shrink-0"
         >
-          <svg
-            className="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
           Onboard Restaurant
-        </button>
+        </Button>
       </div>
 
       {/* ── Platform Metric Cards ── */}
@@ -332,15 +409,7 @@ export default function RestaurantsPage() {
           sub={`${stats?.active_restaurants ?? 0} marked active`}
           accentColor="#3b82f6"
           icon={
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
@@ -352,15 +421,7 @@ export default function RestaurantsPage() {
           sub="Restaurants with orders"
           accentColor="#22c55e"
           icon={
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#22c55e"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
             </svg>
           }
@@ -371,15 +432,7 @@ export default function RestaurantsPage() {
           sub={`${avgOrdersPerRestaurant} avg / restaurant`}
           accentColor="#a855f7"
           icon={
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#a855f7"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
               <rect x="9" y="3" width="6" height="4" rx="1" />
               <path d="M9 12h6M9 16h4" />
@@ -394,15 +447,7 @@ export default function RestaurantsPage() {
           sub={`${avgRevenuePerRestaurant} avg / restaurant`}
           accentColor="#f59e0b"
           icon={
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#f59e0b"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="1" x2="12" y2="23" />
               <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
@@ -421,131 +466,46 @@ export default function RestaurantsPage() {
         <div className="px-5 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
           <div className="flex items-center gap-3">
             <p className="text-sm font-semibold text-white">All Restaurants</p>
-            <span className="badge badge-sm">
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+              style={{ background: "rgba(255,255,255,0.08)", color: "var(--t-dim)" }}
+            >
               {search ? `${filtered.length} / ${restaurants.length}` : restaurants.length}
             </span>
           </div>
-          <div className="relative sm:w-64">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none z-10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
+          <div className="sm:w-64">
+            <Input.Search
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onSearch={() => {}}
               placeholder="Search by name or slug…"
-              className="input input-bordered input-sm pl-9 pr-8 w-full text-xs"
+              size="small"
+              allowClear
+              onClear={() => setSearch("")}
             />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white text-xs"
-              >
-                ✕
-              </button>
-            )}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="table table-zebra table-sm w-full">
-            <thead>
-              <tr>
-                <th className="text-[10px] font-bold uppercase tracking-widest">Restaurant</th>
-                <th className="text-[10px] font-bold uppercase tracking-widest">Owner</th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
-                  Tables
-                </th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
-                  Orders Today
-                </th>
-                <th className="text-[10px] font-bold uppercase tracking-widest">Onboarded</th>
-                <th className="text-center text-[10px] font-bold uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-16">
-                    <p className="text-3xl mb-3">{search ? "🔍" : "🏪"}</p>
-                    <p className="text-slate-300 text-sm">
-                      {search
-                        ? "No restaurants match your search."
-                        : "No restaurants yet. Onboard your first one!"}
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((r) => {
-                  const isActiveToday = (r.orders_today ?? 0) > 0;
-                  const onboarded = r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—";
-                  return (
-                    <tr key={r._id} className="hover cursor-pointer">
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{
-                              background: isActiveToday ? "#22c55e" : "rgba(255,255,255,0.1)",
-                            }}
-                            title={isActiveToday ? "Has orders today" : "No orders today"}
-                          />
-                          <div>
-                            <div className="font-semibold text-sm">{r.name}</div>
-                            <div className="text-slate-300 text-xs mt-0.5 font-mono">/{r.slug}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="text-sm">{r.owner?.name || "—"}</div>
-                        <div className="text-slate-300 text-xs mt-0.5">{r.owner?.email}</div>
-                      </td>
-                      <td className="text-center">{r.table_count ?? 0}</td>
-                      <td className="text-center">
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: isActiveToday ? "#22c55e" : "#475569" }}
-                        >
-                          {r.orders_today ?? 0}
-                        </span>
-                      </td>
-                      <td className="text-xs">{onboarded}</td>
-                      <td className="text-center">
-                        <StatusBadge status={r.subscription_status} />
-                      </td>
-                      <td className="text-right">
-                        <button
-                          onClick={() => navigate(`/superadmin/restaurants/${r._id}/orders`)}
-                          className="btn btn-xs btn-ghost whitespace-nowrap"
-                        >
-                          View Orders →
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table
+          columns={columns}
+          dataSource={filtered}
+          rowKey="_id"
+          size="small"
+          pagination={false}
+          locale={{
+            emptyText: (
+              <div className="py-16 text-center">
+                <p className="text-3xl mb-3">{search ? "🔍" : "🏪"}</p>
+                <p className="text-slate-300 text-sm">
+                  {search
+                    ? "No restaurants match your search."
+                    : "No restaurants yet. Onboard your first one!"}
+                </p>
+              </div>
+            ),
+          }}
+          className="overflow-x-auto"
+        />
       </div>
     </div>
   );

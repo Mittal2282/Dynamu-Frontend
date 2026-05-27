@@ -47,7 +47,20 @@ export function CountBadge({ count, className = '', showZero = false }: CountBad
   if (!showZero && count === 0) return null;
   return (
     <span
-      className={`badge badge-primary badge-sm absolute -top-2 -right-2 text-[10px] font-bold px-0.5 ${className}`}
+      className={`absolute -top-2 -right-2 ${className}`}
+      style={{
+        background: 'var(--t-accent)',
+        color: '#fff',
+        borderRadius: 9999,
+        minWidth: 18,
+        height: 18,
+        fontSize: 10,
+        fontWeight: 700,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 5px',
+      }}
     >
       {count > 99 ? '99+' : count}
     </span>

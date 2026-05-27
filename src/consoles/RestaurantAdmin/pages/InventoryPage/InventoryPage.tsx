@@ -591,7 +591,8 @@ export default function InventoryPage() {
       {/* ── Table ── */}
       <div style={{
         flex: 1, display: "flex", flexDirection: "column", overflow: "hidden",
-        border: "1px solid var(--t-line)", borderRadius: 12,
+        border: "1px solid var(--t-line)",
+        borderRadius: 12,
         background: "var(--t-surface)",
       }}>
         {/* Scrollable area — header is sticky inside so it shares the exact same width as rows */}

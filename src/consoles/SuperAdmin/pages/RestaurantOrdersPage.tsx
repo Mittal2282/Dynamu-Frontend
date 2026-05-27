@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Button, DatePicker, Select, Spin, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
 import { getRestaurantOrders } from "../../../services/superAdminService";
 import { apiCaller } from "../../../api/apiCaller";
 import type { Order } from "../../../types/order";
@@ -15,13 +18,7 @@ const STATUS_COLOR: Record<string, { color: string; bg: string }> = {
 };
 
 const ALL_STATUSES = [
-  "pending",
-  "confirmed",
-  "preparing",
-  "ready",
-  "served",
-  "completed",
-  "cancelled",
+  "pending", "confirmed", "preparing", "ready", "served", "completed", "cancelled",
 ];
 
 interface RestaurantInfo {
@@ -47,14 +44,12 @@ export default function RestaurantOrdersPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // Reset loading when URL ID changes (set state during render pattern)
   const [prevId, setPrevId] = useState(id);
   if (id !== prevId) {
     setPrevId(id);
     setLoading(true);
   }
 
-  // Helper to trigger loading when filters change
   const handleFilterChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, value: T) => {
     setLoading(true);
     setter(value);
@@ -71,7 +66,6 @@ export default function RestaurantOrdersPage() {
   }, [id]);
 
   useEffect(() => {
-    // setLoading(true) is now handled by event handlers for filters or the id-change effect above.
     getRestaurantOrders(id!)
       .then((data) => setOrders(data))
       .catch(console.error)
@@ -80,16 +74,81 @@ export default function RestaurantOrdersPage() {
 
   const isFiltering = statusFilter || dateFrom || dateTo;
 
+  const columns: ColumnsType<Order> = [
+    {
+      title: "Order #",
+      dataIndex: "order_number",
+      key: "order_number",
+      render: (val) => <span className="font-mono text-xs" style={{ color: "var(--t-dim)" }}>{val}</span>,
+    },
+    {
+      title: "Table",
+      key: "table",
+      render: (_, o) =>
+        `Table ${(typeof o.table === "object" ? o.table?.table_number : undefined) ?? o.table_number ?? "—"}`,
+    },
+    {
+      title: "Items",
+      key: "items",
+      render: (_, o) => (
+        <span className="text-xs truncate block max-w-[200px]">
+          {o.items?.map((i) => `${i.name} ×${i.quantity}`).join(", ") || "—"}
+        </span>
+      ),
+    },
+    {
+      title: "Total",
+      dataIndex: "total_amount",
+      key: "total",
+      align: "right",
+      render: (val) => (
+        <span className="font-semibold" style={{ color: "var(--t-accent)" }}>
+          ₹{Math.round(val || 0)}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      align: "center",
+      render: (val) => (
+        <Tag
+          style={{
+            color: STATUS_COLOR[val]?.color ?? "#94a3b8",
+            background: STATUS_COLOR[val]?.bg ?? "rgba(148,163,184,0.15)",
+            borderColor: "transparent",
+            fontWeight: 600,
+            borderRadius: 9999,
+          }}
+        >
+          {val}
+        </Tag>
+      ),
+    },
+    {
+      title: "Time",
+      dataIndex: "createdAt",
+      key: "time",
+      align: "right",
+      render: (val) => (
+        <span className="text-xs whitespace-nowrap">{val ? timeAgo(val) : "—"}</span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start gap-3">
-        <button
+        <Button
+          type="text"
+          size="small"
           onClick={() => navigate("/superadmin")}
-          className="btn btn-sm btn-ghost gap-1.5 shrink-0 mt-0.5"
+          className="shrink-0 mt-0.5"
         >
           ← Back
-        </button>
+        </Button>
         <div>
           <h1
             className="text-2xl font-bold"
@@ -111,44 +170,40 @@ export default function RestaurantOrdersPage() {
 
       {/* ── Filters ────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3 items-end">
-        {/* Status */}
         <div className="space-y-1">
-          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">
-            Status
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => handleFilterChange(setStatusFilter, e.target.value)}
-            className="select select-bordered select-sm text-sm"
+          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">Status</label>
+          <Select
+            value={statusFilter || undefined}
+            placeholder="All Statuses"
+            onChange={(val) => handleFilterChange(setStatusFilter, val ?? "")}
+            size="small"
+            style={{ minWidth: 140 }}
+            allowClear
+            onClear={() => { setLoading(true); setStatusFilter(""); }}
           >
-            <option value="">All Statuses</option>
             {ALL_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <Select.Option key={s} value={s}>{s}</Select.Option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        {/* From */}
         <div className="space-y-1">
-          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">From</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => handleFilterChange(setDateFrom, e.target.value)}
-            className="input input-bordered input-sm text-sm"
-          />
-        </div>
-
-        {/* To */}
-        <div className="space-y-1">
-          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">To</label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => handleFilterChange(setDateTo, e.target.value)}
-            className="input input-bordered input-sm text-sm"
+          <label className="text-[11px] text-slate-300 uppercase tracking-wider block">Date Range</label>
+          <DatePicker.RangePicker
+            value={dateFrom && dateTo ? [dayjs(dateFrom), dayjs(dateTo)] : null}
+            maxDate={dayjs()}
+            size="small"
+            onChange={(dates) => {
+              if (dates?.[0] && dates?.[1]) {
+                setLoading(true);
+                setDateFrom(dates[0].format("YYYY-MM-DD"));
+                setDateTo(dates[1].format("YYYY-MM-DD"));
+              } else {
+                setLoading(true);
+                setDateFrom("");
+                setDateTo("");
+              }
+            }}
           />
         </div>
 
@@ -174,80 +229,23 @@ export default function RestaurantOrdersPage() {
           {!loading && <span className="text-xs text-slate-300">{orders.length} total</span>}
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center gap-3 h-40">
-            <span className="loading loading-spinner loading-md" />
-            <span className="text-slate-300 text-sm">Loading orders…</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table table-zebra table-sm w-full">
-              <thead>
-                <tr>
-                  <th className="text-xs font-semibold uppercase tracking-wider">Order #</th>
-                  <th className="text-xs font-semibold uppercase tracking-wider">Table</th>
-                  <th className="text-xs font-semibold uppercase tracking-wider">Items</th>
-                  <th className="text-right text-xs font-semibold uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="text-center text-xs font-semibold uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="text-right text-xs font-semibold uppercase tracking-wider">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-16">
-                      <p className="text-3xl mb-3">📋</p>
-                      <p className="text-slate-300 text-sm">No orders found.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  orders.map((order) => (
-                    <tr key={order._id} className="hover cursor-pointer">
-                      <td className="font-mono text-xs text-slate-400">{order.order_number}</td>
-                      <td>
-                        Table{" "}
-                        {(typeof order.table === "object"
-                          ? order.table?.table_number
-                          : undefined) ??
-                          order.table_number ??
-                          "—"}
-                      </td>
-                      <td className="max-w-55">
-                        <span className="truncate block text-xs">
-                          {order.items?.map((i) => `${i.name} ×${i.quantity}`).join(", ") || "—"}
-                        </span>
-                      </td>
-                      <td className="text-right font-semibold" style={{ color: "var(--t-accent)" }}>
-                        ₹{Math.round(order.total_amount || 0)}
-                      </td>
-                      <td className="text-center">
-                        <span
-                          className="badge badge-sm font-semibold"
-                          style={{
-                            color: STATUS_COLOR[order.status]?.color ?? "#94a3b8",
-                            background: STATUS_COLOR[order.status]?.bg ?? "rgba(148,163,184,0.15)",
-                            borderColor: "transparent",
-                          }}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="text-right text-xs whitespace-nowrap">
-                        {order.createdAt ? timeAgo(order.createdAt) : "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <Table
+          columns={columns}
+          dataSource={orders}
+          rowKey="_id"
+          loading={loading ? { indicator: <Spin /> } : false}
+          size="small"
+          pagination={false}
+          locale={{
+            emptyText: (
+              <div className="py-16 text-center">
+                <p className="text-3xl mb-3">📋</p>
+                <p className="text-slate-300 text-sm">No orders found.</p>
+              </div>
+            ),
+          }}
+          className="overflow-x-auto"
+        />
       </div>
     </div>
   );

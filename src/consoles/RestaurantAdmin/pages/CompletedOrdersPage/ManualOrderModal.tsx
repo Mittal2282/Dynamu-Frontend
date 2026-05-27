@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Spin } from 'antd';
 import {
   createManualOrder,
   getDashMenu,
@@ -309,7 +310,9 @@ export default function ManualOrderModal({ onClose, onSaved }: ManualOrderModalP
                   </button>
                 )}
                 {searchInput !== debouncedSearch && (
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 loading loading-spinner loading-xs" style={{ color: 'var(--t-dim)' }} />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    <Spin size="small" />
+                  </span>
                 )}
               </div>
 
@@ -321,7 +324,7 @@ export default function ManualOrderModal({ onClose, onSaved }: ManualOrderModalP
               >
                 {catalogLoading ? (
                   <div className="flex items-center justify-center h-full min-h-30">
-                    <span className="loading loading-spinner loading-sm" style={{ color: 'var(--t-dim)' }} />
+                    <Spin size="small" />
                   </div>
                 ) : catalogItems.length === 0 ? (
                   <div className="flex items-center justify-center h-full min-h-30">
@@ -430,7 +433,7 @@ export default function ManualOrderModal({ onClose, onSaved }: ManualOrderModalP
 
                     {catalogLoadingMore && (
                       <div className="flex items-center justify-center py-3" style={{ background: 'var(--t-surface)' }}>
-                        <span className="loading loading-spinner loading-xs" style={{ color: 'var(--t-dim)' }} />
+                        <Spin size="small" />
                       </div>
                     )}
                     {!catalogHasMore && !catalogLoadingMore && catalogItems.length >= CATALOG_LIMIT && (

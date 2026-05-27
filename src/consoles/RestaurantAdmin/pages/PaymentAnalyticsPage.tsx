@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { DatePicker } from "antd";
+import dayjs from "dayjs";
 import {
   getOrdersByDateRange,
   getPaymentMethods,
@@ -442,24 +444,19 @@ export default function PaymentAnalyticsPage() {
           <p className="text-[12px] mt-0.5" style={{ color: "var(--t-dim)" }}>Collection breakdown by payment channel</p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs"
-          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line)" }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-            strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--t-dim)" }}>
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <input type="date" value={dateFrom} max={dateTo}
-            onChange={(e) => { setDateFrom(e.target.value); setExpandedKey(null); }}
-            className="bg-transparent outline-none text-xs tabular-nums cursor-pointer"
-            style={{ color: "var(--t-text)" }} />
-          <span style={{ color: "var(--t-dim)" }}>→</span>
-          <input type="date" value={dateTo} min={dateFrom} max={todayIso()}
-            onChange={(e) => { setDateTo(e.target.value); setExpandedKey(null); }}
-            className="bg-transparent outline-none text-xs tabular-nums cursor-pointer"
-            style={{ color: "var(--t-text)" }} />
-        </div>
+        <DatePicker.RangePicker
+          value={[dayjs(dateFrom), dayjs(dateTo)]}
+          maxDate={dayjs()}
+          size="small"
+          allowClear={false}
+          onChange={(dates) => {
+            if (dates?.[0] && dates?.[1]) {
+              setDateFrom(dates[0].format("YYYY-MM-DD"));
+              setDateTo(dates[1].format("YYYY-MM-DD"));
+              setExpandedKey(null);
+            }
+          }}
+        />
       </div>
 
       {/* ── Summary stat cards ── */}

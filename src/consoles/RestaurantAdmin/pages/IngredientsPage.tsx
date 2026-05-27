@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { Segmented, Spin, Tag } from "antd";
 import { getIngredients, toggleIngredient } from "../../../services/dashboardService";
 import type { Ingredient } from "../../../services/dashboardService";
 import { useInfiniteList, useSentinel } from "../../../hooks/useInfiniteList";
@@ -128,9 +129,9 @@ function IngredientCard({ ingredient, onToggle, saving }: IngredientCardProps) {
           </span>
         </div>
 
-        <span className={`badge badge-sm shrink-0 hidden xs:block ${is_available ? 'badge-success' : 'badge-error'}`}>
+        <Tag color={is_available ? "green" : "red"} className="shrink-0 hidden xs:block">
           {is_available ? "In Stock" : "Out of Stock"}
-        </span>
+        </Tag>
 
         <button
           onClick={() => items_using.length > 0 && setExpanded((v) => !v)}
@@ -159,7 +160,7 @@ function IngredientCard({ ingredient, onToggle, saving }: IngredientCardProps) {
 
         {isSaving ? (
           <div className="w-11 h-6 flex items-center justify-center shrink-0">
-            <span className="loading loading-spinner loading-sm" />
+            <Spin size="small" />
           </div>
         ) : (
           <Toggle checked={is_available} onChange={() => onToggle(name, !is_available)} disabled={isSaving} />
@@ -386,23 +387,19 @@ export default function IngredientsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search ingredients…"
-              className="input input-bordered w-full pl-10 text-sm"
+              className="t-form-field rounded-xl w-full pl-10 text-sm h-10"
             />
           </div>
 
-          <div role="tablist" className="tabs tabs-boxed shrink-0">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                role="tab"
-                onClick={() => setActiveFilter(f.key)}
-                className={`tab text-xs font-semibold ${activeFilter === f.key ? 'tab-active' : ''}`}
-              >
-                {f.label}
-                {activeFilter === f.key && <span className="ml-1.5 text-[10px] font-bold">{total}</span>}
-              </button>
-            ))}
-          </div>
+          <Segmented
+            value={activeFilter}
+            onChange={(val) => setActiveFilter(val as string)}
+            options={FILTERS.map((f) => ({
+              value: f.key,
+              label: activeFilter === f.key ? `${f.label} ${total}` : f.label,
+            }))}
+            className="shrink-0"
+          />
         </div>
       )}
 
@@ -459,7 +456,7 @@ export default function IngredientsPage() {
           <div ref={sentinelRef} className="h-1" />
           {loading && (
             <div className="flex justify-center py-4">
-              <span className="loading loading-spinner loading-sm" />
+              <Spin size="small" />
             </div>
           )}
           {!hasMore && ingredients.length > 0 && (

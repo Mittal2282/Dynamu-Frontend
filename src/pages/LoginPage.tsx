@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, Input } from "antd";
 import Button from "../components/ui/Button";
 import Text from "../components/ui/Text";
 import { adminLogin } from "../services/dashboardService";
@@ -94,38 +95,37 @@ export default function LoginPage() {
           </Text>
 
           {error && (
-            <div role="alert" className="alert alert-error text-sm mb-5 py-3">{error}</div>
+            <Alert type="error" message={error} className="mb-5" showIcon />
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="form-control w-full">
-              <div className="label pb-1"><span className="label-text text-xs text-dim">Email address</span></div>
-              <input
+            <div className="w-full space-y-1">
+              <label className="text-xs text-dim">Email address</label>
+              <Input
                 name="email"
                 type="email"
                 value={form.email}
                 onChange={handleChange}
                 placeholder="admin@restaurant.com"
                 autoComplete="username"
-                className="input input-bordered w-full text-sm"
+                size="large"
               />
-            </label>
+            </div>
 
-            <label className="form-control w-full">
-              <div className="label pb-1"><span className="label-text text-xs text-dim">Password</span></div>
-              <input
+            <div className="w-full space-y-1">
+              <label className="text-xs text-dim">Password</label>
+              <Input.Password
                 name="password"
-                type="password"
                 value={form.password}
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="input input-bordered w-full text-sm"
+                size="large"
               />
-            </label>
+            </div>
 
             <Button
-              type="submit"
+              htmlType="submit"
               fullWidth
               size="lg"
               loading={loading}

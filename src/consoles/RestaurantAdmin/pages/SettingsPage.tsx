@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Alert, Segmented } from "antd";
 import { authStore } from "../../../store/authStore";
 import LocationPanel from "./settings/LocationPanel";
 import PetpoojaPanel from "./settings/PetpoojaPanel";
@@ -19,13 +20,13 @@ const TABS: Tab[] = [
 
 function OwnerOnlyAlert() {
   return (
-    <div role="alert" className="alert alert-warning gap-4">
-      <span className="text-2xl">🔒</span>
-      <div>
-        <p className="text-sm font-semibold">Owner-only setting</p>
-        <p className="text-xs mt-0.5 opacity-75">Only the restaurant owner can update these settings.</p>
-      </div>
-    </div>
+    <Alert
+      type="warning"
+      showIcon
+      icon={<span className="text-xl">🔒</span>}
+      message="Owner-only setting"
+      description="Only the restaurant owner can update these settings."
+    />
   );
 }
 
@@ -53,20 +54,16 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab bar */}
-      <div role="tablist" className="tabs tabs-boxed overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            onClick={() => t.available && setActive(t.key)}
-            disabled={!t.available}
-            className={`tab text-xs font-semibold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed ${active === t.key ? 'tab-active' : ''}`}
-          >
-            {t.label}
-            {!t.available && <span className="ml-1.5 opacity-60">(soon)</span>}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        value={active}
+        onChange={(val) => setActive(val as string)}
+        options={TABS.map((t) => ({
+          value: t.key,
+          label: t.available ? t.label : `${t.label} (soon)`,
+          disabled: !t.available,
+        }))}
+        className="overflow-x-auto"
+      />
 
       {active === "location" && (
         isOwner ? (

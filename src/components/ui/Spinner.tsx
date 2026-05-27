@@ -1,9 +1,11 @@
-const SIZE: Record<string, string> = {
-  xs: 'loading-xs',
-  sm: 'loading-sm',
-  md: 'loading-md',
-  lg: 'loading-lg',
-  xl: 'loading-xl',
+import { Spin } from 'antd';
+
+const ANT_SIZE: Record<string, 'small' | 'default' | 'large'> = {
+  xs: 'small',
+  sm: 'small',
+  md: 'default',
+  lg: 'large',
+  xl: 'large',
 };
 
 interface SpinnerProps {
@@ -13,10 +15,8 @@ interface SpinnerProps {
 
 export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
   return (
-    <span
-      role="status"
-      aria-label="Loading"
-      className={`loading loading-spinner ${SIZE[size] ?? SIZE.md} ${className}`}
-    />
+    <span role="status" aria-label="Loading" className={`inline-flex items-center justify-center ${className}`}>
+      <Spin size={ANT_SIZE[size] ?? 'default'} />
+    </span>
   );
 }

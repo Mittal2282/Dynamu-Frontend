@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@plugin "daisyui" { themes: false; }
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
@@ -46,26 +45,6 @@
   --t-warning: #f59e0b;
   --t-error:   #ef4444;
 
-  /* ── daisyUI v5 semantic bridge → our theme tokens ───────────────────── */
-  --color-primary:         var(--t-accent);
-  --color-primary-content: #fff;
-  --color-secondary:       var(--t-accent2);
-  --color-accent:          var(--t-accent3);
-  --color-base-100:        var(--t-bg);
-  --color-base-200:        var(--t-surface);
-  --color-base-300:        var(--t-float);
-  --color-base-content:    var(--t-text);
-  --color-neutral:         var(--t-surface);
-  --color-neutral-content: var(--t-dim);
-  --color-error:           var(--t-error);
-  --color-success:         var(--t-success);
-  --color-warning:         var(--t-warning);
-  --color-info:            var(--t-accent2);
-
-  /* Match daisyUI radius to existing rounded-xl / rounded-2xl */
-  --radius-box:   1rem;
-  --radius-btn:   0.75rem;
-  --radius-badge: 9999px;
 }
 
 /* ─── Tailwind v4 theme ────────────────────────────────────────────────────── */
@@ -184,28 +163,11 @@ button { cursor: pointer; }
   filter: drop-shadow(0 0 14px var(--t-accent-40));
 }
 
-/* ─── DaisyUI component shape overrides ─────────────────────────────────────── */
-/* DaisyUI v5 with themes:false doesn't always pick up --radius-btn from :root.
-   Explicitly enforce the desired border-radius on all btn/badge instances. */
-.btn         { border-radius: 0.625rem; } /* 10px — rounded-lg feel */
-.badge       { border-radius: 9999px;   } /* fully pill-shaped      */
-
-/* ─── Select dropdown — larger custom chevron ─────────────────────────────── */
-.select-custom-wrap         { position: relative; display: inline-flex; width: 100%; }
-.select-custom-wrap select  { appearance: none; padding-right: 2.5rem; width: 100%; }
-.select-custom-wrap .select-chevron {
-  position: absolute;
-  right: 0.625rem;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--t-dim);
-}
-
 /* Brand button — follows restaurant theme */
 .btn-brand {
   background-color: var(--t-accent);
   color: #fff;
+  border-radius: 0.75rem;
 }
 .btn-brand:hover  { opacity: 0.92; }
 .btn-brand:active { transform: scale(0.97); }
@@ -293,117 +255,8 @@ button { cursor: pointer; }
   background-size: 300% 100%;
 }
 
-/* ─── Admin inputs & selects — professional themed design ───────────────────── */
 
-/* Base: works for both dark + light (uses CSS vars that switch per mode) */
-.input.input-bordered,
-.select.select-bordered,
-.textarea.textarea-bordered {
-  background-color: var(--t-float) !important;
-  border: 1.5px solid var(--t-line) !important;
-  color: var(--t-text) !important;
-  border-radius: 0.75rem !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-  outline: none !important;
-}
-
-.input.input-bordered::placeholder,
-.textarea.textarea-bordered::placeholder {
-  color: var(--t-dim) !important;
-  opacity: 0.75 !important;
-}
-
-/* Focus state — accent ring */
-.input.input-bordered:focus,
-.select.select-bordered:focus,
-.textarea.textarea-bordered:focus {
-  border-color: var(--t-accent) !important;
-  box-shadow: 0 0 0 3px var(--t-accent-20, rgba(255,107,0,0.18)) !important;
-  outline: none !important;
-}
-
-/* Select — custom dropdown arrow using SVG data URI */
-.select.select-bordered {
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237B8594' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 0.85rem center !important;
-  padding-right: 2.25rem !important;
-}
-
-/* Size variants */
-.input.input-bordered.input-sm,
-.select.select-bordered.select-sm {
-  min-height: 2.25rem !important;
-  height: 2.25rem !important;
-  font-size: 0.8125rem !important;
-  padding-left: 0.75rem !important;
-}
-
-.input.input-bordered:not(.input-sm),
-.select.select-bordered:not(.select-sm) {
-  min-height: 2.75rem !important;
-  height: 2.75rem !important;
-}
-
-/* ─── Light mode overrides ───────────────────────────────────────────────────── */
-[data-color-mode="light"] .input.input-bordered,
-[data-color-mode="light"] .select.select-bordered,
-[data-color-mode="light"] .textarea.textarea-bordered {
-  background-color: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.18) !important;
-  color: #111827 !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06) !important;
-}
-
-[data-color-mode="light"] .input.input-bordered::placeholder,
-[data-color-mode="light"] .textarea.textarea-bordered::placeholder {
-  color: #9ca3af !important;
-  opacity: 1 !important;
-}
-
-[data-color-mode="light"] .input.input-bordered:focus,
-[data-color-mode="light"] .select.select-bordered:focus,
-[data-color-mode="light"] .textarea.textarea-bordered:focus {
-  border-color: var(--t-accent) !important;
-  box-shadow: 0 0 0 3px var(--t-accent-20, rgba(255,107,0,0.15)) !important;
-}
-
-[data-color-mode="light"] .select.select-bordered {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
-}
-
-/* ─── Light mode: daisyUI component overrides ───────────────────────────────── */
-[data-color-mode="light"] .tabs-boxed {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-}
-
-[data-color-mode="light"] .tabs-boxed .tab-active {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
-}
-
-[data-color-mode="light"] .btn-ghost {
-  color: #374151 !important;
-}
-
-[data-color-mode="light"] .btn-ghost:hover {
-  background-color: rgba(0, 0, 0, 0.06) !important;
-  color: #111827 !important;
-}
-
-/* Table zebra stripes in light mode */
-[data-color-mode="light"] .table-zebra tbody tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.025) !important;
-}
-
-[data-color-mode="light"] .table-zebra tbody tr:hover {
-  background-color: rgba(249, 115, 22, 0.05) !important;
-}
-
-/* ─── Raw form fields (modal inputs/textareas/selects without daisyUI classes) ── */
+/* ─── Raw form fields (modal inputs/textareas/selects without AntD wrapper) ── */
 .t-form-field {
   background-color: var(--t-float) !important;
   border: 1.5px solid var(--t-line) !important;

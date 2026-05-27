@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { Button, Select } from "antd";
 import { getDashOrders, getPetpoojaConfig, markBillPaid, getPaymentMethods, collectOrderPayment } from "../../../services/dashboardService";
 import { useToast } from "../../../components/ui/Toast";
 import { apiCaller } from "../../../api/apiCaller";
@@ -268,19 +269,17 @@ function OrderBatch({ order, sessionOrders, onStatusChange, updating }: OrderBat
           ₹{Math.round(order.total_amount || 0)}
         </span>
         {ctaLabel && ctaStatus && (
-          <button
-            onClick={() => !ctaDisabled && onStatusChange(order._id, ctaStatus!)}
-            disabled={updating === order._id || ctaDisabled}
+          <Button
+            type="primary"
+            size="small"
+            loading={updating === order._id}
+            disabled={ctaDisabled}
             title={ctaTooltip ?? undefined}
-            className={`btn btn-xs btn-primary ${ctaDisabled ? "opacity-45 cursor-not-allowed" : ""}`}
+            onClick={() => !ctaDisabled && onStatusChange(order._id, ctaStatus!)}
             style={ctaDisabled ? { background: "#475569", borderColor: "#475569" } : undefined}
           >
-            {updating === order._id ? (
-              <><span className="loading loading-spinner loading-xs" />Updating…</>
-            ) : (
-              ctaLabel
-            )}
-          </button>
+            {updating === order._id ? "Updating…" : ctaLabel}
+          </Button>
         )}
       </div>
 
@@ -885,21 +884,20 @@ export default function OrdersPage() {
             {showTableFilter && useTableSelect && (
               <label className="flex items-center gap-2 text-[11px] shrink-0" style={{ color: "var(--t-dim)" }}>
                 <span className="sr-only">Table</span>
-                <select
+                <Select
                   value={selectedTable == null ? "" : String(selectedTable)}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedTable(v === "" ? null : v);
-                  }}
-                  className="select select-bordered select-sm min-w-[8.5rem] text-xs font-semibold"
+                  onChange={(v) => setSelectedTable(v === "" ? null : v)}
+                  size="small"
+                  style={{ minWidth: "8.5rem" }}
+                  className="text-xs font-semibold"
                 >
-                  <option value="">All tables</option>
+                  <Select.Option value="">All tables</Select.Option>
                   {tableNumbers.map((num) => (
-                    <option key={String(num)} value={String(num)}>
+                    <Select.Option key={String(num)} value={String(num)}>
                       Table {num}
-                    </option>
+                    </Select.Option>
                   ))}
-                </select>
+                </Select>
               </label>
             )}
 
@@ -936,7 +934,12 @@ export default function OrdersPage() {
             )}
 
             {activeCount > 0 && (
-              <span className="badge badge-primary badge-sm shrink-0">{activeCount} active</span>
+              <span
+                className="shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                style={{ background: "var(--t-accent)", color: "#fff" }}
+              >
+                {activeCount} active
+              </span>
             )}
 
             <span className="text-[10px] shrink-0" style={{ color: "var(--t-dim)" }}>
@@ -953,9 +956,9 @@ export default function OrdersPage() {
               )}
             </span>
 
-            <button type="button" onClick={() => fetchOrders()} className="btn btn-sm btn-ghost gap-1 ml-auto shrink-0">
-              <span aria-hidden>↻</span> Refresh
-            </button>
+            <Button type="text" size="small" onClick={() => fetchOrders()} className="ml-auto shrink-0">
+              ↻ Refresh
+            </Button>
           </div>
         )}
 
@@ -968,9 +971,9 @@ export default function OrdersPage() {
             <span className="text-4xl">🍽️</span>
             <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>No orders yet</p>
             <p className="text-xs" style={{ color: "var(--t-dim)" }}>Waiting for customers to place orders…</p>
-            <button type="button" onClick={() => fetchOrders()} className="btn btn-sm btn-ghost gap-1 mt-2">
-              <span aria-hidden>↻</span> Refresh
-            </button>
+            <Button type="text" size="small" onClick={() => fetchOrders()} className="mt-2">
+              ↻ Refresh
+            </Button>
           </div>
         )}
 
@@ -995,7 +998,7 @@ export default function OrdersPage() {
                           {label}
                         </h2>
                       </div>
-                      <span className="badge badge-sm shrink-0" style={{ background: `${color}18`, color, border: "none" }}>
+                      <span className="shrink-0 text-[11px] font-semibold px-2.5 py-0.5 rounded-full" style={{ background: `${color}18`, color }}>
                         {cols.length}
                       </span>
                     </div>

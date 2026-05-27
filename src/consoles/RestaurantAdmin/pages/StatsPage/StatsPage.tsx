@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Segmented, Spin, Table, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { getDashOrders } from "../../../../services/dashboardService";
 import { apiCaller } from "../../../../api/apiCaller";
 
@@ -381,6 +383,77 @@ interface OrdersTableProps {
   onOrderClick: (order: Order) => void;
 }
 
+const ordersTableColumns: ColumnsType<Order> = [
+  {
+    title: "Order #",
+    dataIndex: "order_number",
+    key: "order_number",
+    render: (val) => (
+      <span className="font-mono text-xs font-semibold" style={{ color: "var(--t-accent)" }}>#{val}</span>
+    ),
+  },
+  {
+    title: "Table",
+    key: "table",
+    render: (_, o) => (
+      <span
+        className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+        style={{ background: "var(--t-float)", color: "var(--t-dim)" }}
+      >
+        T{o.table?.table_number ?? o.table_number ?? "—"}
+      </span>
+    ),
+  },
+  {
+    title: "Items",
+    key: "items",
+    render: (_, o) => {
+      const summary = o.items?.map((i) => i.name).join(", ") || "—";
+      return (
+        <span className="text-xs truncate block max-w-[200px]" style={{ color: "var(--t-dim)" }} title={summary}>
+          {summary}
+        </span>
+      );
+    },
+  },
+  {
+    title: "Amount",
+    dataIndex: "total_amount",
+    key: "total_amount",
+    align: "right",
+    render: (val) => (
+      <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
+        ₹{Math.round(val || 0).toLocaleString()}
+      </span>
+    ),
+  },
+  {
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
+    align: "center",
+    render: (val) => {
+      const cfg = STATUS_CONFIG[val];
+      return (
+        <Tag
+          style={{
+            background: cfg?.bg ?? "var(--t-float)",
+            color: cfg?.color ?? "var(--t-dim)",
+            borderColor: cfg?.border ?? "var(--t-line)",
+            borderRadius: 9999,
+            fontWeight: 700,
+            fontSize: 10,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          {cfg?.label ?? val}
+        </Tag>
+      );
+    },
+  },
+];
+
 function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
   return (
     <div
@@ -395,94 +468,41 @@ function OrdersTable({ orders, onOrderClick }: OrdersTableProps) {
           <p className="text-sm font-semibold" style={{ color: "var(--t-text)" }}>
             Order Log
           </p>
-          <span className="badge badge-primary badge-sm">{orders.length}</span>
+          <span
+            className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+            style={{ background: "var(--t-accent)", color: "#fff" }}
+          >
+            {orders.length}
+          </span>
         </div>
         <p className="text-[11px]" style={{ color: "var(--t-dim)" }}>
           Today's activity
         </p>
       </div>
 
-      {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-            style={{ background: "var(--t-float)" }}
-          >
-            📋
-          </div>
-          <p className="text-sm font-medium" style={{ color: "var(--t-dim)" }}>
-            No orders yet today
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra table-sm w-full">
-            <thead>
-              <tr>
-                {["Order #", "Table", "Items", "Amount", "Status"].map((h, i) => (
-                  <th
-                    key={h}
-                    className={`text-[10px] font-bold uppercase tracking-widest whitespace-nowrap ${i === 3 ? "text-right" : i === 4 ? "text-center" : "text-left"}`}
-                    style={{ color: "var(--t-dim)" }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {orders.slice(0, 50).map((order) => {
-                const cfg = STATUS_CONFIG[order.status];
-                const itemSummary = order.items?.map((i) => i.name).join(", ") || "—";
-                return (
-                  <tr
-                    key={order._id}
-                    className="hover cursor-pointer"
-                    onClick={() => onOrderClick(order)}
-                  >
-                    <td className="whitespace-nowrap">
-                      <span className="font-mono text-xs font-semibold" style={{ color: "var(--t-accent)" }}>
-                        #{order.order_number}
-                      </span>
-                    </td>
-
-                    <td className="whitespace-nowrap">
-                      <span className="badge badge-sm badge-ghost">
-                        T{order.table?.table_number ?? order.table_number ?? "—"}
-                      </span>
-                    </td>
-
-                    <td className="max-w-[200px]">
-                      <p className="text-xs truncate" style={{ color: "var(--t-dim)" }} title={itemSummary}>
-                        {itemSummary}
-                      </p>
-                    </td>
-
-                    <td className="text-right whitespace-nowrap">
-                      <span className="text-sm font-bold" style={{ color: "var(--t-text)" }}>
-                        ₹{Math.round(order.total_amount || 0).toLocaleString()}
-                      </span>
-                    </td>
-
-                    <td className="text-center">
-                      <span
-                        className="inline-block text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap"
-                        style={{
-                          background: cfg?.bg ?? "var(--t-float)",
-                          color: cfg?.color ?? "var(--t-dim)",
-                          border: `1px solid ${cfg?.border ?? "var(--t-line)"}`,
-                        }}
-                      >
-                        {cfg?.label ?? order.status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <Table
+        columns={ordersTableColumns}
+        dataSource={orders.slice(0, 50)}
+        rowKey="_id"
+        size="small"
+        pagination={false}
+        onRow={(record) => ({ onClick: () => onOrderClick(record), style: { cursor: "pointer" } })}
+        locale={{
+          emptyText: (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                style={{ background: "var(--t-float)" }}
+              >
+                📋
+              </div>
+              <p className="text-sm font-medium" style={{ color: "var(--t-dim)" }}>
+                No orders yet today
+              </p>
+            </div>
+          ),
+        }}
+      />
     </div>
   );
 }
@@ -555,23 +575,17 @@ export default function StatsPage() {
           </p>
         </div>
 
-        <div role="tablist" className="tabs tabs-boxed self-start sm:self-auto">
-          {RANGES.map((r) => (
-            <button
-              key={r.value}
-              role="tab"
-              onClick={() => handleRangeChange(r.value)}
-              className={`tab text-xs font-semibold ${range === r.value ? 'tab-active' : ''}`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          value={range}
+          onChange={(val) => handleRangeChange(val as string)}
+          options={RANGES.map((r) => ({ value: r.value, label: r.label }))}
+          className="self-start sm:self-auto"
+        />
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <span className="loading loading-spinner loading-lg" />
+          <Spin size="large" />
           <p className="text-sm" style={{ color: "var(--t-dim)" }}>Loading stats…</p>
         </div>
       ) : (
