@@ -1,76 +1,102 @@
-import { IMG, ORANGE, OVERLAY_CTA, OVERLAY_CTA_DARK } from '../../../constants/landingConstants';
+import { ORANGE } from '../../../constants/landingConstants';
 import { Eyebrow } from '../Eyebrow';
-import { H2 } from '../H2';
-import { ParallaxSection } from '../ParallaxSection';
 import { Reveal } from '../Reveal';
-import { useLandingTheme } from '../../../context/LandingThemeContext';
+
+const BG = '#0f172a';
+const TITLE_COLOR = '#f1f5f9';
+const BODY_COLOR = '#64748b';
+const FOOTER_BG = '#F5F7FA';
+const FOOTER_TEXT = '#111827';
+const FOOTER_MUTED = '#9ca3af';
+const FOOTER_BORDER = 'rgba(0,0,0,0.08)';
+
+const H2 = 'clamp(1.25rem, calc(3dvh + 1.5vw), 4rem)';
+const BODY = 'clamp(0.8rem, calc(1.1dvh + 0.38vw), 1.0625rem)';
+const BTN_TEXT = 'clamp(0.78rem, calc(1dvh + 0.35vw), 0.9375rem)';
+const BTN_PAD = 'clamp(0.6rem, calc(1.1dvh + 0.2vw), 0.9375rem) clamp(1.5rem, calc(2dvh + 0.8vw), 2.25rem)';
+const PAD_TOP = 'clamp(3.5rem, calc(5dvh + 0.8vw), 6rem)';
+const PAD_BOT = 'clamp(0.75rem, calc(1.2dvh + 0.2vw), 2rem)';
+const GAP = 'clamp(0.6rem, calc(1.2dvh + 0.3vw), 1.75rem)';
 
 export function CtaSlide() {
-  const { isDark } = useLandingTheme();
-  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
-  const secondaryBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const secondaryBorder = isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.15)';
-  const secondaryColor = isDark ? '#e2e8f0' : '#374151';
-
   return (
-    <ParallaxSection
-      disableParallax
-      imageUrl={IMG.cta}
-      overlay={OVERLAY_CTA}
-      overlayDark={OVERLAY_CTA_DARK}
-      className="min-h-dvh w-full shrink-0 flex flex-col justify-center py-12 sm:py-20"
+    <section
+      className="h-full w-full shrink-0 flex flex-col overflow-hidden"
+      style={{ background: BG }}
     >
-      <div className="max-w-3xl mx-auto px-6 text-center w-full">
+      {/* Main CTA */}
+      <div
+        className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 min-h-0"
+        style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOT, gap: GAP }}
+      >
         <Reveal animation="revealFade">
-          <Eyebrow light>Get in Touch</Eyebrow>
+          <Eyebrow light>Get Started</Eyebrow>
         </Reveal>
+
         <Reveal animation="revealUp" delay={0.1}>
-          <H2 className="mb-5">
+          <h2
+            className="font-black leading-tight max-w-2xl"
+            style={{ fontSize: H2, color: TITLE_COLOR }}
+          >
             Ready to turn your menu
             <br />
             into a <span style={{ color: ORANGE }}>revenue engine?</span>
-          </H2>
+          </h2>
         </Reveal>
-        <Reveal animation="revealUp" delay={0.22}>
-          <p className="text-[15px] leading-relaxed mb-10" style={{ color: bodyColor }}>
-            Schedule a demo or reach out directly. Your AI waiter can be live within 24 hours of onboarding.
+
+        <Reveal animation="revealUp" delay={0.18}>
+          <p className="leading-relaxed max-w-md sm:max-w-lg" style={{ fontSize: BODY, color: BODY_COLOR }}>
+            Schedule a demo or reach out directly. Your AI waiter can be live
+            within 24 hours of onboarding.
           </p>
         </Reveal>
-        <Reveal animation="revealScale" delay={0.32}>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href="https://calendly.com/arorabhavyam"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: ORANGE, boxShadow: '0 0 36px rgba(255,107,0,0.38)' }}
-            >
-              Request a Demo
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2 7h10M8 3l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </a>
-            <a
-              href="mailto:founder@dynamu.ai"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-sm transition-all"
-              style={{
-                background: secondaryBg,
-                border: secondaryBorder,
-                color: secondaryColor,
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              Contact Team
-            </a>
-          </div>
+
+        <Reveal animation="revealScale" delay={0.28}>
+          <a
+            href="https://calendly.com/arorabhavyam"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: ORANGE, boxShadow: '0 0 32px rgba(255,107,0,0.35)', fontSize: BTN_TEXT, padding: BTN_PAD }}
+          >
+            Request a Demo
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
         </Reveal>
       </div>
-    </ParallaxSection>
+
+      {/* Embedded light footer */}
+      <div className="w-full border-t shrink-0" style={{ background: FOOTER_BG, borderColor: FOOTER_BORDER }}>
+        <div
+          className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between"
+          style={{ gap: '0.5rem', padding: 'clamp(0.5rem, calc(0.9dvh + 0.2vw), 1.25rem) 1rem' }}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className="flex items-center justify-center font-black text-white"
+              style={{
+                width: 'clamp(1.4rem, calc(2dvh + 0.4vw), 1.75rem)',
+                height: 'clamp(1.4rem, calc(2dvh + 0.4vw), 1.75rem)',
+                background: ORANGE,
+                fontSize: 'clamp(0.6rem, 0.9dvh, 0.75rem)',
+              }}
+            >
+              D
+            </div>
+            <span
+              className="font-bold"
+              style={{ fontSize: 'clamp(0.75rem, calc(1dvh + 0.3vw), 0.9375rem)', color: FOOTER_TEXT }}
+            >
+              Dynamu<span style={{ color: ORANGE }}>.AI</span>
+            </span>
+          </div>
+          <p style={{ fontSize: 'clamp(0.6rem, calc(0.8dvh + 0.15vw), 0.75rem)', color: FOOTER_MUTED }}>
+            © {new Date().getFullYear()} Dynamu AI. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }

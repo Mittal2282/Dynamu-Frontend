@@ -1,5 +1,4 @@
 import { ORANGE } from '../../constants/landingConstants';
-import { useLandingTheme } from '../../context/LandingThemeContext';
 
 export interface SlideDotsProps {
   count: number;
@@ -7,8 +6,10 @@ export interface SlideDotsProps {
   onSelect: (index: number) => void;
 }
 
+/** Odd-indexed slides are dark; even-indexed slides are light. */
 export function SlideDots({ count, activeIndex, onSelect }: SlideDotsProps) {
-  const { isDark } = useLandingTheme();
+  const isDarkSlide = activeIndex % 2 === 1;
+  const inactiveColor = isDarkSlide ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.25)';
 
   return (
     <div
@@ -23,7 +24,7 @@ export function SlideDots({ count, activeIndex, onSelect }: SlideDotsProps) {
           onClick={() => onSelect(i)}
           className="w-2 h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/80"
           style={{
-            background: i === activeIndex ? ORANGE : isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+            background: i === activeIndex ? ORANGE : inactiveColor,
             transform: i === activeIndex ? 'scale(1.35)' : 'scale(1)',
           }}
           aria-label={`Go to section ${i + 1}`}

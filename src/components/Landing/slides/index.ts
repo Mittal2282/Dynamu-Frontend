@@ -1,6 +1,7 @@
 import { CapabilitiesSlide } from './CapabilitiesSlide';
 import { CtaSlide } from './CtaSlide';
-import { FooterSlide } from './FooterSlide';
+// FooterSlide is commented out — embedded simple footer is now inside CtaSlide.
+// import { FooterSlide } from './FooterSlide';
 import { HeroSlide } from './HeroSlide';
 import { HowItWorksSlide } from './HowItWorksSlide';
 import { ProblemSlide } from './ProblemSlide';
@@ -13,5 +14,4 @@ export const SLIDE_COMPONENTS = [
   HowItWorksSlide,
   CapabilitiesSlide,
   CtaSlide,
-  FooterSlide,
 ];

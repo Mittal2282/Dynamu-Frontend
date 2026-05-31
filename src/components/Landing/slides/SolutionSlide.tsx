@@ -1,59 +1,95 @@
-import { BG, BG_DARK, ORANGE } from '../../../constants/landingConstants';
+import { ORANGE } from '../../../constants/landingConstants';
 import { SOLUTION_BULLETS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
-import { H2 } from '../H2';
 import { Reveal } from '../Reveal';
-import { useLandingTheme } from '../../../context/LandingThemeContext';
+
+const BG = '#F5F7FA';
+const TEXT_DARK = '#111827';
+const TEXT_MUTED = '#6b7280';
+const DIVIDER = 'rgba(0,0,0,0.08)';
+
+const H2 = 'clamp(1.2rem, calc(2.5dvh + 1.3vw), 3.5rem)';
+const BODY = 'clamp(0.8rem, calc(1.1dvh + 0.38vw), 1rem)';
+const BLT_LABEL = 'clamp(0.75rem, calc(1dvh + 0.35vw), 0.9375rem)';
+const BLT_DESC = 'clamp(0.65rem, calc(0.75dvh + 0.22vw), 0.8125rem)';
+const PAD_TOP = 'clamp(3.5rem, calc(5dvh + 0.8vw), 6rem)';
+const PAD_BOT = 'clamp(0.75rem, calc(1.2dvh + 0.2vw), 2.5rem)';
 
 export function SolutionSlide() {
-  const { isDark } = useLandingTheme();
-  const bg = isDark ? BG_DARK : BG;
-  const bodyColor = isDark ? '#94a3b8' : '#6b7280';
-  const labelColor = isDark ? '#f1f5f9' : '#111827';
-  const descColor = isDark ? '#64748b' : '#9ca3af';
-  const dividerColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
-
   return (
     <section
-      className="min-h-dvh w-full shrink-0 flex flex-col justify-center px-6 py-12 sm:py-16"
-      style={{ background: bg }}
+      className="h-full w-full shrink-0 flex flex-col justify-center overflow-hidden px-4 sm:px-6"
+      style={{ background: BG, paddingTop: PAD_TOP, paddingBottom: PAD_BOT }}
     >
-      <div className="max-w-6xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-6xl mx-auto w-full h-full flex items-center">
+        <div
+          className="grid grid-cols-1 lg:grid-cols-2 w-full"
+          style={{ gap: 'clamp(1rem, calc(2.5dvh + 1vw), 4.5rem)', alignItems: 'center' }}
+        >
+          {/* Text column */}
           <Reveal animation="revealLeft">
-            <Eyebrow>The Solution</Eyebrow>
-            <H2 className="mb-5">
-              Dynamu — your AI
-              <br />
-              <span style={{ color: ORANGE }}>sales rep at every table</span>
-            </H2>
-            <p className="text-[15px] leading-relaxed mb-10" style={{ color: bodyColor }}>
-              A conversational AI that greets every guest the moment they scan the QR code — guiding through the menu,
-              recommending combos, upselling intelligently, and remembering preferences for future visits.
-            </p>
+            <div className="flex flex-col" style={{ gap: 'clamp(0.4rem, calc(0.8dvh + 0.2vw), 1rem)' }}>
+              <Eyebrow>The Solution</Eyebrow>
+              <h2
+                className="font-black leading-tight"
+                style={{ fontSize: H2, color: TEXT_DARK }}
+              >
+                Dynamu, your AI
+                <br />
+                <span style={{ color: ORANGE }}>sales rep at every table</span>
+              </h2>
+              <p className="leading-relaxed" style={{ fontSize: BODY, color: TEXT_MUTED }}>
+                A conversational AI that greets every guest the moment they scan the QR code —
+                guiding through the menu, recommending combos, upselling intelligently, and
+                remembering preferences for future visits.
+              </p>
 
-            <div className="space-y-0 divide-y" style={{ borderColor: dividerColor }}>
-              {SOLUTION_BULLETS.map(({ label, desc }, i) => (
-                <Reveal key={label} animation="revealFade" delay={0.1 + i * 0.1}>
-                  <div className="py-4 flex items-start gap-4">
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.75" style={{ background: ORANGE }} />
-                    <div>
-                      <p className="font-semibold text-sm" style={{ color: labelColor }}>{label}</p>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: descColor }}>{desc}</p>
+              <div
+                className="flex flex-col divide-y"
+                style={{ borderColor: DIVIDER, marginTop: 'clamp(0.2rem, 0.5dvh, 0.5rem)' }}
+              >
+                {SOLUTION_BULLETS.map(({ label, desc }, i) => (
+                  <Reveal key={label} animation="revealFade" delay={0.08 + i * 0.08}>
+                    <div
+                      className="flex items-start"
+                      style={{
+                        gap: 'clamp(0.5rem, calc(0.8dvh + 0.3vw), 1rem)',
+                        padding: 'clamp(0.3rem, calc(0.7dvh + 0.15vw), 0.875rem) 0',
+                      }}
+                    >
+                      {/* Square bullet */}
+                      <div
+                        className="shrink-0"
+                        style={{
+                          width: 'clamp(0.4rem, calc(0.65dvh + 0.15vw), 0.5rem)',
+                          height: 'clamp(0.4rem, calc(0.65dvh + 0.15vw), 0.5rem)',
+                          background: ORANGE,
+                          marginTop: '0.3em',
+                        }}
+                      />
+                      <div>
+                        <p className="font-semibold" style={{ fontSize: BLT_LABEL, color: TEXT_DARK }}>{label}</p>
+                        <p className="leading-relaxed" style={{ fontSize: BLT_DESC, color: TEXT_MUTED, marginTop: '0.1em' }}>{desc}</p>
+                      </div>
                     </div>
-                  </div>
-                </Reveal>
-              ))}
+                  </Reveal>
+                ))}
+              </div>
             </div>
           </Reveal>
 
-          <Reveal animation="revealRight" delay={0.15}>
+          {/* Image column — light mode only, constrained height */}
+          <Reveal animation="revealRight" delay={0.12} className="hidden lg:block">
             <div className="relative group">
-              <div className="absolute -inset-1 bg-linear-to-r from-[#FF6B00] to-[#7B00FF] rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+              <div
+                className="absolute -inset-1 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"
+                style={{ background: `linear-gradient(to right, ${ORANGE}, #7B00FF)` }}
+              />
               <img
-                src={isDark ? "/images/DarkChatMode.jpeg" : "/images/LightChatMode.jpeg"} 
+                src="/images/LightChatMode.jpeg"
                 alt="Dynamu AI Chat Interface"
-                className="relative rounded-2xl shadow-2xl border border-black/10 w-full max-w-md lg:max-w-full mx-auto max-h-145 lg:max-h-160 object-cover object-top"
+                className="relative rounded-2xl shadow-xl border border-black/10 w-full mx-auto object-cover object-top"
+                style={{ maxHeight: 'clamp(14rem, calc(40dvh + 5vw), 38rem)' }}
               />
             </div>
           </Reveal>
