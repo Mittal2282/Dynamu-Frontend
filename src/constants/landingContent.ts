@@ -25,9 +25,9 @@ export interface HeroStat {
 }
 
 export const HERO_STATS: HeroStat[] = [
-  { value: '10-15%', label: 'Avg Order Value' },
-  { value: '3×', label: 'Faster Ordering' },
-  { value: '40-60%', label: 'Less Waiter Load' },
+  { value: '10 to 15%', label: 'Avg Order Value' },
+  { value: '3x', label: 'Faster Ordering' },
+  { value: '40 to 60%', label: 'Less Waiter Load' },
   { value: '0', label: 'App Downloads Needed' },
 ];
 

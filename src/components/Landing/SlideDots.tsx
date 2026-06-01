@@ -13,7 +13,7 @@ export function SlideDots({ count, activeIndex, onSelect }: SlideDotsProps) {
 
   return (
     <div
-      className="fixed right-3 sm:right-5 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-2 pointer-events-auto"
+      className="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-40 flex-col gap-2 pointer-events-auto"
       role="navigation"
       aria-label="Page sections"
     >

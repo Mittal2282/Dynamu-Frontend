@@ -2,19 +2,18 @@ import React from 'react';
 import { HOW_IT_WORKS_SLIDE_INDEX, ORANGE } from '../../../constants/landingConstants';
 import { HERO_STATS } from '../../../constants/landingContent';
 
-const BG = '#F5F7FA';
+const BG = '#ffffff';
 const TEXT_DARK = '#111827';
 const TEXT_MUTED = '#6b7280';
-const DIVIDER = 'rgba(0,0,0,0.12)';
 
 // calc(dvh + vw) so sizes grow with both viewport dimensions — no compression on wide desktops
 const H1 = 'clamp(1.75rem, calc(4dvh + 2.5vw), 5rem)';
 const BODY = 'clamp(0.82rem, calc(1.2dvh + 0.4vw), 1.0625rem)';
-const BADGE = 'clamp(0.55rem, calc(0.55dvh + 0.25vw), 0.6875rem)';
+const BADGE = 'clamp(0.6rem, calc(0.6dvh + 0.3vw), 0.75rem)';
 const STAT_VAL = 'clamp(1.1rem, calc(2.5dvh + 0.8vw), 1.875rem)';
-const STAT_LBL = 'clamp(0.52rem, calc(0.5dvh + 0.2vw), 0.6875rem)';
+const STAT_LBL = 'clamp(0.65rem, calc(0.7dvh + 0.3vw), 0.8125rem)';
 const BTN_TEXT = 'clamp(0.75rem, calc(1dvh + 0.35vw), 0.9375rem)';
-const BTN_PAD = 'clamp(0.5rem, calc(1dvh + 0.2vw), 0.875rem) clamp(1.25rem, calc(2dvh + 0.8vw), 1.75rem)';
+const BTN_PAD = 'clamp(0.4rem, calc(0.8dvh + 0.15vw), 0.875rem) clamp(0.75rem, calc(1.5dvh + 0.5vw), 1.75rem)';
 const PAD_TOP = 'clamp(3.5rem, calc(5dvh + 0.8vw), 6rem)';
 const PAD_BOT = 'clamp(0.5rem, calc(1.2dvh + 0.2vw), 2rem)';
 const GAP = 'clamp(0.5rem, calc(1.2dvh + 0.2vw), 1.5rem)';
@@ -59,18 +58,32 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
           style={{ fontSize: BODY, color: TEXT_MUTED }}
         >
           An AI-native ordering layer that turns every restaurant menu into a conversational
-          sales representative — recommending, upselling, and remembering. On autopilot.
+          sales representative. It recommends, upsells, and remembers, all on autopilot.
         </p>
 
         {/* Buttons */}
         <div
-          className="hero-cta flex flex-col sm:flex-row items-center justify-center w-full shrink-0"
-          style={{ gap: 'clamp(0.4rem, calc(0.7dvh + 0.2vw), 0.75rem)' }}
+          className="hero-cta flex flex-row items-center justify-center w-full shrink-0 flex-wrap"
+          style={{ gap: 'clamp(0.6rem, calc(1dvh + 0.3vw), 1rem)', paddingTop: 'clamp(0.75rem, 2dvh, 1.5rem)', paddingBottom: 'clamp(2rem, 5dvh, 3rem)' }}
         >
           <a
             href="mailto:founder@dynamu.ai"
-            className="inline-flex items-center gap-2 font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] w-full sm:w-auto justify-center"
-            style={{ background: ORANGE, boxShadow: '0 0 24px rgba(255,107,0,0.28)', fontSize: BTN_TEXT, padding: BTN_PAD }}
+            className="inline-flex items-center gap-2 font-semibold text-white w-auto justify-center flex-1 sm:flex-none"
+            style={{
+              background: ORANGE,
+              borderRadius: '6px',
+              fontSize: BTN_TEXT,
+              padding: BTN_PAD,
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             Request a Demo
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -80,53 +93,50 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
           <button
             type="button"
             onClick={() => goToSlide(HOW_IT_WORKS_SLIDE_INDEX)}
-            className="inline-flex items-center gap-2 font-semibold transition-all hover:opacity-80 active:scale-[0.98] w-full sm:w-auto justify-center"
+            className="inline-flex items-center gap-2 font-semibold w-auto justify-center flex-1 sm:flex-none"
             style={{
               background: 'transparent',
-              border: '1.5px solid #D1D5DB',
+              border: '2px solid #111827',
+              borderRadius: '6px',
               color: TEXT_DARK,
               fontSize: BTN_TEXT,
               padding: BTN_PAD,
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
             See How It Works
           </button>
         </div>
 
-        {/* Divider + Stats */}
+        {/* Stats */}
         <div className="hero-stats w-full max-w-xl sm:max-w-2xl shrink-0">
-          <div className="h-px" style={{ background: DIVIDER, marginBottom: 'clamp(0.5rem, calc(0.8dvh + 0.2vw), 1rem)' }} />
-
           {/* Mobile 2×2 grid */}
-          <div className="grid grid-cols-2 sm:hidden" style={{ gap: 'clamp(0.5rem, 1dvh, 1rem)' }}>
+          <div className="grid grid-cols-2 sm:hidden" style={{ gap: 'clamp(0.75rem, 1.5dvh, 1.5rem)' }}>
             {HERO_STATS.map(({ value, label }) => (
               <div key={label} className="text-center">
-                <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: ORANGE }}>{value}</p>
-                <p className="font-medium uppercase tracking-wider leading-tight" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.2rem' }}>{label}</p>
+                <div style={{ width: '100%', height: '3px', background: TEXT_DARK, marginBottom: '0.4rem' }} />
+                <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: TEXT_DARK }}>{value}</p>
+                <p className="font-normal leading-tight" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.2rem' }}>{label}</p>
               </div>
             ))}
           </div>
 
-          {/* sm+ single row with dividers */}
-          <div className="hidden sm:flex items-center justify-center">
-            {HERO_STATS.map(({ value, label }, i) => (
-              <React.Fragment key={label}>
-                {i > 0 && (
-                  <div
-                    className="shrink-0"
-                    style={{
-                      width: '1px',
-                      height: 'clamp(1.5rem, calc(2dvh + 0.5vw), 2.5rem)',
-                      background: DIVIDER,
-                      margin: '0 clamp(0.75rem, calc(1.5dvh + 0.6vw), 2rem)',
-                    }}
-                  />
-                )}
-                <div className="text-center shrink-0">
-                  <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: ORANGE }}>{value}</p>
-                  <p className="font-medium uppercase tracking-wider" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.2rem' }}>{label}</p>
-                </div>
-              </React.Fragment>
+          {/* sm+ single row */}
+          <div className="hidden sm:flex items-start" style={{ gap: 'clamp(1.5rem, 3dvh, 2.5rem)' }}>
+            {HERO_STATS.map(({ value, label }) => (
+              <div key={label} className="text-center flex-1">
+                <div style={{ width: '100%', height: '3px', background: TEXT_DARK, marginBottom: '0.5rem' }} />
+                <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: TEXT_DARK }}>{value}</p>
+                <p className="font-normal" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.25rem' }}>{label}</p>
+              </div>
             ))}
           </div>
         </div>
