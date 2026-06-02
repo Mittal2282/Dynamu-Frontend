@@ -1,11 +1,13 @@
 import { ORANGE } from '../../../constants/landingConstants';
+import DynamuLogo from '../../../assets/DynamuLogo.png';
 import { Eyebrow } from '../Eyebrow';
 import { Reveal } from '../Reveal';
 
-const BG = '#0f172a';
-const TITLE_COLOR = '#f1f5f9';
-const BODY_COLOR = '#64748b';
-const FOOTER_BG = '#F5F7FA';
+const BG = '#0A0A0A';
+const ACCENT = '#FF4D00';
+const TITLE_COLOR = '#FFFFFF';
+const BODY_COLOR = 'rgba(255,255,255,0.65)';
+const FOOTER_BG = '#FFFFFF';
 const FOOTER_TEXT = '#111827';
 const FOOTER_MUTED = '#9ca3af';
 const FOOTER_BORDER = 'rgba(0,0,0,0.08)';
@@ -30,7 +32,7 @@ export function CtaSlide() {
         style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOT, gap: GAP }}
       >
         <Reveal animation="revealFade">
-          <Eyebrow light>Get Started</Eyebrow>
+          <Eyebrow light color={ACCENT}>Get Started</Eyebrow>
         </Reveal>
 
         <Reveal animation="revealUp" delay={0.1}>
@@ -40,7 +42,7 @@ export function CtaSlide() {
           >
             Ready to turn your menu
             <br />
-            into a <span style={{ color: ORANGE }}>revenue engine?</span>
+            into a <span style={{ color: ACCENT }}>revenue engine?</span>
           </h2>
         </Reveal>
 
@@ -57,7 +59,7 @@ export function CtaSlide() {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: ORANGE, boxShadow: '0 0 32px rgba(255,107,0,0.35)', fontSize: BTN_TEXT, padding: BTN_PAD }}
+            style={{ background: ACCENT, boxShadow: '0 0 32px rgba(255,77,0,0.35)', fontSize: BTN_TEXT, padding: BTN_PAD }}
           >
             Request a Demo
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
@@ -67,24 +69,20 @@ export function CtaSlide() {
         </Reveal>
       </div>
 
-      {/* Embedded light footer */}
-      <div className="w-full border-t shrink-0" style={{ background: FOOTER_BG, borderColor: FOOTER_BORDER }}>
+      {/* Footer — same height as nav (h-14 sm:h-16 = 56px / 64px) */}
+      <div
+        className="w-full border-t shrink-0"
+        style={{ background: FOOTER_BG, borderColor: FOOTER_BORDER }}
+      >
         <div
-          className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between"
-          style={{ gap: '0.5rem', padding: 'clamp(0.5rem, calc(0.9dvh + 0.2vw), 1.25rem) 1rem' }}
+          className="max-w-full px-6 sm:px-10 h-14 sm:h-16 flex flex-row items-center justify-between"
         >
           <div className="flex items-center gap-2">
-            <div
-              className="flex items-center justify-center font-black text-white"
-              style={{
-                width: 'clamp(1.4rem, calc(2dvh + 0.4vw), 1.75rem)',
-                height: 'clamp(1.4rem, calc(2dvh + 0.4vw), 1.75rem)',
-                background: ORANGE,
-                fontSize: 'clamp(0.6rem, 0.9dvh, 0.75rem)',
-              }}
-            >
-              D
-            </div>
+            <img
+              src={DynamuLogo}
+              alt="DynamuAI"
+              className="h-8 w-auto object-contain rounded-full"
+            />
             <span
               className="font-bold"
               style={{ fontSize: 'clamp(0.75rem, calc(1dvh + 0.3vw), 0.9375rem)', color: FOOTER_TEXT }}

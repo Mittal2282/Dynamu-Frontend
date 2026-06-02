@@ -1,23 +1,22 @@
 import React from 'react';
-import { ORANGE } from '../../../constants/landingConstants';
 import { HOW_IT_WORKS_STEPS } from '../../../constants/landingContent';
 import { Eyebrow } from '../Eyebrow';
 import { Reveal } from '../Reveal';
 
-const BG = '#0f172a';
-const CARD_BG = 'rgba(255,255,255,0.04)';
-const TITLE_COLOR = '#f1f5f9';
-const DESC_COLOR = '#94a3b8';
-const MUTED_COLOR = '#64748b';
+const BG = '#0A0A0A';
+const ACCENT = '#FF4D00';
+const TITLE_COLOR = '#FFFFFF';
+const DESC_COLOR = 'rgba(255,255,255,0.90)';
+const MUTED_COLOR = 'rgba(255,255,255,0.70)';
 
-const H2 = 'clamp(1.2rem, calc(2.5dvh + 1.5vw), 4rem)';
-const CARD_NUM = 'clamp(1.4rem, calc(2.8dvh + 0.8vw), 2.75rem)';
-const CARD_TITLE = 'clamp(0.75rem, calc(1dvh + 0.35vw), 0.9375rem)';
-const CARD_DESC = 'clamp(0.65rem, calc(0.75dvh + 0.22vw), 0.8125rem)';
-const CARD_PAD = 'clamp(0.75rem, calc(1.3dvh + 0.4vw), 1.75rem)';
-const EYEBROW_SIZE = 'clamp(0.55rem, calc(0.55dvh + 0.22vw), 0.6875rem)';
-const PAD_TOP = 'clamp(3.5rem, calc(5dvh + 0.8vw), 6rem)';
-const PAD_BOT = 'clamp(0.75rem, calc(1.2dvh + 0.2vw), 2.5rem)';
+const H2 = 'clamp(1.4rem, calc(3dvh + 1.8vw), 4.5rem)';
+const CARD_NUM = 'clamp(1.6rem, calc(3.2dvh + 0.9vw), 3.25rem)';
+const CARD_TITLE = 'clamp(1rem, calc(1.4dvh + 0.5vw), 1.25rem)';
+const CARD_DESC = 'clamp(0.875rem, calc(1.1dvh + 0.35vw), 1.0625rem)';
+const CARD_PAD = 'clamp(1.25rem, calc(2dvh + 0.6vw), 2.5rem)';
+const EYEBROW_SIZE = 'clamp(0.72rem, calc(0.85dvh + 0.3vw), 0.9375rem)';
+const PAD_TOP = 'clamp(4rem, calc(7dvh + 1vw), 7rem)';
+const PAD_BOT = 'clamp(2rem, calc(4dvh + 0.5vw), 5rem)';
 
 export function HowItWorksSlide() {
   return (
@@ -28,21 +27,21 @@ export function HowItWorksSlide() {
     >
       <div
         className="max-w-6xl mx-auto w-full flex flex-col"
-        style={{ gap: 'clamp(0.75rem, calc(1.5dvh + 0.4vw), 2.5rem)' }}
+        style={{ gap: 0 }}
       >
         {/* Centered heading */}
         <Reveal>
           <div className="text-center">
-            <Eyebrow light>How It Works</Eyebrow>
+            <Eyebrow light color={ACCENT}>How It Works</Eyebrow>
             <h2
               className="font-black leading-tight"
-              style={{ fontSize: H2, color: TITLE_COLOR, margin: 'clamp(0.2rem, 0.5dvh, 0.75rem) 0 clamp(0.2rem, 0.4dvh, 0.5rem)' }}
+              style={{ fontSize: H2, color: TITLE_COLOR, margin: 'clamp(0.3rem, 0.6dvh, 0.8rem) 0 clamp(0.5rem, 1.2dvh, 1.25rem)' }}
             >
               From scan to upsell in 90 seconds
             </h2>
             <p
               className="font-semibold uppercase tracking-[0.2em]"
-              style={{ fontSize: EYEBROW_SIZE, color: MUTED_COLOR }}
+              style={{ fontSize: EYEBROW_SIZE, color: MUTED_COLOR, marginTop: 'clamp(0.4rem, 1dvh, 1rem)', marginBottom: 'clamp(1.5rem, calc(3.5dvh + 0.6vw), 4rem)' }}
             >
               Zero App Download&nbsp;&nbsp;·&nbsp;&nbsp;Zero Staff Training
             </p>
@@ -57,13 +56,12 @@ export function HowItWorksSlide() {
                 <div
                   className="h-full flex flex-col"
                   style={{
-                    background: CARD_BG,
-                    borderTop: `3px solid ${ORANGE}`,
+                    borderTop: `3px solid ${ACCENT}`,
                     padding: CARD_PAD,
-                    gap: 'clamp(0.25rem, calc(0.5dvh + 0.1vw), 0.6rem)',
+                    gap: 'clamp(0.5rem, calc(0.9dvh + 0.2vw), 1rem)',
                   }}
                 >
-                  <p className="font-black tabular-nums leading-none" style={{ fontSize: CARD_NUM, color: ORANGE }}>{step}</p>
+                  <p className="font-black tabular-nums leading-none" style={{ fontSize: CARD_NUM, color: ACCENT }}>{step}</p>
                   <p className="font-bold" style={{ fontSize: CARD_TITLE, color: TITLE_COLOR }}>{title}</p>
                   <p className="leading-relaxed" style={{ fontSize: CARD_DESC, color: DESC_COLOR }}>{desc}</p>
                 </div>
@@ -75,7 +73,7 @@ export function HowItWorksSlide() {
                   style={{ width: 'clamp(1.5rem, calc(1.5dvh + 0.5vw), 2.5rem)' }}
                 >
                   <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 9h12M11 4.5L15.5 9 11 13.5" stroke={ORANGE} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 9h12M11 4.5L15.5 9 11 13.5" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               )}
@@ -93,13 +91,12 @@ export function HowItWorksSlide() {
               <div
                 className="h-full flex flex-col"
                 style={{
-                  background: CARD_BG,
-                  borderTop: `3px solid ${ORANGE}`,
+                  borderTop: `3px solid ${ACCENT}`,
                   padding: CARD_PAD,
-                  gap: 'clamp(0.2rem, 0.5dvh, 0.5rem)',
+                  gap: 'clamp(0.5rem, calc(0.9dvh + 0.2vw), 1rem)',
                 }}
               >
-                <p className="font-black tabular-nums leading-none" style={{ fontSize: CARD_NUM, color: ORANGE }}>{step}</p>
+                <p className="font-black tabular-nums leading-none" style={{ fontSize: CARD_NUM, color: ACCENT }}>{step}</p>
                 <p className="font-bold" style={{ fontSize: CARD_TITLE, color: TITLE_COLOR }}>{title}</p>
                 <p className="leading-relaxed" style={{ fontSize: CARD_DESC, color: DESC_COLOR }}>{desc}</p>
               </div>
