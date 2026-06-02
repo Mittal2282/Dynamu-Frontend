@@ -1,13 +1,22 @@
-import {
-  HERO_TEXT_SHADOW,
-  HOW_IT_WORKS_SLIDE_INDEX,
-  IMG,
-  ORANGE,
-  OVERLAY_HERO,
-  OVERLAY_HERO_DARK,
-} from '../../../constants/landingConstants';
+import React from 'react';
+import { HOW_IT_WORKS_SLIDE_INDEX, ORANGE } from '../../../constants/landingConstants';
 import { HERO_STATS } from '../../../constants/landingContent';
-import { useLandingTheme } from '../../../context/LandingThemeContext';
+
+const BG = '#ffffff';
+const TEXT_DARK = '#111827';
+const TEXT_MUTED = '#6b7280';
+
+// calc(dvh + vw) so sizes grow with both viewport dimensions — no compression on wide desktops
+const H1 = 'clamp(1.75rem, calc(4dvh + 2.5vw), 5rem)';
+const BODY = 'clamp(0.82rem, calc(1.2dvh + 0.4vw), 1.0625rem)';
+const BADGE = 'clamp(0.6rem, calc(0.6dvh + 0.3vw), 0.75rem)';
+const STAT_VAL = 'clamp(1.1rem, calc(2.5dvh + 0.8vw), 1.875rem)';
+const STAT_LBL = 'clamp(0.65rem, calc(0.7dvh + 0.3vw), 0.8125rem)';
+const BTN_TEXT = 'clamp(0.75rem, calc(1dvh + 0.35vw), 0.9375rem)';
+const BTN_PAD = 'clamp(0.4rem, calc(0.8dvh + 0.15vw), 0.875rem) clamp(0.75rem, calc(1.5dvh + 0.5vw), 1.75rem)';
+const PAD_TOP = 'clamp(3.5rem, calc(5dvh + 0.8vw), 6rem)';
+const PAD_BOT = 'clamp(0.5rem, calc(1.2dvh + 0.2vw), 2rem)';
+const GAP = 'clamp(0.5rem, calc(1.2dvh + 0.2vw), 1.5rem)';
 
 export interface HeroSlideProps {
   activeIndex: number;
@@ -16,109 +25,120 @@ export interface HeroSlideProps {
 }
 
 export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps) {
-  const { isDark } = useLandingTheme();
-  const overlay = isDark ? OVERLAY_HERO_DARK : OVERLAY_HERO;
-  const statCardBg = isDark ? 'rgba(15,23,42,0.75)' : 'rgba(255,255,255,0.82)';
-  const statCardBorder = isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)';
-  const statLabelColor = isDark ? '#94a3b8' : '#64748b';
-  const secondaryBtnBg = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.75)';
-  const secondaryBtnBorder = isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,0,0,0.12)';
-  const secondaryBtnColor = isDark ? '#e2e8f0' : '#374151';
-
   return (
-    <section className="relative min-h-dvh w-full overflow-hidden flex flex-col shrink-0">
-      <img
-        src={IMG.hero}
-        alt=""
-        aria-hidden="true"
-        fetchPriority="high"
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-      />
-      <div className="absolute inset-0" style={{ background: overlay }} />
+    <section
+      className="h-full w-full flex flex-col shrink-0 overflow-hidden"
+      style={{ background: BG, color: TEXT_DARK }}
+    >
       <div
-        className="absolute inset-0 pointer-events-none glow-drift"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 50% 38%, rgba(255,107,0,0.12) 0%, transparent 100%)',
-        }}
-      />
-
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center text-center px-6 py-20 w-full max-w-5xl mx-auto rounded-3xl sm:px-8 sm:py-6">
-        <h1 className="hero-title text-5xl sm:text-6xl lg:text-[76px] font-black leading-[1.03] tracking-tight mb-7 max-w-4xl">
-          <span style={{ textShadow: HERO_TEXT_SHADOW }}>
-            The AI Revenue
-          </span>
-          <br />
-          <span
-            className="inline-block"
-            style={{
-              background: `linear-gradient(92deg, ${ORANGE} 0%, #FF9F45 55%, ${ORANGE} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.85))',
-            }}
-          >
-            Engine for Restaurants
-          </span>
-        </h1>
-
-        <p
-          className="hero-sub text-lg sm:text-xl leading-relaxed max-w-2xl mb-11"
-          style={{ textShadow: HERO_TEXT_SHADOW }}
+        className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 min-h-0"
+        style={{ paddingTop: PAD_TOP, paddingBottom: PAD_BOT, gap: GAP }}
+      >
+        {/* Eyebrow badge */}
+        <div
+          className="hero-badge inline-flex items-center px-3 py-1 font-bold uppercase tracking-[0.18em] shrink-0"
+          style={{ color: ORANGE, border: `1.5px solid ${ORANGE}`, fontSize: BADGE }}
         >
-          An AI-native ordering layer that turns every restaurant menu into a conversational sales representative —
-          recommending, upselling, and remembering. On autopilot.
-        </p>
-
-        <div className="hero-stats flex flex-wrap justify-center gap-3 mb-10">
-          {HERO_STATS.map(({ value, label }) => (
-            <div
-              key={label}
-              className="px-6 py-3.5 rounded-xl text-center"
-              style={{
-                background: statCardBg,
-                border: statCardBorder,
-                backdropFilter: 'blur(50px)',
-              }}
-            >
-              <p className="text-[22px] font-black tabular-nums" style={{ color: ORANGE }}>
-                {value}
-              </p>
-              <p className="text-[11px] mt-0.5 font-medium" style={{ color: statLabelColor }}>{label}</p>
-            </div>
-          ))}
+          AI-Native Restaurant Platform
         </div>
 
-        <div className="hero-cta flex flex-wrap justify-center gap-3">
+        {/* Heading */}
+        <h1
+          className="hero-title font-black leading-[1.05] tracking-tight max-w-3xl shrink-0"
+          style={{ fontSize: H1, color: TEXT_DARK }}
+        >
+          The AI Revenue Engine
+          <br />
+          <span style={{ color: ORANGE }}>for Restaurants.</span>
+        </h1>
+
+        {/* Description */}
+        <p
+          className="hero-sub leading-relaxed max-w-xl sm:max-w-2xl shrink-0"
+          style={{ fontSize: BODY, color: TEXT_MUTED }}
+        >
+          An AI-native ordering layer that turns every restaurant menu into a conversational
+          sales representative. It recommends, upsells, and remembers, all on autopilot.
+        </p>
+
+        {/* Buttons */}
+        <div
+          className="hero-cta flex flex-row items-center justify-center w-full shrink-0 flex-wrap"
+          style={{ gap: 'clamp(0.6rem, calc(1dvh + 0.3vw), 1rem)', paddingTop: 'clamp(0.75rem, 2dvh, 1.5rem)', paddingBottom: 'clamp(2rem, 5dvh, 3rem)' }}
+        >
           <a
             href="mailto:founder@dynamu.ai"
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-white text-sm transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{ background: ORANGE, boxShadow: '0 0 32px rgba(255,107,0,0.4)' }}
+            className="inline-flex items-center gap-2 font-semibold text-white w-auto justify-center flex-1 sm:flex-none"
+            style={{
+              background: ORANGE,
+              borderRadius: '6px',
+              fontSize: BTN_TEXT,
+              padding: BTN_PAD,
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             Request a Demo
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 7h10M8 3l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </a>
           <button
             type="button"
             onClick={() => goToSlide(HOW_IT_WORKS_SLIDE_INDEX)}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-sm transition-all"
+            className="inline-flex items-center gap-2 font-semibold w-auto justify-center flex-1 sm:flex-none"
             style={{
-              background: secondaryBtnBg,
-              border: secondaryBtnBorder,
-              color: secondaryBtnColor,
-              backdropFilter: 'blur(8px)',
+              background: 'transparent',
+              border: '2px solid #111827',
+              borderRadius: '6px',
+              color: TEXT_DARK,
+              fontSize: BTN_TEXT,
+              padding: BTN_PAD,
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
             See How It Works
           </button>
+        </div>
+
+        {/* Stats */}
+        <div className="hero-stats w-full max-w-xl sm:max-w-2xl shrink-0">
+          {/* Mobile 2×2 grid */}
+          <div className="grid grid-cols-2 sm:hidden" style={{ gap: 'clamp(0.75rem, 1.5dvh, 1.5rem)' }}>
+            {HERO_STATS.map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div style={{ width: '100%', height: '3px', background: TEXT_DARK, marginBottom: '0.4rem' }} />
+                <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: TEXT_DARK }}>{value}</p>
+                <p className="font-normal leading-tight" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.2rem' }}>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* sm+ single row */}
+          <div className="hidden sm:flex items-start" style={{ gap: 'clamp(1.5rem, 3dvh, 2.5rem)' }}>
+            {HERO_STATS.map(({ value, label }) => (
+              <div key={label} className="text-center flex-1">
+                <div style={{ width: '100%', height: '3px', background: TEXT_DARK, marginBottom: '0.5rem' }} />
+                <p className="font-black tabular-nums" style={{ fontSize: STAT_VAL, color: TEXT_DARK }}>{value}</p>
+                <p className="font-normal" style={{ fontSize: STAT_LBL, color: TEXT_MUTED, marginTop: '0.25rem' }}>{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -126,25 +146,13 @@ export function HeroSlide({ activeIndex, stepSlide, goToSlide }: HeroSlideProps)
         <button
           type="button"
           onClick={() => stepSlide(1)}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5 scroll-indicator pointer-events-auto cursor-pointer bg-transparent border-0 p-2 rounded-xl hover:opacity-95"
-          style={{ textShadow: HERO_TEXT_SHADOW }}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1 scroll-indicator pointer-events-auto cursor-pointer bg-transparent border-0 p-2"
           aria-label="Next section"
+          style={{ color: TEXT_MUTED }}
         >
-          <span className="text-[10px] font-semibold uppercase tracking-widest">Next</span>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
-          >
-            <path
-              d="M3 6l5 5 5-5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <span style={{ fontSize: '0.5625rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Scroll</span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       )}

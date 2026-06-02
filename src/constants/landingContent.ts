@@ -25,10 +25,10 @@ export interface HeroStat {
 }
 
 export const HERO_STATS: HeroStat[] = [
-  { value: '10-15%', label: 'Average Order Value' },
-  { value: '3×', label: 'Faster Ordering' },
-  { value: '40-60%', label: 'Reduced Waiter Workload' },
-  { value: '0', label: 'App Downloads' },
+  { value: '10 to 15%', label: 'Avg Order Value' },
+  { value: '3x', label: 'Faster Ordering' },
+  { value: '40 to 60%', label: 'Less Waiter Load' },
+  { value: '0', label: 'App Downloads Needed' },
 ];
 
 export interface ProblemCard {
@@ -114,48 +114,56 @@ export const HOW_IT_WORKS_STEPS: HowItWorksStep[] = [
 ];
 
 export interface CapabilityItem {
-  letter: string;
+  iconKey: string;
   label: string;
   desc: string;
-  colorKey: 'orange' | 'cyan' | 'purple';
 }
 
 export const CAPABILITY_ITEMS: CapabilityItem[] = [
   {
-    letter: 'A',
+    iconKey: 'chat',
     label: 'AI Chat Menu',
     desc: 'Natural-language ordering across local native languages — meeting guests where they communicate.',
-    colorKey: 'orange',
   },
   {
-    letter: 'U',
+    iconKey: 'upsell',
     label: 'Smart Upselling',
     desc: 'Combo and cross-sell recommendation engine consistently driving 10–20% average order value uplift.',
-    colorKey: 'cyan',
   },
   {
-    letter: 'D',
+    iconKey: 'dashboard',
     label: 'Live Dashboard',
-    desc: 'Real-time menu management — update items, pricing, availability, and promotions in seconds.',
-    colorKey: 'purple',
+    desc: 'Real-time menu management plus a daily sales bird\'s-eye view, with revenue broken down by payment method and order source.',
   },
   {
-    letter: 'P',
+    iconKey: 'persona',
     label: 'Persona Engine',
     desc: 'Persistent guest profiles capturing taste, budget, and dietary history for hyper-personalised service.',
-    colorKey: 'orange',
   },
   {
-    letter: 'O',
+    iconKey: 'efficiency',
     label: 'Operational Efficiency',
     desc: 'AI-driven self-service reduces floor staff dependency — lowering headcount costs while improving service quality.',
-    colorKey: 'cyan',
   },
   {
-    letter: '$',
+    iconKey: 'payments',
     label: 'POS + Payments',
     desc: 'Native UPI, Razorpay, and POS integrations available on day one — no middleware, no custom dev.',
-    colorKey: 'purple',
+  },
+  {
+    iconKey: 'inventory',
+    label: 'Manage Inventory',
+    desc: 'Track stock levels and ingredients availability in real time, and auto-flag low items before they hit the menu.',
+  },
+  {
+    iconKey: 'thirdparty',
+    label: 'Third-Party Order Management',
+    desc: 'Unify Swiggy and Zomato orders in one place so you can accept, track, and fulfil every channel from a single screen.',
+  },
+  {
+    iconKey: 'revenue',
+    label: "Bird's-Eye Revenue Dashboard",
+    desc: 'A daily sales overview with revenue broken down across every payment method and order source, including dine-in, QR, Swiggy, and Zomato.',
   },
 ];
 

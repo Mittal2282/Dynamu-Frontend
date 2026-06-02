@@ -57,8 +57,8 @@ function StatCard({ label, value, sub, accentColor, icon }: StatCardProps) {
         style={{ background: accentColor }}
       />
       <div
-        className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
-        style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }}
+        className="absolute top-0 left-0 right-0 h-[2px]"
+        style={{ background: "#000" }}
       />
 
       <div className="flex items-center justify-between">
