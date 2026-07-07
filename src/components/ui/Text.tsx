@@ -51,17 +51,20 @@ export default function Text({
 }: TextProps) {
   const Tag = as as React.ElementType;
 
-  return (
-    <Tag
-      className={[
+  // React.createElement (not JSX) here: a dynamic ElementType combined with
+  // TextProps' `[key: string]: unknown` index signature makes the JSX
+  // children-prop overload resolve to `never` under this TS/React version.
+  return React.createElement(
+    Tag,
+    {
+      className: [
         SIZE_CLASSES[size]     ?? SIZE_CLASSES.md,
         WEIGHT_CLASSES[weight] ?? WEIGHT_CLASSES.normal,
         COLOR_CLASSES[color]   ?? COLOR_CLASSES.primary,
         className,
-      ].filter(Boolean).join(' ')}
-      {...rest}
-    >
-      {children}
-    </Tag>
+      ].filter(Boolean).join(' '),
+      ...rest,
+    },
+    children,
   );
 }
