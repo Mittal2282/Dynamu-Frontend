@@ -1,0 +1,395 @@
+/* DynamuAI landing — charcoal-espresso / parchment / bordeaux / brass */
+
+.dyn-landing {
+  --dyn-bg: #1c1815;
+  --dyn-cream: #f1e9dc;
+  --dyn-wine: #7a2e2e;
+  --dyn-brass: #b8863b;
+  --dyn-dim: rgba(241, 233, 220, 0.66);
+  --dyn-line: rgba(241, 233, 220, 0.16);
+  --dyn-panel: rgba(28, 24, 21, 0.78);
+  --dyn-serif: 'Fraunces Variable', Georgia, serif;
+  --dyn-sans: 'Inter Variable', system-ui, sans-serif;
+  --dyn-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  background: var(--dyn-bg);
+  color: var(--dyn-cream);
+  font-family: var(--dyn-sans);
+  min-height: 100vh;
+}
+
+.dyn-mono {
+  font-family: var(--dyn-mono);
+}
+
+.dyn-landing :focus-visible {
+  outline: 2px solid var(--dyn-brass);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* full-bleed hero video at native resolution, under the transparent canvas */
+.dyn-hero-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  background: var(--dyn-bg);
+}
+
+/* fixed WebGL layer (transparent) above the video */
+.dyn-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+/* cinematic vignette over the 3D, under the copy */
+.dyn-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(16, 13, 11, 0.55) 100%),
+    linear-gradient(rgba(16, 13, 11, 0.5), transparent 12% 88%, rgba(16, 13, 11, 0.6));
+}
+
+/* nav */
+.dyn-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 2rem;
+  background: linear-gradient(rgba(28, 24, 21, 0.85), rgba(28, 24, 21, 0));
+}
+.dyn-nav-brand {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--dyn-cream);
+}
+.dyn-nav nav {
+  display: flex;
+  gap: 1.6rem;
+}
+.dyn-nav-link {
+  color: var(--dyn-brass);
+  font-size: 0.85rem;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.dyn-nav-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.dyn-nav-dim {
+  color: var(--dyn-dim);
+}
+
+/* scroll spine — one 100vh+ act per scene */
+.dyn-scroll {
+  position: relative;
+  z-index: 3;
+}
+.dyn-act {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 6.5rem 2rem 4rem;
+}
+.dyn-act-right {
+  justify-content: flex-end;
+}
+.dyn-act-right .dyn-copy {
+  margin-right: 4vw;
+}
+.dyn-act-cta {
+  justify-content: center;
+  text-align: center;
+}
+.dyn-act-cta .dyn-copy {
+  background: rgba(28, 24, 21, 0.6);
+  backdrop-filter: blur(5px);
+  padding: 2.6rem 3rem;
+  border: 1px solid var(--dyn-line);
+}
+.dyn-act-hero {
+  justify-content: center;
+  text-align: center;
+}
+
+.dyn-copy {
+  max-width: 34rem;
+  will-change: transform, opacity;
+}
+.dyn-copy-center {
+  max-width: 46rem;
+}
+.dyn-copy-wide {
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+.dyn-eyebrow {
+  font-size: 0.74rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--dyn-brass);
+  margin: 0 0 1.1rem;
+}
+.dyn-headline {
+  font-family: var(--dyn-serif);
+  font-weight: 560;
+  font-variation-settings: 'SOFT' 60, 'WONK' 1;
+  font-size: clamp(2rem, 4.4vw, 3.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  margin: 0 0 1.3rem;
+  color: var(--dyn-cream);
+}
+.dyn-headline em {
+  font-style: italic;
+  color: var(--dyn-brass);
+}
+.dyn-headline-hero {
+  font-size: clamp(2.4rem, 5.6vw, 4.6rem);
+}
+.dyn-body {
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--dyn-dim);
+  margin: 0 auto 1rem;
+  max-width: 38rem;
+}
+.dyn-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dyn-dim);
+  margin: 0 0 2rem;
+}
+
+/* buttons */
+.dyn-cta-row {
+  display: flex;
+  gap: 0.9rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 1.6rem 0;
+}
+.dyn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font: 600 0.95rem var(--dyn-sans);
+  letter-spacing: 0.03em;
+  padding: 0.8rem 1.6rem;
+  border-radius: 3px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.dyn-btn-brass {
+  background: var(--dyn-brass);
+  background-image: url('/landing/brass.webp');
+  background-size: cover;
+  background-blend-mode: multiply;
+  color: #241c10;
+  box-shadow: 0 0 34px rgba(184, 134, 59, 0.28);
+}
+.dyn-btn-brass:hover {
+  filter: brightness(1.12);
+}
+.dyn-btn-ghost {
+  border: 1px solid var(--dyn-line);
+  color: var(--dyn-cream);
+  background: rgba(28, 24, 21, 0.5);
+}
+.dyn-btn-ghost:hover {
+  border-color: var(--dyn-brass);
+}
+
+/* hero stats */
+.dyn-stats {
+  display: flex;
+  gap: 2.2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2.2rem 0 0;
+}
+.dyn-stat {
+  min-width: 7.5rem;
+  border-top: 2px solid var(--dyn-brass);
+  padding-top: 0.6rem;
+  text-align: center;
+}
+.dyn-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dyn-cream);
+  margin: 0;
+}
+.dyn-stat-label {
+  font-size: 0.78rem;
+  color: var(--dyn-dim);
+  margin-top: 0.25rem;
+}
+
+/* card grids */
+.dyn-cards {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 2.2rem;
+  text-align: left;
+}
+.dyn-cards-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.dyn-cards-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.dyn-card {
+  background: var(--dyn-panel);
+  backdrop-filter: blur(6px);
+  padding: 1.3rem 1.2rem;
+  border: 1px solid var(--dyn-line);
+}
+.dyn-card-wine {
+  border-left: 3px solid var(--dyn-wine);
+}
+.dyn-card-brass {
+  border-top: 3px solid var(--dyn-brass);
+}
+.dyn-card-line {
+  border-left: 2px solid var(--dyn-line);
+}
+.dyn-card-num {
+  font-size: 0.9rem;
+  color: var(--dyn-brass);
+  margin: 0 0 0.5rem;
+}
+.dyn-card-num-big {
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+.dyn-card-title {
+  font-weight: 600;
+  font-size: 0.98rem;
+  margin: 0 0 0.4rem;
+  color: var(--dyn-cream);
+}
+.dyn-card-desc {
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--dyn-dim);
+  margin: 0;
+}
+
+/* solution bullets */
+.dyn-bullets {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+}
+.dyn-bullets li {
+  border-top: 1px solid var(--dyn-line);
+  padding: 0.9rem 0;
+}
+.dyn-bullet-label {
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--dyn-cream);
+}
+.dyn-bullet-label::before {
+  content: '';
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  background: var(--dyn-brass);
+  margin-right: 0.6rem;
+}
+.dyn-bullet-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--dyn-dim);
+  margin: 0 0 0 1.05rem;
+}
+
+/* footer inside final act */
+.dyn-footer {
+  margin-top: 4rem;
+  border-top: 1px solid var(--dyn-line);
+  padding-top: 1.6rem;
+}
+.dyn-footer-brand {
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  margin: 0 0 0.8rem;
+}
+.dyn-footer-blurb {
+  display: block;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--dyn-dim);
+  max-width: 34rem;
+  margin: 0.6rem auto 0;
+}
+.dyn-footer-meta {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--dyn-dim);
+  margin: 0;
+}
+
+/* static fallback — same acts, plates as CSS backgrounds */
+.dyn-static .dyn-act {
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid var(--dyn-line);
+  position: relative;
+}
+.dyn-static .dyn-act::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(22, 18, 15, 0.68);
+}
+.dyn-static .dyn-copy {
+  position: relative;
+}
+.dyn-static [data-act='0'] { background-image: url('/landing/bg-hero.webp'); }
+.dyn-static [data-act='1'] { background-image: url('/landing/bg-problem.webp'); }
+.dyn-static [data-act='2'] { background-image: url('/landing/bg-solution.webp'); }
+.dyn-static [data-act='3'] { background-image: url('/landing/bg-how.webp'); }
+.dyn-static [data-act='4'] { background-image: url('/landing/bg-caps.webp'); }
+.dyn-static [data-act='5'] { background-image: url('/landing/bg-cta.webp'); }
+
+@media (max-width: 980px) {
+  .dyn-cards-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dyn-cards-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .dyn-cards-4,
+  .dyn-cards-3 {
+    grid-template-columns: 1fr;
+  }
+  .dyn-act-right {
+    justify-content: flex-start;
+  }
+  .dyn-nav {
+    padding: 0.9rem 1.1rem;
+  }
+}

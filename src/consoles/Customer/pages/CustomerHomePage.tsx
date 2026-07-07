@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import MenuItemCard from "../../../components/customer/MenuItemCard";
 import { useCartCount } from "../../../store/cartStore";
 import { authStore } from "../../../store/authStore";
 import { restaurantStore } from "../../../store/restaurantStore";
+import api from "../../../api/axiosInstance";
+import { ENDPOINTS } from "../../../utils/endpoints";
 
 // ── Outlet context type ───────────────────────────────────────────────────────
 
@@ -568,6 +570,7 @@ export default function CustomerHomePage() {
         loading={sectionsLoading}
         currencySymbol={currencySymbol}
       />
+
     </div>
   );
 }

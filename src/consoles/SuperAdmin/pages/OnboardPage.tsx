@@ -9,6 +9,8 @@ import {
   updateSAPetpoojaConfig,
 } from "../../../services/superAdminService";
 import { authStore } from "../../../store/authStore";
+import adminApi from "../../../api/adminAxios";
+import { ENDPOINTS } from "../../../utils/endpoints";
 
 const STEPS = ["Restaurant Details", "Import Menu", "Petpooja POS", "Done"];
 
