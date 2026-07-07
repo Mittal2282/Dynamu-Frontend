@@ -23,7 +23,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
     <div className="dyn-scroll" ref={ref}>
       {/* 01 — HERO */}
       <section className="dyn-act dyn-act-hero" data-act={0}>
-        <div className="dyn-copy dyn-copy-center" data-copy>
+        <div className="dyn-copy dyn-copy-center dyn-scrim" data-copy>
           <p className="dyn-eyebrow dyn-mono">AI-Native Restaurant Platform</p>
           <h1 className="dyn-headline dyn-headline-hero">
             The AI Revenue Engine
@@ -55,7 +55,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
 
       {/* 02 — THE PROBLEM */}
       <section className="dyn-act" data-act={1}>
-        <div className="dyn-copy dyn-copy-wide" data-copy>
+        <div className="dyn-copy dyn-copy-wide dyn-scrim" data-copy>
           <p className="dyn-eyebrow dyn-mono">The Problem</p>
           <h2 className="dyn-headline">
             Restaurants are losing revenue because <em>menus don&apos;t sell.</em>
@@ -78,7 +78,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
 
       {/* 03 — THE SOLUTION */}
       <section className="dyn-act dyn-act-right" data-act={2}>
-        <div className="dyn-copy" data-copy>
+        <div className="dyn-copy dyn-scrim dyn-scrim-right" data-copy>
           <p className="dyn-eyebrow dyn-mono">The Solution</p>
           <h2 className="dyn-headline">
             Dynamu, your AI <em>sales representative at every table</em>
@@ -100,7 +100,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
 
       {/* 04 — HOW IT WORKS */}
       <section className="dyn-act" id="how-it-works" data-act={3}>
-        <div className="dyn-copy dyn-copy-wide" data-copy>
+        <div className="dyn-copy dyn-copy-wide dyn-scrim" data-copy>
           <p className="dyn-eyebrow dyn-mono">How It Works</p>
           <h2 className="dyn-headline">From scan to upsell in 90 seconds</h2>
           <p className="dyn-kicker dyn-mono">Zero App Download&nbsp;&nbsp;·&nbsp;&nbsp;Zero Staff Training</p>
@@ -118,7 +118,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
 
       {/* 05 — PRODUCT CAPABILITIES */}
       <section className="dyn-act" data-act={4}>
-        <div className="dyn-copy dyn-copy-wide" data-copy>
+        <div className="dyn-copy dyn-copy-wide dyn-scrim" data-copy>
           <p className="dyn-eyebrow dyn-mono">Product Capabilities</p>
           <h2 className="dyn-headline">A complete revenue layer for the modern restaurant</h2>
           <p className="dyn-body">Everything you need in one unified platform, with no new hardware required.</p>

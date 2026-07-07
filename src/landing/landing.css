@@ -53,8 +53,8 @@
   z-index: 2;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(16, 13, 11, 0.55) 100%),
-    linear-gradient(rgba(16, 13, 11, 0.5), transparent 12% 88%, rgba(16, 13, 11, 0.6));
+    radial-gradient(ellipse 130% 95% at 50% 45%, transparent 62%, rgba(16, 13, 11, 0.4) 100%),
+    linear-gradient(rgba(16, 13, 11, 0.3), transparent 15% 85%, rgba(16, 13, 11, 0.42));
 }
 
 /* nav */
@@ -136,6 +136,25 @@
 .dyn-copy-wide {
   max-width: 62rem;
   margin: 0 auto;
+}
+
+/* reusable text-protection scrim for copy with no card/panel ancestor */
+.dyn-scrim {
+  position: relative;
+  isolation: isolate;
+  padding: 2rem 2.4rem;
+}
+.dyn-scrim::before {
+  content: '';
+  position: absolute;
+  inset: -1.5rem -2rem;
+  z-index: -1;
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, var(--dyn-panel) 0%, rgba(28, 24, 21, 0.5) 55%, transparent 100%);
+  backdrop-filter: blur(3px);
+  border-radius: 4px;
+}
+.dyn-scrim-right::before {
+  background: radial-gradient(ellipse 90% 100% at 65% 50%, var(--dyn-panel) 0%, rgba(28, 24, 21, 0.5) 55%, transparent 100%);
 }
 
 .dyn-eyebrow {

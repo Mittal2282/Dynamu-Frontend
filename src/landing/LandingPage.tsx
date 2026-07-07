@@ -116,7 +116,6 @@ function Cinematic() {
         poster="/landing/bg-hero.webp"
         aria-hidden="true"
       >
-        <source src="/landing/hero.webm" type="video/webm" />
         <source src="/landing/hero.mp4" type="video/mp4" />
       </video>
       <Experience progress={progress} />
