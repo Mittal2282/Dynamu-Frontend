@@ -63,18 +63,20 @@ const PLATE_POS: [number, number, number][] = [
   [0, 0.4, -12.4],
   [0, 0.6, -12.6],
   [0.4, 0.8, -12.8],
-  [0, 0.4, -13],
+  [3.2, 0.4, -13], // cta — shifted to sit under the camera's off-centre look-at
 ];
 
 // Plate sizes matched to each act's camera distance so the 16:9 media is
 // never magnified far past the frustum (over-zoom = visible pixel break-up).
+// CTA is oversized because its camera looks well off-plate-centre (see
+// PLATE_POS[5]); the extra width keeps the frame full at wide viewports.
 const PLATE_SIZE: [number, number][] = [
   [26, 14.6],
   [26, 14.6],
   [26, 14.6],
   [24, 13.5],
   [19, 10.7],
-  [28, 15.75],
+  [40, 17],
 ];
 
 function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
@@ -138,7 +140,6 @@ function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
       if (m) m.opacity = actEnv(t, i);
     }
 
-    const envSolution = actEnv(t, 2);
     const envHow = actEnv(t, 3);
     const envCaps = actEnv(t, 4);
 
