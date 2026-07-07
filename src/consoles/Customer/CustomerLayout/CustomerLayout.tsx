@@ -45,6 +45,9 @@ export interface CustomerOutletContext {
   onOpenAI: () => void;
 }
 
+// Known admin route prefixes that should never be treated as QR code IDs.
+const ADMIN_PREFIXES = new Set(["dashboard", "superadmin", "login"]);
+
 export default function CustomerLayout() {
   const { qrCodeId, tableNumber } = useParams();
   const navigate = useNavigate();
@@ -146,6 +149,16 @@ export default function CustomerLayout() {
   };
 
   // ── Early returns ──
+  // Guard: redirect if the URL was mistakenly matched to CustomerLayout
+  // (e.g. /dashboard/settings matched as /:qrCodeId/:tableNumber).
+  // Use window.location.replace (hard reload) so React Router's loop is broken
+  // and the correct static route is matched fresh on the next load.
+  if (qrCodeId && ADMIN_PREFIXES.has(qrCodeId)) {
+    const target = tableNumber ? `/${qrCodeId}/${tableNumber}` : `/${qrCodeId}`;
+    window.location.replace(target);
+    return null;
+  }
+
   if (!gateComplete) {
     return (
       <SessionGate

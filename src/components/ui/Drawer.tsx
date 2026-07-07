@@ -9,6 +9,7 @@ interface DrawerProps {
   height?: string;
   mobileOnly?: boolean;
   className?: string;
+  sheetStyle?: React.CSSProperties;
 }
 
 /**
@@ -21,7 +22,7 @@ interface DrawerProps {
  *  - mobileOnly: when true, the drawer is hidden on md+ screens (use a desktop
  *    alternative alongside it)
  */
-export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', height, mobileOnly = false }: DrawerProps) {
+export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', height, mobileOnly = false, sheetStyle }: DrawerProps) {
   const sheetRef   = useRef<HTMLDivElement>(null);
   const handleRef  = useRef<HTMLDivElement>(null);
   const startY     = useRef<number | null>(null);
@@ -128,6 +129,7 @@ export default function Drawer({ isOpen, onClose, children, maxHeight = '90vh', 
             borderRadius: '24px 24px 0 0',
             borderTop: '2.5px solid var(--t-accent)',
             transition: dragging ? 'none' : 'transform 0.3s ease-out',
+            ...sheetStyle,
           }}
         >
           {/* ── Drag handle ────────────────────────────────────────────────── */}
