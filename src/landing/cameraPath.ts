@@ -53,6 +53,16 @@ const LOOKATS = [
 
 const FOVS = [38, 44, 42, 52, 48, 40];
 
+// Desktop framing offsets the look-at so DOM copy has room beside the 3D
+// subject; on a portrait viewport there's no room, so this blends the
+// offset back toward centre as aspect narrows.
+const ASPECT_WIDE = 1.15; // side-by-side desktop framing still valid
+const ASPECT_NARROW = 0.75; // fully stacked mobile framing
+
+export function portraitBlend(aspect: number): number {
+  return smoothstep((ASPECT_WIDE - aspect) / (ASPECT_WIDE - ASPECT_NARROW));
+}
+
 const posCurve = new THREE.CatmullRomCurve3(POSITIONS, false, 'centripetal');
 const lookCurve = new THREE.CatmullRomCurve3(LOOKATS, false, 'centripetal');
 
@@ -63,6 +73,7 @@ export function applyCamera(camera: THREE.PerspectiveCamera, t: number) {
   const tt = clamp01(t);
   posCurve.getPoint(tt, _pos);
   lookCurve.getPoint(tt, _look);
+  _look.x *= 1 - portraitBlend(camera.aspect);
   const segs = FOVS.length - 1;
   const seg = Math.min(segs - 1, Math.floor(tt * segs));
   const f = tt * segs - seg;
@@ -78,4 +89,41 @@ export function applyCamera(camera: THREE.PerspectiveCamera, t: number) {
 // Print reveal: first lines print in the hero, ticket fully printed by ~0.85.
 export function printProgress(t: number) {
   return clamp01(0.25 * ramp(t, 0.01, 0.11) + 0.75 * ramp(t, 0.14, 0.85));
+}
+
+// Discrete per-act pose (for backdrop plates, which aren't continuously
+// interpolated like the scroll-driven camera curve).
+export function actPose(i: number, aspect: number) {
+  const blend = portraitBlend(aspect);
+  const look = LOOKATS[i].clone();
+  look.x *= 1 - blend;
+  return { pos: POSITIONS[i], look, fov: FOVS[i] };
+}
+
+const OVERSCAN = 1.04;
+
+const _planeNormal = new THREE.Vector3(0, 0, 1);
+const _quat = new THREE.Quaternion();
+
+// Size, position + orient a backdrop plate so it exactly fills the camera
+// frustum at depthZ, for the current viewport aspect — replaces hand-tuned
+// PLATE_SIZE magic numbers (and the coverage-gap bug class they caused).
+// Several acts look at the plate off-axis (e.g. CTA), so the plate must be
+// rotated to face the camera along its view ray — otherwise the frustum
+// cross-section is a skewed trapezoid, not the axis-aligned rectangle the
+// size formula assumes.
+export function plateTransform(i: number, aspect: number, depthZ: number) {
+  const { pos, look, fov } = actPose(i, aspect);
+  const dir = look.clone().sub(pos).normalize();
+  const dz = Math.abs(dir.z) < 1e-4 ? 1e-4 : dir.z;
+  const d = (depthZ - pos.z) / dz;
+  const center = pos.clone().addScaledVector(dir, d);
+  const height = 2 * d * Math.tan((fov * Math.PI) / 360) * OVERSCAN;
+  const width = height * aspect * OVERSCAN;
+  _quat.setFromUnitVectors(_planeNormal, dir.clone().negate());
+  return {
+    position: [center.x, center.y, center.z] as [number, number, number],
+    size: [width, height] as [number, number],
+    quaternion: [_quat.x, _quat.y, _quat.z, _quat.w] as [number, number, number, number],
+  };
 }

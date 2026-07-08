@@ -10,11 +10,5 @@ export function getTier(): Tier {
   const mem = (navigator as unknown as { deviceMemory?: number }).deviceMemory;
   if (mem !== undefined && mem < 4) return 'static';
 
-  // ponytail: coarse pointer + small screen ≈ phone; swap for a real GPU probe if this misclassifies
-  const smallTouch =
-    window.matchMedia('(pointer: coarse)').matches &&
-    Math.min(window.screen.width, window.screen.height) < 768;
-  if (smallTouch) return 'static';
-
   return 'full';
 }

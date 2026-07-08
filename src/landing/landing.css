@@ -69,6 +69,12 @@
   align-items: center;
   padding: 1.1rem 2rem;
   background: linear-gradient(rgba(28, 24, 21, 0.85), rgba(28, 24, 21, 0));
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+.dyn-nav.dyn-nav-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 .dyn-nav-brand {
   font-size: 0.9rem;
@@ -205,6 +211,7 @@
   margin: 1.6rem 0;
 }
 .dyn-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -214,6 +221,7 @@
   border-radius: 3px;
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
 .dyn-btn-brass {
   background: var(--dyn-brass);
@@ -233,6 +241,57 @@
 }
 .dyn-btn-ghost:hover {
   border-color: var(--dyn-brass);
+}
+
+/* "lightning thread" hover: a bright hairline comet chases the button's
+   own outline in a continuous loop — an animated conic-gradient ring
+   masked down to just the border band (@property lets the angle
+   interpolate smoothly; browsers without it just skip the motion). */
+@property --dyn-thread-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.dyn-btn:hover {
+  transform: translateY(1px) scale(0.99);
+}
+.dyn-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--dyn-thread-angle),
+    transparent 0%,
+    transparent 84%,
+    var(--dyn-brass) 90%,
+    #fdf3df 94%,
+    var(--dyn-brass) 98%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.dyn-btn:hover::before {
+  opacity: 1;
+  animation: dyn-thread 1.4s linear infinite;
+}
+@keyframes dyn-thread {
+  to {
+    --dyn-thread-angle: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dyn-btn,
+  .dyn-btn::before {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* hero stats */
@@ -341,32 +400,94 @@
   margin: 0 0 0 1.05rem;
 }
 
-/* footer inside final act */
-.dyn-footer {
-  margin-top: 4rem;
-  border-top: 1px solid var(--dyn-line);
-  padding-top: 1.6rem;
+/* standalone site footer — sits below the scroll spine, own opaque
+   background so it fully covers the fixed video/3D/vignette layers.
+   The table-set photo IS the footer background; nav/contact anchor to
+   the top (dark restaurant bg) and the wordmark to the bottom (dark
+   tablecloth), with gradient scrims for legibility over the bright
+   flame centrepiece. */
+.dyn-site-footer {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(10, 8, 6, 0.78) 0%, rgba(10, 8, 6, 0.12) 26%, rgba(10, 8, 6, 0.1) 58%, rgba(10, 8, 6, 0.88) 100%),
+    url('/landing/footer-bg.webp');
+  background-size: cover;
+  background-position: center;
 }
-.dyn-footer-brand {
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  margin: 0 0 0.8rem;
+
+.dyn-site-footer-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  width: 100%;
+  padding: 2rem 2.5rem 0;
 }
-.dyn-footer-blurb {
-  display: block;
-  font-weight: 400;
-  letter-spacing: 0;
-  font-size: 0.86rem;
-  line-height: 1.6;
+.dyn-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+.dyn-footer-col-center {
+  align-items: center;
+  text-align: center;
+}
+.dyn-footer-col-right {
+  align-items: flex-end;
+  text-align: right;
+}
+.dyn-footer-col-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dyn-brass);
+  margin: 0 0 0.3rem;
+}
+.dyn-footer-col a {
   color: var(--dyn-dim);
-  max-width: 34rem;
-  margin: 0.6rem auto 0;
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+.dyn-footer-col a:hover {
+  color: var(--dyn-cream);
+}
+.dyn-footer-say-hi {
+  font-size: 0.92rem;
+  color: var(--dyn-dim);
+  margin: 0 0 0.4rem;
+  max-width: 16rem;
 }
 .dyn-footer-meta {
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   color: var(--dyn-dim);
   margin: 0;
+}
+
+.dyn-site-footer-wordmark {
+  overflow-x: hidden;
+  text-align: center;
+  padding: 0.4rem 0 0;
+}
+.dyn-site-footer-wordmark span {
+  display: block;
+  font-family: var(--dyn-serif);
+  font-weight: 620;
+  font-variation-settings: 'SOFT' 40;
+  font-size: clamp(3.2rem, 15vw, 11rem);
+  line-height: 1.2;
+  padding-bottom: 0.12em;
+  letter-spacing: -0.01em;
+  color: var(--dyn-cream);
+  background: linear-gradient(180deg, var(--dyn-cream) 0%, var(--dyn-brass) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* static fallback — same acts, plates as CSS backgrounds */
@@ -399,6 +520,17 @@
   .dyn-cards-3 {
     grid-template-columns: repeat(2, 1fr);
   }
+  .dyn-site-footer-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2rem;
+  }
+  .dyn-footer-col-center,
+  .dyn-footer-col-right {
+    align-items: center;
+    text-align: center;
+  }
 }
 @media (max-width: 640px) {
   .dyn-cards-4,
@@ -410,5 +542,115 @@
   }
   .dyn-nav {
     padding: 0.9rem 1.1rem;
+  }
+
+  .dyn-act {
+    padding: 5rem 1.1rem 2.6rem;
+  }
+  .dyn-act-right .dyn-copy {
+    margin-right: 0;
+  }
+  .dyn-scrim {
+    padding: 1.3rem 1.3rem;
+  }
+  .dyn-scrim::before {
+    inset: -1rem -1rem;
+  }
+  .dyn-act-cta .dyn-copy {
+    padding: 1.8rem 1.6rem;
+  }
+
+  .dyn-headline {
+    font-size: clamp(1.6rem, 7.2vw, 3.5rem);
+  }
+  .dyn-headline-hero {
+    font-size: clamp(1.9rem, 8.6vw, 4.6rem);
+  }
+  .dyn-eyebrow {
+    font-size: 0.66rem;
+  }
+  .dyn-body {
+    font-size: 0.92rem;
+  }
+  .dyn-kicker {
+    font-size: 0.7rem;
+  }
+  .dyn-card-num {
+    font-size: 0.8rem;
+  }
+  .dyn-card-num-big {
+    font-size: 1.6rem;
+  }
+  .dyn-card-title {
+    font-size: 0.9rem;
+  }
+  .dyn-card-desc {
+    font-size: 0.8rem;
+  }
+  .dyn-bullet-desc {
+    font-size: 0.82rem;
+  }
+  .dyn-stat-value {
+    font-size: 1.25rem;
+  }
+  .dyn-stat-label {
+    font-size: 0.7rem;
+  }
+  .dyn-footer-blurb {
+    font-size: 0.8rem;
+  }
+  .dyn-footer-meta {
+    font-size: 0.62rem;
+  }
+  .dyn-nav-brand {
+    font-size: 0.78rem;
+  }
+  .dyn-nav-link {
+    font-size: 0.76rem;
+  }
+  .dyn-btn {
+    font-size: 0.85rem;
+    padding: 0.68rem 1.3rem;
+  }
+
+  .dyn-cards {
+    gap: 0.7rem;
+    margin-top: 1.6rem;
+  }
+  .dyn-stats {
+    gap: 1.4rem;
+    margin-top: 1.6rem;
+  }
+  .dyn-cta-row {
+    gap: 0.7rem;
+    margin: 1.2rem 0;
+  }
+  .dyn-card {
+    padding: 1rem 0.95rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .dyn-act {
+    padding: 4.5rem 0.85rem 2.2rem;
+  }
+  .dyn-scrim {
+    padding: 1.1rem 1rem;
+  }
+  .dyn-headline {
+    font-size: clamp(1.4rem, 7.6vw, 3.5rem);
+  }
+  .dyn-headline-hero {
+    font-size: clamp(1.65rem, 9vw, 4.6rem);
+  }
+  .dyn-body {
+    font-size: 0.86rem;
+  }
+  .dyn-cta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dyn-btn {
+    justify-content: center;
   }
 }
