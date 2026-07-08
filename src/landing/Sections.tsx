@@ -133,7 +133,7 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
         </div>
       </section>
 
-      {/* 06 — CTA + FOOTER */}
+      {/* 06 — CTA */}
       <section className="dyn-act dyn-act-cta" id="book-demo" data-act={5}>
         <div className="dyn-copy dyn-copy-center" data-copy>
           <p className="dyn-eyebrow dyn-mono">Get Started</p>
@@ -153,19 +153,6 @@ const Sections = forwardRef<HTMLDivElement>(function Sections(_, ref) {
               Contact Team
             </a>
           </div>
-
-          <footer className="dyn-footer">
-            <p className="dyn-footer-brand">
-              {BRAND}
-              <span className="dyn-footer-blurb">
-                The AI-native ordering layer built for Bharat. Turning every restaurant menu into a
-                conversational sales representative that remembers and upsells.
-              </span>
-            </p>
-            <p className="dyn-footer-meta dyn-mono">
-              © {new Date().getFullYear()} Dynamu AI. All rights reserved. · Vertical AI · HoReCa · Bharat First
-            </p>
-          </footer>
         </div>
       </section>
     </div>

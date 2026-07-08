@@ -2,7 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import { applyCamera, actEnv, envelope, printProgress, ramp } from './cameraPath';
+import { applyCamera, actEnv, envelope, printProgress, ramp, plateTransform } from './cameraPath';
 import { createTicketTexture, TicketTexture } from './ticketTexture';
 import { ACT_IDS } from './content';
 
@@ -55,32 +55,17 @@ const TICKET_PATH = [
   new THREE.Vector3(0, 0, 0), // cta — back on the table, fully printed
 ];
 
-// Backdrop plate placement per act: hero/problem/solution behind the ticket,
-// how behind the pass, caps/traction/cta further down the travel path.
-const PLATE_POS: [number, number, number][] = [
-  [0, 0.4, -12], // hero — no plate rendered; the DOM <video> shows through the transparent canvas
-  [0, 0.4, -12.2],
-  [0, 0.4, -12.4],
-  [0, 0.6, -12.6],
-  [0.4, 0.8, -12.8],
-  [3.2, 0.4, -13], // cta — shifted to sit under the camera's off-centre look-at
-];
-
-// Plate sizes matched to each act's camera distance so the 16:9 media is
-// never magnified far past the frustum (over-zoom = visible pixel break-up).
-// CTA is oversized because its camera looks well off-plate-centre (see
-// PLATE_POS[5]); the extra width keeps the frame full at wide viewports.
-const PLATE_SIZE: [number, number][] = [
-  [26, 14.6],
-  [26, 14.6],
-  [26, 14.6],
-  [24, 13.5],
-  [19, 10.7],
-  [40, 17],
-];
+// Backdrop plate depth per act (parallax layering only — position/size are
+// derived per-frame from camera pose + viewport aspect, see plateTransform).
+const PLATE_DEPTH = [-12, -12.2, -12.4, -12.6, -12.8, -13];
 
 function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const aspect = useThree((s) => s.viewport.aspect);
+  const plateLayout = useMemo(
+    () => ACT_IDS.map((_, i) => plateTransform(i, aspect, PLATE_DEPTH[i])),
+    [aspect],
+  );
 
   const textures = useTexture([
     ...ACT_IDS.map((id) => ASSET(`bg-${id}.webp`)),
@@ -130,9 +115,16 @@ function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
   const ticketGroup = useRef<THREE.Group>(null);
   const barRefs = useRef<(THREE.Mesh | null)[]>([]);
 
-  useFrame(() => {
+  useFrame((state) => {
     const t = progress.current.t;
     applyCamera(camera, t);
+
+    // handheld micro-drift: purely time-driven, layered on top of the
+    // scroll-driven pose so it never affects scrub reversibility.
+    const time = state.clock.getElapsedTime();
+    camera.position.x += Math.sin(time * 0.35) * 0.01 + Math.sin(time * 0.9) * 0.004;
+    camera.position.y += Math.cos(time * 0.28) * 0.007;
+
     ticket?.draw(printProgress(t));
 
     for (let i = 0; i < ACT_IDS.length; i++) {
@@ -149,7 +141,10 @@ function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
 
     if (kitchenLight.current) kitchenLight.current.intensity = envHow * 6;
     if (barsLight.current) barsLight.current.intensity = envCaps * 4;
-    if (keyLight.current) keyLight.current.intensity = 1.1 + ramp(t, 0.86, 0.97) * 0.9;
+    if (keyLight.current) {
+      const flicker = Math.sin(time * 1.7) * 0.02 + Math.sin(time * 4.3) * 0.012;
+      keyLight.current.intensity = 1.1 + ramp(t, 0.86, 0.97) * 0.9 + flicker;
+    }
 
     if (ticketGroup.current) {
       // ticket is absent over the hero video, prints into existence in scene 2,
@@ -192,8 +187,8 @@ function Scene({ progress }: { progress: React.RefObject<ProgressRef> }) {
       {/* Higgsfield backdrop plates — one per act (hero act uses the DOM video) */}
       {ACT_IDS.map((id, i) =>
         i === 0 ? null : (
-          <mesh key={id} position={PLATE_POS[i]}>
-            <planeGeometry args={PLATE_SIZE[i]} />
+          <mesh key={id} position={plateLayout[i].position} quaternion={plateLayout[i].quaternion}>
+            <planeGeometry args={plateLayout[i].size} />
             <meshBasicMaterial
               ref={(m) => {
                 plateMats.current[i] = m;

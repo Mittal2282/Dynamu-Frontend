@@ -10,6 +10,7 @@ import '@fontsource/ibm-plex-mono/700.css';
 import Experience, { ProgressRef } from './Experience';
 import Sections from './Sections';
 import StaticPage from './StaticPage';
+import Footer from './Footer';
 import { getTier } from './deviceTier';
 import { BRAND, ACT_COUNT } from './content';
 import './landing.css';
@@ -38,7 +39,7 @@ function Cinematic() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.12 });
+    const lenis = new Lenis({ lerp: 0.1, easing: (x: number) => 1 - Math.pow(1 - x, 3) });
     lenis.on('scroll', ScrollTrigger.update);
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
@@ -53,7 +54,7 @@ function Cinematic() {
           trigger: scrollRef.current,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.6,
+          scrub: 0.85,
         },
         onUpdate: () => {
           const t = progress.current.t;
@@ -94,6 +95,16 @@ function Cinematic() {
             .to(copy, { autoAlpha: 0, y: -40, duration: 0.25 }, 0.63);
         }
       });
+
+      // The fixed nav header is redundant once the footer (with its own
+      // nav links) scrolls into view — fade it out rather than let it
+      // float over the footer's content.
+      ScrollTrigger.create({
+        trigger: '.dyn-site-footer',
+        start: 'top 85%',
+        end: 'bottom top',
+        toggleClass: { targets: '.dyn-nav', className: 'dyn-nav-hidden' },
+      });
     });
 
     return () => {
@@ -122,6 +133,7 @@ function Cinematic() {
       <div className="dyn-vignette" aria-hidden="true" />
       <Nav />
       <Sections ref={scrollRef} />
+      <Footer />
     </div>
   );
 }
@@ -134,6 +146,7 @@ export default function LandingPage() {
       <div className="dyn-landing">
         <Nav />
         <StaticPage />
+        <Footer />
       </div>
     );
   }
